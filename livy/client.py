@@ -18,7 +18,7 @@ __all__ = ["LivyClient", "Batch"]
 
 
 if sys.version_info < (3, 8):
-    Batch = typing.TypeVar("Batch", dict)
+    Batch = typing.TypeVar("Batch", bound=dict)
 else:
 
     class Batch(typing.TypedDict):
