@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class LivyClient:
     """Client that wraps requests to Livy server
 
-    This implemented follows livy API v0.7.0.
+    This implementation follows livy API v0.7.0 spec.
     """
 
     def __init__(
