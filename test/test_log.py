@@ -18,6 +18,8 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             module.LivyBatchLogReader(object(), 1234)
         with self.assertRaises(TypeError):
             module.LivyBatchLogReader(self.client, "1234")
+        with self.assertRaises(TypeError):
+            module.LivyBatchLogReader(self.client, 1234, prefix=object())
 
     def test_add_parsers(self):
         # success
@@ -29,6 +31,36 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             self.reader.add_parsers(r"(.+): (.+)", module.default_parser)
         with self.assertRaises(TypeError):
             self.reader.add_parsers(pattern, "1234")
+
+    def test_read(self):
+        self.client.get_batch_log.return_value = [
+            "stdout: ",
+            "test stdout extraction",
+            "line 2",
+            "21/05/01 15:21:23 INFO Client: ",
+            "\t client token: N/A",
+            "\t diagnostics: AM container is launched, waiting for AM container to Register with RM",
+            "\t ApplicationMaster host: N/A",
+            "\t ApplicationMaster RPC port: -1",
+            "\t queue: default",
+            "\t start time: 1619882482318",
+            "\t final status: UNDEFINED",
+            "\t tracking URL: http://ip-10-104-21-141.us-west-2.compute.internal:20888/proxy/application_1618372323346_53932/",
+            "\t user: livy",
+            "extra stdout here",
+            "\nstderr: ",
+            "stderr log here",
+            "\nYARN Diagnostics: ",
+        ]
+
+        with self.assertLogs("Client", "INFO") as logC, self.assertLogs(
+            "stdout", "INFO"
+        ) as logS, self.assertLogs("stderr", "ERROR") as logE:
+            self.reader.read()
+
+        self.assertEqual(len(logC.output), 1)
+        self.assertEqual(len(logS.output), 2)
+        self.assertEqual(len(logE.output), 1)
 
 
 class ParserTester(unittest.TestCase):

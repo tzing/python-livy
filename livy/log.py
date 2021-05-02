@@ -1,6 +1,7 @@
+import datetime
+import hashlib
 import logging
 import re
-import datetime
 import typing
 
 import livy.client
@@ -9,6 +10,12 @@ import livy.exception
 __all__ = ["LivyBatchLogReader", "LivyLogParseResult"]
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LEVEL = {
+    "stdout": logging.INFO,
+    "stderr": logging.ERROR,
+    "YARN Diagnostics": logging.WARNING,
+}
 
 
 class LivyLogParseResult(typing.NamedTuple):
@@ -44,6 +51,7 @@ class LivyBatchLogReader:
         self,
         client: livy.client.LivyClient,
         batch_id: int,
+        prefix: str = None,
     ) -> None:
         """
         Parameters
@@ -52,6 +60,8 @@ class LivyBatchLogReader:
                 Livy client that is pre-configured
             batch_id : int
                 Batch ID to be watched
+            prefix : str
+                Prefix to be added to logger name
 
         Raises
         ------
@@ -62,19 +72,28 @@ class LivyBatchLogReader:
             raise livy.exception.TypeError("client", livy.client.LivyClient, client)
         if not isinstance(batch_id, int):
             raise livy.exception.TypeError("batch_id", int, batch_id)
+        if prefix and not isinstance(prefix, str):
+            raise livy.exception.TypeError("prefix", str, prefix)
 
         self.client = client
         self.batch_id = batch_id
+        self.prefix = prefix or ""
 
         self._section_match = object()
         self._parsers = {
             # indicator that the section is changed
-            re.compile("^(stdout|\nstderr|\nYARN Diagnostics): "): self._section_match,
+            re.compile(
+                "^(stdout|\nstderr|\nYARN Diagnostics): ", re.RegexFlag.MULTILINE
+            ): self._section_match,
             # default parser
             re.compile(
-                r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)"
+                r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)",
+                re.RegexFlag.MULTILINE,
             ): default_parser,
         }
+
+        self._emitted_logs = set()
+        self._last_emit_timestamp = None
 
     def add_parsers(
         self,
@@ -147,25 +166,73 @@ class LivyBatchLogReader:
             # get match that is neatest to current pos
             pattern, match = min(matches.items(), key=lambda x: x[1].start())
             if match.start() == pos:
-                parser = self._parsers[pattern]
                 pos = match.end()
+                parser = self._parsers[pattern]
             else:
+                npos = match.start()
+                match = logs[pos : match.start()]  # convert_stdout takes str as input
                 parser = convert_stdout
-                match = logs[pos + 1 : match.start()]
-                pos = match.start()
+                pos = npos
+
+            # find next match
+            m = pattern.search(logs, pos)
+            if m:
+                matches[pattern] = m
+            else:
+                del matches[pattern]
 
             # special case: change section name
             if parser is self._section_match:
-                current_section = match.group().strip()
+                current_section = match.group().lstrip()
+                current_section = current_section[:-2]  # drop trailing colon (`: `)
                 continue
 
             # parse log
             result = parser(match)
 
-            # TODO cache
-            # TODO emit
+            # cache for preventing emit duplicated logs
+            digest = hashlib.md5(
+                b"%f--%d--%d--%d"
+                % (
+                    result.created,
+                    result.level,
+                    hash(result.name),
+                    hash(result.message),
+                )
+            ).digest()
 
-        raise NotImplementedError()
+            if digest in self._emitted_logs:
+                continue
+            else:
+                self._emitted_logs.add(digest)
+
+            # emit
+            name = result.name
+            level = result.level
+            if not name:
+                name = current_section
+                level = DEFAULT_LEVEL[current_section]
+
+            created = result.created
+            if created <= 0:
+                created = (
+                    self._last_emit_timestamp or datetime.datetime.now().timestamp()
+                )
+            else:
+                self._last_emit_timestamp = created
+
+            record = logging.makeLogRecord(
+                {
+                    "name": self.prefix + name,
+                    "levelno": level,
+                    "levelname": logging.getLevelName(result.level),
+                    "msg": result.message,
+                    "created": created,
+                }
+            )
+
+            logger = logging.getLogger(record.name)
+            logger.handle(record)
 
 
 def default_parser(match: re.Match):
@@ -187,10 +254,15 @@ def default_parser(match: re.Match):
         created=time.timestamp(),
         level=level,
         name=match.group(3),
-        message=match.group(4).lstrip(),
+        message=match.group(4).lstrip().replace("\n\t", "\n"),
     )
 
 
 def convert_stdout(text: str):
     """Convert stdout (and stderr) text to parse result object."""
-    return LivyLogParseResult(created=0, level=logging.INFO, name=None, message=text)
+    return LivyLogParseResult(
+        created=0,
+        level=logging.INFO,
+        name=None,
+        message=text.strip(),
+    )
