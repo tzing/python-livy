@@ -37,6 +37,8 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             "stdout: ",
             "test stdout extraction",
             "line 2",
+            "21/05/01 15:21:03 INFO SecurityManager: Changing view acls to: livy",
+            "21/05/01 15:21:03 INFO SecurityManager: Changing view acls to: livy",  # duplicated line
             "21/05/01 15:21:23 INFO Client: ",
             "\t client token: N/A",
             "\t diagnostics: AM container is launched, waiting for AM container to Register with RM",
@@ -53,10 +55,12 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             "\nYARN Diagnostics: ",
         ]
 
-        with self.assertLogs("Client", "INFO") as logC, self.assertLogs(
-            "stdout", "INFO"
-        ) as logS, self.assertLogs("stderr", "ERROR") as logE:
+        # fmt: off
+        with self.assertLogs("Client", "INFO") as logC, \
+             self.assertLogs("stdout", "INFO") as logS, \
+             self.assertLogs("stderr", "ERROR") as logE:
             self.reader.read()
+        # fmt: on
 
         self.assertEqual(len(logC.output), 1)
         self.assertEqual(len(logS.output), 2)

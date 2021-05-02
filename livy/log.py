@@ -87,7 +87,7 @@ class LivyBatchLogReader:
             ): self._section_match,
             # default parser
             re.compile(
-                r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)",
+                r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
                 re.RegexFlag.MULTILINE,
             ): default_parser,
         }
@@ -170,14 +170,15 @@ class LivyBatchLogReader:
                 parser = self._parsers[pattern]
             else:
                 npos = match.start()
-                match = logs[pos : match.start()]  # convert_stdout takes str as input
+                # trick: `convert_stdout` takes str as input
+                match = logs[pos : match.start()].strip()
                 parser = convert_stdout
                 pos = npos
 
             # find next match
-            m = pattern.search(logs, pos)
-            if m:
-                matches[pattern] = m
+            next_match = pattern.search(logs, pos)
+            if next_match:
+                matches[pattern] = next_match
             else:
                 del matches[pattern]
 
@@ -188,7 +189,12 @@ class LivyBatchLogReader:
                 continue
 
             # parse log
-            result = parser(match)
+            try:
+                result = parser(match)
+            except:
+                logger.exception(
+                    "Error during parsing log in %s. Raw match=%s", parser, match
+                )
 
             # cache for preventing emit duplicated logs
             digest = hashlib.md5(
