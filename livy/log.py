@@ -180,6 +180,9 @@ class LivyBatchLogReader:
                 current_section = current_section[:-2]  # drop trailing colon (`: `)
                 continue
 
+            if not match:
+                continue
+
             # parse log
             try:
                 result = parser(match)
@@ -187,6 +190,7 @@ class LivyBatchLogReader:
                 logger.exception(
                     "Error during parsing log in %s. Raw match=%s", parser, match
                 )
+                continue
 
             # cache for preventing emit duplicated logs
             digest = hashlib.md5(
