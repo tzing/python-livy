@@ -196,6 +196,12 @@ class LivyClientRequestTester(unittest.TestCase):
         with self.assertRaises(IOError):
             self.client._request("GET", "/test")
 
+    def test_keyboard_interrupt(self):
+        self.getresponse.side_effect = KeyboardInterrupt()
+
+        with self.assertRaises(KeyboardInterrupt):
+            self.client._request("GET", "/test")
+
     def test_json_error(self):
         self.getresponse.return_value = self.mock_response(200, b"{")
 
