@@ -32,7 +32,7 @@ class LivyBatchLogReaderTester(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.reader.add_parsers(pattern, "1234")
 
-    def test_read(self):
+    def test_read_success(self):
         self.client.get_batch_log.return_value = [
             "stdout: ",
             "test stdout extraction",
@@ -55,16 +55,23 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             "\nYARN Diagnostics: ",
         ]
 
-        # fmt: off
-        with self.assertLogs("Client", "INFO") as logC, \
-             self.assertLogs("stdout", "INFO") as logS, \
-             self.assertLogs("stderr", "ERROR") as logE:
+        with self.assertLogs("Client", "INFO"), self.assertLogs(
+            "stdout", "INFO"
+        ) as logS, self.assertLogs("stderr", "ERROR"):
             self.reader.read()
-        # fmt: on
 
-        self.assertEqual(len(logC.output), 1)
         self.assertEqual(len(logS.output), 2)
-        self.assertEqual(len(logE.output), 1)
+
+    def test_read_fail(self):
+        pattern = re.compile("^ERROR:", re.MULTILINE)
+        self.reader._parsers[pattern] = lambda: None  # signature not match
+
+        self.client.get_batch_log.return_value = [
+            "\nstderr: ",
+            "ERROR: assert raise error on this line",
+        ]
+        with self.assertLogs("livy.log", "ERROR"):
+            self.reader.read()
 
 
 class ParserTester(unittest.TestCase):

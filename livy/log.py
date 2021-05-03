@@ -7,7 +7,7 @@ import typing
 import livy.client
 import livy.exception
 
-__all__ = ["LivyBatchLogReader", "LivyLogParseResult"]
+__all__ = ["LivyBatchLogReader"]
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,9 @@ class LivyLogParseResult(typing.NamedTuple):
     message: str
     """Log message.
     """
+
+
+LivyLogParser = typing.Callable[[re.Match], LivyLogParseResult]
 
 
 class LivyBatchLogReader:
@@ -98,7 +101,7 @@ class LivyBatchLogReader:
     def add_parsers(
         self,
         pattern: typing.Pattern,
-        parser: typing.Callable[[re.Match], LivyLogParseResult],
+        parser: LivyLogParser,
     ):
         """Add log parser to this reader.
 
@@ -117,9 +120,14 @@ class LivyBatchLogReader:
 
         Note
         ----
-        Do not directly emit log from the parser. As the fetched log might
-        have overlap with previous action, this reader does cached the processed
-        result and prevent duplicated logs emitted.
+        The pattern must wrapped entire log
+            The re.Match object is also used to locate the position in the log.
+            It might cause error if the regex pattern does not match entire log
+            lines.
+
+        Do not directly emit log from the parser
+            The fetched log might have overlap with previous action, this reader
+            does cached the processed result and prevent duplicated logs emitted.
         """
         if not isinstance(pattern, typing.Pattern):
             raise livy.exception.TypeError("pattern", "regex pattern", pattern)
@@ -163,24 +171,8 @@ class LivyBatchLogReader:
         pos = 0
         current_section = "stdout"
         while pos < len(logs):
-            # get match that is neatest to current pos
-            pattern, match = min(matches.items(), key=lambda x: x[1].start())
-            if match.start() == pos:
-                pos = match.end()
-                parser = self._parsers[pattern]
-            else:
-                npos = match.start()
-                # trick: `convert_stdout` takes str as input
-                match = logs[pos : match.start()].strip()
-                parser = convert_stdout
-                pos = npos
-
-            # find next match
-            next_match = pattern.search(logs, pos)
-            if next_match:
-                matches[pattern] = next_match
-            else:
-                del matches[pattern]
+            # match recent text
+            pos, match, parser = self._match_log(matches, logs, pos)
 
             # special case: change section name
             if parser is self._section_match:
@@ -237,8 +229,62 @@ class LivyBatchLogReader:
                 }
             )
 
-            logger = logging.getLogger(record.name)
-            logger.handle(record)
+            logging.getLogger(record.name).handle(record)
+
+    def _match_log(
+        self, matches: typing.Dict[typing.Pattern, re.Match], logs: str, pos: int
+    ) -> typing.Tuple[int, re.Match, LivyLogParser]:
+        """Helper function to match most-recent text and get corresponding
+        parser.
+
+        Parameters
+        ----------
+            matches : Dict[re.Pattern, re.Match]
+                Cached match object dict for accelerate searching
+            logs : str
+                Complete log context
+            pos : int
+                Current position indicator for searching and parsing
+
+        Returns
+        -------
+            new_pos : int
+                New position indicator after this match
+            match : re.Match
+                Current matched object
+            parser : LivyLogParser
+                Parser for current match
+            (matches) : Dict[re.Pattern, re.Match]
+                Cached match object dict, updated in-place
+        """
+        if not matches:
+            # some text remained but no pattern matched
+            # flush all to fallback logger
+            match = logs[pos:]
+            new_pos = len(logs)
+            parser = convert_stdout
+            return new_pos, match, parser
+
+        # get match that is neatest to current pos
+        pattern, match = min(matches.items(), key=lambda x: x[1].start())
+
+        if match.start() == pos:
+            new_pos = match.end()
+            parser = self._parsers[pattern]
+        else:
+            new_pos = match.start()
+            # trick: `convert_stdout` takes str for input
+            match = logs[pos : match.start()].strip()
+            parser = convert_stdout
+
+        # find next match
+        next_match = pattern.search(logs, new_pos)
+        if next_match:
+            matches[pattern] = next_match
+        else:
+            del matches[pattern]
+
+        return new_pos, match, parser
 
 
 def default_parser(match: re.Match):
