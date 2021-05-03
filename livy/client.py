@@ -319,7 +319,7 @@ class LivyClient:
             raise _TypeError("batch_id", int, batch_id)
         self._request("DELETE", f"/batches/{batch_id}")
 
-    def get_batch_infomation(self, batch_id: int) -> Batch:
+    def get_batch_information(self, batch_id: int) -> Batch:
         """Get summary information for specific batch
 
         Parameter

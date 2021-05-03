@@ -84,15 +84,15 @@ class LivyClientInitTester(unittest.TestCase):
             self.client.delete_batch("app")
         self.request.assert_not_called()
 
-    def test_get_batch_infomation(self):
+    def test_get_batch_information(self):
         # success
-        self.client.get_batch_infomation(1234)
+        self.client.get_batch_information(1234)
         self.request.assert_called_with("GET", "/batches/1234")
 
         # fail
         self.request.reset_mock()
         with self.assertRaises(TypeError):
-            self.client.get_batch_infomation("app")
+            self.client.get_batch_information("app")
         self.request.assert_not_called()
 
     def test_get_batch_state(self):
