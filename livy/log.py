@@ -21,8 +21,8 @@ DEFAULT_LEVEL = {
 class LivyLogParseResult(typing.NamedTuple):
     """Log parse result."""
 
-    created: int
-    """Timestamp that the log is created. Could be -1 if we could not determine
+    created: datetime.datetime
+    """Timestamp that the log is created. Could be None if we could not determine
     when does it created, would use the time last log is created.
     """
 
@@ -54,6 +54,7 @@ class LivyBatchLogReader:
         self,
         client: livy.client.LivyClient,
         batch_id: int,
+        timezone: datetime.tzinfo = datetime.timezone.utc,
         prefix: str = None,
     ) -> None:
         """
@@ -63,6 +64,8 @@ class LivyBatchLogReader:
                 Livy client that is pre-configured
             batch_id : int
                 Batch ID to be watched
+            timezone : datetime.tzinfo
+                Server time zone
             prefix : str
                 Prefix to be added to logger name
 
@@ -75,11 +78,14 @@ class LivyBatchLogReader:
             raise livy.exception.TypeError("client", livy.client.LivyClient, client)
         if not isinstance(batch_id, int):
             raise livy.exception.TypeError("batch_id", int, batch_id)
+        if not isinstance(timezone, datetime.tzinfo):
+            raise livy.exception.TypeError("timezone", datetime.tzinfo, timezone)
         if prefix and not isinstance(prefix, str):
             raise livy.exception.TypeError("prefix", str, prefix)
 
         self.client = client
         self.batch_id = batch_id
+        self.timezone = timezone
         self.prefix = prefix or ""
 
         self._section_match = object()
@@ -195,7 +201,7 @@ class LivyBatchLogReader:
             digest = hashlib.md5(
                 b"%f--%d--%d--%d"
                 % (
-                    result.created,
+                    result.created.timestamp() if result.created else 0,
                     result.level,
                     hash(result.name),
                     hash(result.message),
@@ -215,12 +221,12 @@ class LivyBatchLogReader:
                 level = DEFAULT_LEVEL[current_section]
 
             created = result.created
-            if created <= 0:
-                created = (
-                    self._last_emit_timestamp or datetime.datetime.now().timestamp()
-                )
+            if not created:
+                created = self._last_emit_timestamp or datetime.datetime.now()
             else:
                 self._last_emit_timestamp = created
+            if not created.tzinfo:
+                created = created.replace(tzinfo=self.timezone)
 
             record = logging.makeLogRecord(
                 {
@@ -306,7 +312,7 @@ def default_parser(match: re.Match):
     level = LEVEL_MAPPING.get(match.group(2), logging.CRITICAL)
 
     return LivyLogParseResult(
-        created=time.timestamp(),
+        created=time,
         level=level,
         name=match.group(3),
         message=match.group(4).lstrip().replace("\n\t", "\n"),
@@ -316,7 +322,7 @@ def default_parser(match: re.Match):
 def convert_stdout(text: str):
     """Convert stdout (and stderr) text to parse result object."""
     return LivyLogParseResult(
-        created=0,
+        created=None,
         level=logging.INFO,
         name=None,
         message=text.strip(),

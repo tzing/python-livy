@@ -1,3 +1,4 @@
+import datetime
 import logging
 import re
 import unittest
@@ -20,6 +21,8 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             module.LivyBatchLogReader(self.client, "1234")
         with self.assertRaises(TypeError):
             module.LivyBatchLogReader(self.client, 1234, prefix=object())
+        with self.assertRaises(TypeError):
+            module.LivyBatchLogReader(self.client, 1234, timezone=8)
 
     def test_add_parsers(self):
         # success
@@ -84,7 +87,7 @@ class ParserTester(unittest.TestCase):
         p = module.default_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
-        assert round(p.created) == 1619843696
+        assert p.created == datetime.datetime(2021, 5, 1, 12, 34, 56)
         assert p.level == logging.DEBUG
         assert p.name == "Foo"
         assert p.message == "test message"
