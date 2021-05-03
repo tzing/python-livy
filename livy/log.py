@@ -40,15 +40,13 @@ class LivyLogParseResult(typing.NamedTuple):
     """
 
 
-LivyLogParser = typing.Callable[[re.Match], LivyLogParseResult]
+LivyLogParser = typing.Callable[[typing.Match], LivyLogParseResult]
 
 
 class LivyBatchLogReader:
     """Read Livy batch logs and publish to Python's logging infrastructure."""
 
-    _parsers: typing.Dict[
-        typing.Pattern, typing.Callable[[re.Match], LivyLogParseResult]
-    ]
+    _parsers: typing.Dict[typing.Pattern, LivyLogParser]
 
     def __init__(
         self,
@@ -166,7 +164,7 @@ class LivyBatchLogReader:
         logs = "\n".join(logs)
 
         # initial matching
-        matches: typing.Dict[typing.Pattern, re.Match] = {}
+        matches: typing.Dict[typing.Pattern, typing.Match] = {}
         for pattern in self._parsers:
             m = pattern.search(logs)
             if not m:
@@ -241,8 +239,8 @@ class LivyBatchLogReader:
             logging.getLogger(record.name).handle(record)
 
     def _match_log(
-        self, matches: typing.Dict[typing.Pattern, re.Match], logs: str, pos: int
-    ) -> typing.Tuple[int, re.Match, LivyLogParser]:
+        self, matches: typing.Dict[typing.Pattern, typing.Match], logs: str, pos: int
+    ) -> typing.Tuple[int, typing.Match, LivyLogParser]:
         """Helper function to match most-recent text and get corresponding
         parser.
 
@@ -296,7 +294,7 @@ class LivyBatchLogReader:
         return new_pos, match, parser
 
 
-def default_parser(match: re.Match):
+def default_parser(match: typing.Match):
     """Parser for default PySpark log format."""
     LEVEL_MAPPING = {
         "DEBUG": logging.DEBUG,
