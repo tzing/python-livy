@@ -35,7 +35,7 @@ jobs:
           cat /tmp/package-master-version
 
       - name: Ensure version is incremental
-        run: python -c "import sys, packaging.version; assert packaging.version.parse(sys.argv[1]) < packaging.version.parse(sys.argv[2]), 'Version is not increased'" "$(cat /tmp/package-master-version)" "$(cat /tmp/package-current-version)"
+        run: python -c "import sys, distutils.version; assert distutils.version.StrictVersion(sys.argv[1]) < distutils.version.StrictVersion(sys.argv[2]), 'Version is not increased'" "$(cat /tmp/package-master-version)" "$(cat /tmp/package-current-version)"
 
   check-poetry-version:
     runs-on: ubuntu-latest
