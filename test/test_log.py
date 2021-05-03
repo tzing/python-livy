@@ -84,7 +84,7 @@ class ParserTester(unittest.TestCase):
         p = module.default_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
-        assert p.created == 1619843696
+        assert round(p.created) == 1619843696
         assert p.level == logging.DEBUG
         assert p.name == "Foo"
         assert p.message == "test message"
