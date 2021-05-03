@@ -86,7 +86,7 @@ class LivyBatchLogReader:
         self._parsers = {
             # indicator that the section is changed
             re.compile(
-                "^(stdout|\nstderr|\nYARN Diagnostics): ", re.RegexFlag.MULTILINE
+                "^(stdout|stderr|YARN Diagnostics): ", re.RegexFlag.MULTILINE
             ): self._section_match,
             # default parser
             re.compile(
@@ -176,8 +176,7 @@ class LivyBatchLogReader:
 
             # special case: change section name
             if parser is self._section_match:
-                current_section = match.group().lstrip()
-                current_section = current_section[:-2]  # drop trailing colon (`: `)
+                current_section = match.group(1)
                 continue
 
             if not match:
