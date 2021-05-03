@@ -1,0 +1,59 @@
+name: Check version
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  dump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Get version on current branch
+        run: |
+          python -c "import livy; print(livy.__version__)" > /tmp/package-current-version
+          cat /tmp/package-current-version
+
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Get version on master branch
+        run: |
+          python -c "import livy; print(livy.__version__)" > /tmp/package-master-version
+          cat /tmp/package-master-version
+
+      - name: Ensure version is incremental
+        run: python -c "import sys, distutils.version; assert distutils.version.StrictVersion(sys.argv[1]) < distutils.version.StrictVersion(sys.argv[2]), 'Version is not increased'" "$(cat /tmp/package-master-version)" "$(cat /tmp/package-current-version)"
+
+  check-poetry-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Get version defined in package
+        run: |
+          python -c "import livy; print(livy.__version__)" > /tmp/package-version
+          cat /tmp/package-version
+
+      - name: Get version defined in pyproject.toml
+        run: |
+          pip install toml==0.10.2
+          python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])" > /tmp/poetry-version
+          cat /tmp/poetry-version
+
+      - name: Check version equal
+        run: diff /tmp/package-version /tmp/poetry-version
