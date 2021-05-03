@@ -14,12 +14,12 @@ from livy.exception import TypeError as _TypeError, UnsupportedError, RequestErr
 if typing.TYPE_CHECKING:
     import http.client
 
-__all__ = ["LivyClient", "Batch"]
+__all__ = ["LivyClient"]
 
 
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 8):  # pragma: no cover
     Batch = typing.TypeVar("Batch", bound=dict)
-else:
+else:  # pragma: no cover
 
     class Batch(typing.TypedDict):
         id: int
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class LivyClient:
     """Client that wraps requests to Livy server
 
-    This implemented follows livy API v0.7.0.
+    This implementation follows livy API v0.7.0 spec.
     """
 
     def __init__(
@@ -152,16 +152,21 @@ class LivyClient:
 
         try:
             response = self._client.getresponse()
+        except KeyboardInterrupt:
+            # keyboard interruption causes connection failed on next request
+            self._client.close()
+            raise
         except ConnectionError as e:
+            self._client.close()
             raise RequestError(0, "Connection error", e)
 
         response: "http.client.HTTPResponse"
 
-        if response.status != http.HTTPStatus.OK:
-            raise RequestError(response.status, response.reason)
-
         with response as buf:
             response_bytes = buf.read()
+
+        if response.status != http.HTTPStatus.OK:
+            raise RequestError(response.status, response.reason)
 
         if not response_bytes:
             return {}
@@ -314,7 +319,7 @@ class LivyClient:
             raise _TypeError("batch_id", int, batch_id)
         self._request("DELETE", f"/batches/{batch_id}")
 
-    def get_batch_infomation(self, batch_id: int) -> Batch:
+    def get_batch_information(self, batch_id: int) -> Batch:
         """Get summary information for specific batch
 
         Parameter
