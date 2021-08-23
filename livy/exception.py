@@ -54,3 +54,7 @@ class RequestError(Error, IOError):
         if self.error:
             msg += f". exception={self.error}"
         return msg
+
+
+class OperationError(Error):
+    """User mis-use the library."""

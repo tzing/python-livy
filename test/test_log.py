@@ -76,6 +76,36 @@ class LivyBatchLogReaderTester(unittest.TestCase):
         with self.assertLogs("livy.log", "ERROR"):
             self.reader.read()
 
+    def test_read_until_finish_block(self):
+        self.client.get_batch_state.side_effect = ["running", "finished"]
+        self.client.get_batch_log.return_value = []
+        self.reader.read_until_finish(block=True, interval=0.01)
+
+    def test_read_until_finish_unblock(self):
+        self.client.get_batch_state.side_effect = ["running", "finished"]
+        self.client.get_batch_log.return_value = []
+
+        self.reader.read_until_finish(block=False, interval=0.5)
+
+        # stop event
+        self.reader._stop_event.set()
+
+        # test error
+        with self.assertRaises(Exception):
+            self.reader.read_until_finish()
+
+        # wait
+        self.reader.thread.join()
+
+    def test_stop_read_success(self):
+        self.client.get_batch_state.return_value = "running"
+        self.reader.read_until_finish(block=False, interval=0.1)
+        self.reader.stop_read()
+
+    def test_stop_read_fail(self):
+        with self.assertRaises(Exception):
+            self.reader.stop_read()
+
 
 class ParserTester(unittest.TestCase):
     def test_default_parser(self):
