@@ -334,7 +334,7 @@ class LivyBatchLogReader:
         stop_event = threading.Event()
 
         def watch():
-            while self.client.get_batch_state() not in ("starting", "running"):
+            while self.client.get_batch_state() in ("starting", "running"):
                 self.read()
                 if stop_event.wait(interval):
                     return
