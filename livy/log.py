@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import logging
 import re
+import threading
 import typing
 
 import livy.client
@@ -47,6 +48,7 @@ class LivyBatchLogReader:
     """Read Livy batch logs and publish to Python's logging infrastructure."""
 
     _parsers: typing.Dict[typing.Pattern, LivyLogParser]
+    thread: threading.Thread
 
     def __init__(
         self,
@@ -86,7 +88,7 @@ class LivyBatchLogReader:
         self.timezone = timezone
         self.prefix = prefix or ""
 
-        self._section_match = object()
+        self._section_match = object()  # marker
         self._parsers = {
             # indicator that the section is changed
             re.compile(
@@ -106,6 +108,10 @@ class LivyBatchLogReader:
             ): timed_stdout,
         }
 
+        self.thread = None
+        self._stop_event = None
+
+        self._lock = threading.Lock()
         self._emitted_logs = set()
         self._last_emit_timestamp = None
 
@@ -151,7 +157,7 @@ class LivyBatchLogReader:
 
         Return
         ------
-        No return. All logs would be pipe to Python's `logging` library.
+        No data return. All logs would be pipe to Python's `logging` library.
 
         Note
         ----
@@ -213,10 +219,11 @@ class LivyBatchLogReader:
                 )
             ).digest()
 
-            if digest in self._emitted_logs:
-                continue
-            else:
-                self._emitted_logs.add(digest)
+            with self._lock:
+                if digest in self._emitted_logs:
+                    continue
+                else:
+                    self._emitted_logs.add(digest)
 
             # emit
             name = result.name
@@ -226,10 +233,12 @@ class LivyBatchLogReader:
                 level = DEFAULT_LEVEL[current_section]
 
             created = result.created
-            if not created:
-                created = self._last_emit_timestamp or datetime.datetime.now()
-            else:
-                self._last_emit_timestamp = created
+            with self._lock:
+                if not created:
+                    created = self._last_emit_timestamp or datetime.datetime.now()
+                else:
+                    self._last_emit_timestamp = created
+
             if not created.tzinfo:
                 created = created.replace(tzinfo=self.timezone)
 
@@ -299,6 +308,55 @@ class LivyBatchLogReader:
             del matches[pattern]
 
         return new_pos, match, parser
+
+    def read_until_finish(self, block: bool = True, interval: float = 0.4):
+        """Keep monitoring and read logs until the task is finished.
+
+        Parameters
+        ----------
+            block : bool
+                Block the current thread or not. Would fire a backend thread if
+                True.
+            interval : float
+                Interval seconds to query the log.
+
+        Return
+        ------
+        No data return. All logs would be pipe to Python's `logging` library.
+
+        See
+        ---
+        Method `read()`
+        """
+        if self.thread is not None:
+            raise livy.exception.OperationError("Background worker is already created.")
+
+        stop_event = threading.Event()
+
+        def watch():
+            while self.client.get_batch_state() not in ("starting", "running"):
+                self.read()
+                if stop_event.wait(interval):
+                    return
+
+        if block:
+            watch()
+        else:
+            self.thread = threading.Thread(target=watch, args=())
+            self.thread.daemon = True
+            self.thread.start()
+            self._stop_event = stop_event
+
+    def stop_read(self):
+        """Stop background which is created by `read_until_finish`. Only take
+        effects after it is created.
+        """
+        if not self.thread or not self._stop_event:
+            raise livy.exception.OperationError(
+                "Background worker not found. "
+                "Do you already called `read_until_finish`?"
+            )
+        self._stop_event.set()
 
 
 def default_parser(match: typing.Match):
