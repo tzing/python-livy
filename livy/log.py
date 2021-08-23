@@ -97,6 +97,13 @@ class LivyBatchLogReader:
                 r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
                 re.RegexFlag.MULTILINE,
             ): default_parser,
+            # some log without level
+            re.compile(
+                r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
+                r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
+                r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)",
+                re.RegexFlag.MULTILINE,
+            ): timed_stdout,
         }
 
         self._emitted_logs = set()
@@ -269,7 +276,7 @@ class LivyBatchLogReader:
             # flush all to fallback logger
             match = logs[pos:]
             new_pos = len(logs)
-            parser = convert_stdout
+            parser = simple_stdout
             return new_pos, match, parser
 
         # get match that is neatest to current pos
@@ -280,9 +287,9 @@ class LivyBatchLogReader:
             parser = self._parsers[pattern]
         else:
             new_pos = match.start()
-            # trick: `convert_stdout` takes str for input
+            # trick: `simple_stdout` takes str for input
             match = logs[pos : match.start()].strip()
-            parser = convert_stdout
+            parser = simple_stdout
 
         # find next match
         next_match = pattern.search(logs, new_pos)
@@ -317,7 +324,19 @@ def default_parser(match: typing.Match):
     )
 
 
-def convert_stdout(text: str):
+def timed_stdout(match: typing.Match):
+    """Parser for text that is with timestamp but is without level."""
+    print(match)
+    time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
+    return LivyLogParseResult(
+        created=time,
+        level=logging.INFO,
+        name=None,
+        message=match.group(2),
+    )
+
+
+def simple_stdout(text: str):
     """Convert stdout (and stderr) text to parse result object."""
     return LivyLogParseResult(
         created=None,
