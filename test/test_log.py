@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import time
 import unittest
 import unittest.mock
 
@@ -99,8 +100,15 @@ class LivyBatchLogReaderTester(unittest.TestCase):
 
     def test_stop_read_success(self):
         self.client.get_batch_state.return_value = "running"
-        self.reader.read_until_finish(block=False, interval=0.1)
+        self.client.get_batch_log.return_value = []
+        self.reader.read_until_finish(block=False, interval=1.0)
+        tic = time.time()
+
         self.reader.stop_read()
+        self.reader.thread.join()
+        toc = time.time()
+
+        self.assertLess(toc - tic, 1.0)
 
     def test_stop_read_fail(self):
         with self.assertRaises(Exception):
