@@ -21,7 +21,7 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         dest="verbose",
         action="count",
         default=0,
-        help="Enable debug log",
+        help="Enable debug log on console.",
     )
     g.add_argument(
         "-q",
@@ -29,7 +29,7 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         dest="verbose",
         action="store_const",
         const=-1,
-        help="Silent mode. only show warning and error log.",
+        help="Silent mode. Only show warning and error log.",
     )
 
 
