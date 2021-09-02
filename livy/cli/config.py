@@ -28,21 +28,23 @@ class _Settings:
 _settings = None
 
 
-def load(path=MAIN_CONFIG_PATH) -> _Settings:
+def load(path=None) -> _Settings:
     """Load config"""
     # cache
     global _settings
     if _settings:
         return _settings
 
-    # create default object if not exist
-    if not os.path.isfile(path):
-        _settings = _Settings()
-        return _settings
+    if not path:  # fill with default later, for easier testing
+        path = MAIN_CONFIG_PATH
 
     # read existing config
-    with open(path, "rb") as fp:
-        data = json.load(fp)
+    try:
+        with open(path, "rb") as fp:
+            data = json.load(fp)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _settings = _Settings()
+        return _settings
 
     def from_dict(cls, d: dict):
         obj = cls()
@@ -50,7 +52,7 @@ def load(path=MAIN_CONFIG_PATH) -> _Settings:
             if dataclasses.is_dataclass(type_):
                 value = from_dict(type_, d.get(name, {}))
             else:
-                value = d.get(name, None)
+                value = d.get(name, getattr(obj, name))
             setattr(obj, name, value)
         return obj
 
@@ -128,7 +130,7 @@ def main(argv=None):
 
     # otherwise, action: set
     value_given = args.value
-    if not value_given:
+    if not value_given.strip():
         console.error("Could not set value as none")
         return 1
 
@@ -139,7 +141,7 @@ def main(argv=None):
         elif dtype is bool:
             value_given = cbool(value_given)
         else:
-            logger.warning("Unregistered data type %s", dtype)
+            logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
     except:
         logger.error("Failed to parse given input %s into %s type", value_given, dtype)
         return 1
@@ -157,7 +159,8 @@ def main(argv=None):
         json.dump(dataclasses.asdict(config), fp, indent=2)
 
     console.info("%s.%s = %s (updated)", section_name, key_name, value_given)
+    return 0
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     exit(main())
