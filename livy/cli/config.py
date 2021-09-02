@@ -4,6 +4,8 @@ import os
 import pathlib
 import json
 
+import livy.cli.log
+
 MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy-config.json"
 
 
@@ -54,3 +56,108 @@ def load(path=MAIN_CONFIG_PATH) -> _Settings:
 
     _settings = from_dict(_Settings, data)
     return _settings
+
+
+def cbool(s: str) -> bool:
+    if isinstance(s, bool):
+        return s
+    s = str(s).lower()
+    if s in ("1", "t", "true", "y", "yes"):
+        return True
+    elif s in ("0", "f", "false", "n", "no"):
+        return False
+    else:
+        raise ValueError()
+
+
+def main(argv=None):
+    """CLI entrypoint"""
+    # parse args
+    parser = argparse.ArgumentParser(
+        prog="livy-config",
+        description="Configuration management",
+    )
+    action = parser.add_subparsers(
+        title="action",
+        dest="action",
+        required=True,
+    )
+
+    p = action.add_parser("get", help="Get config value")
+    p.add_argument("name", help="Config name to retrieve")
+
+    p = action.add_parser("set", help="Set config value")
+    p.add_argument("name", help="Config name to set")
+    p.add_argument("value", help="Config value to set")
+
+    livy.cli.log.setup_argparse(parser)
+    args = parser.parse_args(argv)
+
+    livy.cli.log.init(args)
+    console = livy.cli.log.get()
+    logger = livy.cli.log.get(__name__)
+
+    # check config name exists
+    if args.name.count(".") != 1:
+        console.error(
+            "Config name is always in `section.key` format. Got `%s`.", args.name
+        )
+        return 1
+
+    section_name, key_name = args.name.split(".", 1)
+    section_name = section_name.lower()
+    key_name = key_name.lower()
+
+    config = load()
+    if section_name not in config.__annotations__:
+        console.error("Unknown section %s", section_name)
+        return 1
+
+    section = getattr(config, section_name)
+    if key_name not in section.__annotations__:
+        console.error("Unknown key %s.%s", section_name, key_name)
+        return 1
+
+    # action: get
+    value_original = getattr(section, key_name)
+    if args.action == "get":
+        if value_original is None:
+            value_original = "<Not set>"
+        console.info("%s.%s = %s", section_name, key_name, value_original)
+        return 0
+
+    # otherwise, action: set
+    value_given = args.value
+    if not value_given:
+        console.error("Could not set value as none")
+        return 1
+
+    dtype = section.__annotations__[key_name]
+    try:
+        if dtype is str:
+            ...
+        elif dtype is bool:
+            value_given = cbool(value_given)
+        else:
+            logger.warning("Unregistered data type %s", dtype)
+    except:
+        logger.error("Failed to parse given input %s into %s type", value_given, dtype)
+        return 1
+
+    if value_given == value_original:
+        console.info("%s.%s = %s (not changed)", section_name, key_name, value_given)
+        return 0
+
+    setattr(section, key_name, value_given)
+
+    # write value file
+    logger.debug("Write config to %s", MAIN_CONFIG_PATH)
+
+    with open(MAIN_CONFIG_PATH, "w") as fp:
+        json.dump(dataclasses.asdict(config), fp, indent=2)
+
+    console.info("%s.%s = %s (updated)", section_name, key_name, value_given)
+
+
+if __name__ == "__main__":
+    exit(main())
