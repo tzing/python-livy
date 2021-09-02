@@ -4,7 +4,6 @@ import os
 import pathlib
 import json
 
-import livy.cli.log
 
 MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy-config.json"
 
@@ -74,16 +73,14 @@ def cbool(s: str) -> bool:
 
 def main(argv=None):
     """CLI entrypoint"""
+    import livy.cli.log
+
     # parse args
     parser = argparse.ArgumentParser(
         prog="livy-config",
         description="Configuration management",
     )
-    action = parser.add_subparsers(
-        title="action",
-        dest="action",
-        required=True,
-    )
+    action = parser.add_subparsers(title="action", dest="action")
 
     p = action.add_parser("get", help="Get config value")
     livy.cli.log.setup_argparse(p)
@@ -99,6 +96,11 @@ def main(argv=None):
     livy.cli.log.init(args)
     console = livy.cli.log.get()
     logger = livy.cli.log.get(__name__)
+
+    # check action
+    if args.action not in ("get", "set"):
+        console.error("action is required: get/set")
+        return 1
 
     # check config name exists
     if args.name.count(".") != 1:

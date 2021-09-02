@@ -53,6 +53,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, module.main(["set", "root.api_url", "http://example.com/"]))
 
     def test_main_error(self):
+        self.assertNotEqual(0, module.main([]))
         self.assertNotEqual(0, module.main(["get", "foo"]))
         self.assertNotEqual(0, module.main(["get", "foo.bar"]))
         self.assertNotEqual(0, module.main(["get", "root.foo"]))
