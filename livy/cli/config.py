@@ -86,13 +86,14 @@ def main(argv=None):
     )
 
     p = action.add_parser("get", help="Get config value")
+    livy.cli.log.setup_argparse(p)
     p.add_argument("name", help="Config name to retrieve")
 
     p = action.add_parser("set", help="Set config value")
+    livy.cli.log.setup_argparse(p)
     p.add_argument("name", help="Config name to set")
     p.add_argument("value", help="Config value to set")
 
-    livy.cli.log.setup_argparse(parser)
     args = parser.parse_args(argv)
 
     livy.cli.log.init(args)

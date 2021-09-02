@@ -8,11 +8,15 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.6.2"
 dataclasses = {version = "^0.6", python = "<3.7"}
+colorlog = {version = "^6.4.1", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^21.7b0"
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
+
+[tool.poetry.extras]
+pretty = ["colorlog"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
