@@ -1,10 +1,10 @@
 # Python-Livy
 
-> Still work in progress
-
-Library and command line tools to interact with [Apache livy](https://livy.incubator.apache.org/).
+Library to interact with [Apache livy](https://livy.incubator.apache.org/).
 
 This tool is designed for the entire livy submission task, including creating a new batch and watching for its log until job is ended.
+
+> Under developing: command line interface tool for it
 
 #### Features
 
@@ -53,5 +53,5 @@ Python >= 3.6. No third-party library is required for core features.
 }
 
 >>> reader = livy.LivyBatchLogReader(client, 55)
->>> reader.read()  # read log and publish to logging
+>>> reader.read_until_finish()  # read logs and broadcast to log handlers
 ```
