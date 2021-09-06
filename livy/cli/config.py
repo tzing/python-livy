@@ -16,6 +16,9 @@ class _RootSection:
     """Base-URL for Livy API server"""
 
 
+T_LOGLEVEL = typing.TypeVar("T_LOGLEVEL")
+
+
 @dataclasses.dataclass
 class _LocalLogSection:
     """Configure logging behavior on local"""
@@ -31,7 +34,7 @@ class _LocalLogSection:
     output_file: bool = False
     """Output logs into file by default"""
 
-    logfile_level: typing.Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "DEBUG"
+    logfile_level: T_LOGLEVEL = "DEBUG"
     """Default log level on output to log file"""
 
 
@@ -166,8 +169,8 @@ def main(argv=None):
             ...
         elif dtype is bool:
             value_given = cbool(value_given)
-        elif getattr(dtype, "__origin__", None) is typing.Literal:
-            assert value_given in dtype.__args__
+        elif dtype is T_LOGLEVEL:
+            assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
         else:
             logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
     except:
