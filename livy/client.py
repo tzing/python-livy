@@ -2,6 +2,7 @@ import http
 import http.client
 import json
 import logging
+import socket
 import ssl
 import sys
 import typing
@@ -42,6 +43,7 @@ class LivyClient:
         self,
         url: str,
         verify: Union[bool, ssl.SSLContext] = True,
+        timeout: float = 30.0,
     ) -> None:
         """
         Parameters
@@ -50,6 +52,8 @@ class LivyClient:
                 URL to the livy server
             verify : Union[bool, ssl.SSLContext]
                 Verifies SSL certificates or not; or use customized SSL context
+            timeout : float
+                Timeout seconds for the connection.
 
         Raises
         ------
@@ -88,11 +92,11 @@ class LivyClient:
         scheme = purl.scheme.upper()
         if scheme == "HTTP":
             self._client = http.client.HTTPConnection(
-                host=purl.hostname, port=purl.port
+                host=purl.hostname, port=purl.port, timeout=timeout
             )
         elif scheme == "HTTPS":
             self._client = http.client.HTTPSConnection(
-                host=purl.hostname, port=purl.port, context=ssl_context
+                host=purl.hostname, port=purl.port, timeout=timeout, context=ssl_context
             )
         else:
             raise UnsupportedError(f"Unsupported scheme: {scheme}")
@@ -127,7 +131,11 @@ class LivyClient:
         logger.debug("%s %s", method, path)
 
         # start request
-        self._client.connect()
+        try:
+            self._client.connect()
+        except socket.timeout as e:
+            raise RequestError(0, "Connection timeout", e)
+
         self._client.putrequest(
             method=method,
             url=self._prefix + path,
