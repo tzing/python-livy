@@ -1,3 +1,4 @@
+"""Configuration management for python-livy CLI tool."""
 import argparse
 import dataclasses
 import pathlib
@@ -5,7 +6,7 @@ import json
 import typing
 
 
-MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy-config.json"
+MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
 
 
 @dataclasses.dataclass
@@ -104,7 +105,7 @@ def main(argv=None):
     # parse args
     parser = argparse.ArgumentParser(
         prog="livy-config",
-        description="Configuration management",
+        description=f"{__doc__} All configured would be saved and loaded in {MAIN_CONFIG_PATH}.",
     )
     action = parser.add_subparsers(title="action", dest="action")
 

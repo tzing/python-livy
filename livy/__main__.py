@@ -12,7 +12,7 @@ def main():
     # parse args
     parser = argparse.ArgumentParser(prog="livy", description="Livy interaction tool")
     subparsers = parser.add_subparsers(title="Sub-command", dest="subcommand")
-    subparsers.add_parser("config", help="Get or set configuration")
+    subparsers.add_parser("config", help=livy.cli.config.__doc__)
 
     args, remain = parser.parse_known_args(sys.argv[1:2])
     remain += sys.argv[2:]
