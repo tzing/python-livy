@@ -3,6 +3,8 @@ import logging
 import sys
 import typing
 
+import livy.cli.config
+
 if typing.TYPE_CHECKING:
     import argparse
 
@@ -60,20 +62,19 @@ def _use_color_handler():
 
 def _get_console_formatter():
     """Return colored formatter if avaliable."""
-    MSG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    MSG_FORMAT_COLORED = (
-        "%(log_color)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
-    )
-    DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"
-
     if not _use_color_handler():
-        return logging.Formatter(fmt=MSG_FORMAT, datefmt=DATE_FORMAT)
+        return _get_general_formatter()
 
     import colorlog
 
-    return colorlog.ColoredFormatter(fmt=MSG_FORMAT_COLORED, datefmt=DATE_FORMAT)
+    cfg = livy.cli.config.load()
+    return colorlog.ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
-def get(name="main"):
-    """Get logger"""
-    return logging.getLogger(name)
+def _get_general_formatter():
+    cfg = livy.cli.config.load()
+    fmt = cfg.logs.format.replace("%(log_color)s", "").replace("%(reset)s", "")
+    return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
+
+
+get = logging.getLogger

@@ -26,7 +26,3 @@ def test__get_console_formatter():
     if importlib.util.find_spec("colorlog"):  # test-core does not install colorlog
         with unittest.mock.patch("livy.cli.log._use_color_handler", return_value=True):
             assert isinstance(module._get_console_formatter(), logging.Formatter)
-
-
-def test_get():
-    assert isinstance(module.get(), logging.Logger)

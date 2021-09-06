@@ -1,6 +1,5 @@
 import argparse
 import dataclasses
-import os
 import pathlib
 import json
 
@@ -10,7 +9,23 @@ MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy-config.json"
 
 @dataclasses.dataclass
 class _RootSection:
+    """Basic settings that might be applied to all actions."""
+
     api_url: str = None
+    """Base-URL for Livy API server"""
+
+
+@dataclasses.dataclass
+class _LocalLogSection:
+    """Configure logging behavior on local"""
+
+    format: str = (
+        "%(log_color)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
+    )
+    """Log message format."""
+
+    date_format: str = "%Y-%m-%d %H:%M:%S %z"
+    """Date format in log message"""
 
 
 @dataclasses.dataclass
@@ -21,6 +36,7 @@ class _ReadLogSection:
 @dataclasses.dataclass
 class _Settings:
     root: _RootSection = dataclasses.field(default_factory=_RootSection)
+    logs: _LocalLogSection = dataclasses.field(default_factory=_LocalLogSection)
     read_log: _ReadLogSection = dataclasses.field(default_factory=_ReadLogSection)
 
 
