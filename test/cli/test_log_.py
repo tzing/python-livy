@@ -15,6 +15,7 @@ def test_setup_argparse():
 def test_init():
     args = argparse.Namespace()
     args.verbose = 0
+    args.output_file = False
     module.init(args)
     module.init(args)
 

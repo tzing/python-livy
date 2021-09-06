@@ -1,6 +1,8 @@
 import importlib.util
 import logging
+import os
 import sys
+import tempfile
 import typing
 
 import livy.cli.config
@@ -13,6 +15,7 @@ _is_initialized = False
 
 def setup_argparse(parser: "argparse.ArgumentParser"):
     group = parser.add_argument_group("logging")
+    cfg = livy.cli.config.load()
 
     # level
     g = group.add_mutually_exclusive_group()
@@ -31,7 +34,30 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         dest="verbose",
         action="store_const",
         const=-1,
-        help="Silent mode. Only show warning and error log.",
+        help="Silent mode. Only show warning and error log on console.",
+    )
+
+    # file
+    g = group.add_mutually_exclusive_group()
+    g.set_defaults(log_file=cfg.logs.output_file)
+    g.add_argument(
+        "--log-file",
+        metavar="XXXX.log",
+        nargs="?",
+        dest="log_file",
+        help="Output logs into log file. A temporary file would be created if path is not specificied.",
+    )
+    g.add_argument(
+        "--no-log-file",
+        action="store_false",
+        dest="log_file",
+        help="Do not output logs into log file.",
+    )
+    group.add_argument(
+        "--log-file-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default=cfg.logs.logfile_level,
+        help="Set minimal log level to be written to file. Default: DEBUG.",
     )
 
 
@@ -51,6 +77,24 @@ def init(args: "argparse.Namespace"):
     console_handler.setLevel(logging.INFO - 10 * args.verbose)
     console_handler.setFormatter(_get_console_formatter())
     root_logger.addHandler(console_handler)
+
+    # file handler
+    if args.log_file or args.log_file is None:
+        if not isinstance(args.log_file, str):
+            _, path = tempfile.mkstemp(
+                prefix="livy-", suffix=".log", dir=os.getcwd(), text=True
+            )
+            args.log_file = path
+
+        file_handler = logging.FileHandler(args.log_file)
+        file_handler.setFormatter(_get_general_formatter())
+        root_logger.addHandler(file_handler)
+
+    # send init log
+    logger = logging.getLogger(__name__)
+    logger.debug("Beep- log starts.")
+    if args.log_file:
+        logger.info("Log file is created at %s", args.log_file)
 
     _is_initialized = True
 
@@ -72,6 +116,8 @@ def _get_console_formatter():
 
 
 def _get_general_formatter():
+    """Return general formatter. Removed colorlog package specificed format
+    syntax before use it."""
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(log_color)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)

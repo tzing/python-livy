@@ -28,5 +28,6 @@ addopts = "--cov=livy --cov-report=term-missing"
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
-    "if typing.TYPE_CHECKING"
+    "if typing.TYPE_CHECKING",
+    "__name__ == \"__main__\""
 ]

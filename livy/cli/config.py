@@ -2,6 +2,7 @@ import argparse
 import dataclasses
 import pathlib
 import json
+import typing
 
 
 MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy-config.json"
@@ -26,6 +27,12 @@ class _LocalLogSection:
 
     date_format: str = "%Y-%m-%d %H:%M:%S %z"
     """Date format in log message"""
+
+    output_file: bool = False
+    """Output logs into file by default"""
+
+    logfile_level: typing.Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "DEBUG"
+    """Default log level on output to log file"""
 
 
 @dataclasses.dataclass
@@ -159,6 +166,8 @@ def main(argv=None):
             ...
         elif dtype is bool:
             value_given = cbool(value_given)
+        elif getattr(dtype, "__origin__", None) is typing.Literal:
+            assert value_given in dtype.__args__
         else:
             logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
     except:
@@ -181,5 +190,5 @@ def main(argv=None):
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     exit(main())
