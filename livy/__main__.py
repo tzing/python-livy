@@ -3,6 +3,10 @@ import sys
 
 import livy.cli.config
 
+_ENTRYPOINT = {
+    "config": livy.cli.config.main,
+}
+
 
 def main():
     # parse args
@@ -18,10 +22,6 @@ def main():
         return 1
 
     # pass remain argv to subcommand
-    _ENTRYPOINT = {
-        "config": livy.cli.config.main,
-    }
-
     func = _ENTRYPOINT[args.subcommand]
     return func(remain)
 

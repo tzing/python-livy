@@ -58,6 +58,7 @@ class TestConfig(unittest.TestCase):
         self.assertNotEqual(0, module.main(["get", "foo.bar"]))
         self.assertNotEqual(0, module.main(["get", "root.foo"]))
         self.assertNotEqual(0, module.main(["set", "root.api_url", " "]))
+        self.assertNotEqual(0, module.main(["set", "logs.logfile_level", "foo"]))
         self.assertNotEqual(0, module.main(["set", "read_log.keep_watch", "foo"]))
 
 

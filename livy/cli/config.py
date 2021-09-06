@@ -117,7 +117,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     livy.cli.log.init(args)
-    console = livy.cli.log.get()
+    console = livy.cli.log.get("livy-config.main")
     logger = livy.cli.log.get(__name__)
 
     # check action

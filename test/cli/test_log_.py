@@ -12,10 +12,11 @@ def test_setup_argparse():
     p.parse_args(["-q"])
 
 
+@unittest.mock.patch("livy.cli.log._is_initialized", False)
 def test_init():
     args = argparse.Namespace()
     args.verbose = 0
-    args.output_file = False
+    args.log_file = True
     module.init(args)
     module.init(args)
 
