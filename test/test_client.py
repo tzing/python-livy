@@ -4,30 +4,30 @@ import ssl
 import unittest
 import unittest.mock
 
-import livy.client as client
+import livy.client as module
 
 
 class LivyClientInitTester(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = client.LivyClient("http://example.com")
+        self.client = module.LivyClient("http://example.com")
         self.client._request = self.request = unittest.mock.Mock()
 
     def test___init___url(self):
         with self.assertRaises(TypeError):
-            client.LivyClient(1234)
+            module.LivyClient(1234)
         with self.assertRaises(NotImplementedError):
-            client.LivyClient("hxxp://example.com")
+            module.LivyClient("hxxp://example.com")
 
     def test___init___verify(self):
         # false
-        client.LivyClient("http://example.com", False)
+        module.LivyClient("http://example.com", False)
 
         # customized
-        client.LivyClient("http://example.com", ssl.create_default_context())
+        module.LivyClient("http://example.com", ssl.create_default_context())
 
         # failed: path is currently not supportted
         with self.assertRaises(TypeError):
-            client.LivyClient("http://example.com", "/path/to/certificates")
+            module.LivyClient("http://example.com", "/path/to/certificates")
 
     def test_create_batch(self):
         # required argument (file)
@@ -155,7 +155,7 @@ class LivyClientInitTester(unittest.TestCase):
 
 class LivyClientRequestTester(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = client.LivyClient("http://example.com", True)
+        self.client = module.LivyClient("http://example.com", True)
         self.client._client = unittest.mock.MagicMock(spec=http.client.HTTPConnection)
         self.getresponse = self.client._client.getresponse
 
@@ -190,6 +190,11 @@ class LivyClientRequestTester(unittest.TestCase):
         with self.assertRaises(IOError):
             self.client._request("GET", "/test")
 
+    def test_timeout(self):
+        client = module.LivyClient("http://example.com:22", True, 5.0)
+        with self.assertRaises(IOError):
+            client._request("GET", "")
+
     def test_connection_error(self):
         self.getresponse.side_effect = ConnectionError()
 
@@ -209,19 +214,19 @@ class LivyClientRequestTester(unittest.TestCase):
             self.client._request("GET", "/test")
 
     def test_real_get(self):
-        c = client.LivyClient("http://httpbin.org")
+        c = module.LivyClient("http://httpbin.org")
 
         # run twice for testing keep-alive
         self.assertIsInstance(c._request("GET", "/get"), dict)
         self.assertIsInstance(c._request("GET", "/get"), dict)
 
     def test_real_post(self):
-        c = client.LivyClient("https://httpbin.org")
+        c = module.LivyClient("https://httpbin.org")
         resp = c._request("POST", "/post", {"foo": 123})
         self.assertIsInstance(resp, dict)
         self.assertIn("foo", resp["json"])
 
     def test_real_connection_error(self):
-        c = client.LivyClient("http://127.0.0.1", True)
+        c = module.LivyClient("http://127.0.0.1", True)
         with self.assertRaises(IOError):
             c._request("GET", "/foo")

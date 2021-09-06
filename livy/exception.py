@@ -2,6 +2,15 @@ import builtins
 import typing
 
 
+__all__ = [
+    "Error",
+    "OperationError",
+    "RequestError",
+    "TypeError",
+    "UnsupportedError",
+]
+
+
 class Error(Exception):
     """Base exception type for python-livy package"""
 
