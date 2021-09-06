@@ -1,6 +1,8 @@
 import argparse
 import importlib.util
 import logging
+import os
+import tempfile
 import unittest.mock
 
 import livy.cli.log as module
@@ -17,7 +19,12 @@ def test_init():
     args = argparse.Namespace()
     args.verbose = 0
     args.log_file = True
-    module.init(args)
+
+    with tempfile.NamedTemporaryFile() as fp, unittest.mock.patch(
+        "os.getcwd", return_value=os.path.dirname(fp.name)
+    ):
+        module.init(args)
+
     module.init(args)
 
 
