@@ -1,5 +1,7 @@
 # Python-Livy
 
+![test status](https://github.com/tzing/python-livy/actions/workflows/test.yml/badge.svg)
+
 Library to interact with [Apache livy](https://livy.incubator.apache.org/).
 
 This tool is designed for the entire livy submission task, including creating a new batch and watching for its log until job is ended.
