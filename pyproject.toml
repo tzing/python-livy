@@ -4,6 +4,18 @@ version = "0.7.0"
 description = "Library to interact with Apache livy"
 authors = ["tzing <tzingshih@gmail.com>"]
 license = "MIT"
+readme = "Readme.md"
+homepage = "https://github.com/tzing/python-livy/"
+repository = "git@github.com:tzing/python-livy.git"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9"
+]
 
 [tool.poetry.dependencies]
 python = "^3.6.2"
