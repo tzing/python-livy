@@ -248,7 +248,7 @@ class LivyBatchLogReader:
                     "levelno": level,
                     "levelname": logging.getLevelName(result.level),
                     "msg": result.message,
-                    "created": created,
+                    "created": int(created.timestamp()),
                 }
             )
 
@@ -334,10 +334,12 @@ class LivyBatchLogReader:
         stop_event = threading.Event()
 
         def watch():
-            while self.client.get_batch_state() in ("starting", "running"):
+            while self.client.get_batch_state(self.batch_id) in ("starting", "running"):
                 self.read()
                 if stop_event.wait(interval):
                     return
+
+        self.read()  # at least read once
 
         if block:
             watch()
