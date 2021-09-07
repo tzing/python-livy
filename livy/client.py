@@ -10,7 +10,7 @@ import urllib.parse
 from typing import Union, Optional, List, Dict
 
 import livy
-from livy.exception import TypeError as _TypeError, UnsupportedError, RequestError
+from livy.exception import OperationError, RequestError, TypeError as _TypeError
 
 if typing.TYPE_CHECKING:
     import http.client
@@ -59,7 +59,7 @@ class LivyClient:
         ------
         TypeError
             On a invalid data type is used for inputted argument
-        UnsupportedError
+        OperationError
             On URL scheme is not supportted
 
         Note
@@ -99,7 +99,7 @@ class LivyClient:
                 host=purl.hostname, port=purl.port, timeout=timeout, context=ssl_context
             )
         else:
-            raise UnsupportedError(f"Unsupported scheme: {scheme}")
+            raise OperationError(f"Unsupported scheme: {scheme}")
 
     def _request(self, method: str, path: str, data: dict = None) -> dict:
         """Firing request and decode response
@@ -135,6 +135,8 @@ class LivyClient:
             self._client.connect()
         except socket.timeout as e:
             raise RequestError(0, "Connection timeout", e)
+        except ConnectionRefusedError as e:
+            raise RequestError(0, "Connection refused", e)
 
         self._client.putrequest(
             method=method,
@@ -182,7 +184,7 @@ class LivyClient:
         try:
             response_data = json.loads(response_bytes)
         except json.JSONDecodeError as e:
-            raise RequestError(0, "JSON decode error", e)
+            raise RequestError(response.status, "JSON decode error", e)
 
         return response_data
 

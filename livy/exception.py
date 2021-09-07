@@ -7,7 +7,6 @@ __all__ = [
     "OperationError",
     "RequestError",
     "TypeError",
-    "UnsupportedError",
 ]
 
 
@@ -44,10 +43,6 @@ class TypeError(Error, builtins.TypeError):
             return obj.__name__
         else:
             return cls.type_name(type(obj))
-
-
-class UnsupportedError(Error, NotImplementedError):
-    """Request is unsupported"""
 
 
 class RequestError(Error, IOError):

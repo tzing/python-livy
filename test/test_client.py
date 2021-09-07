@@ -5,6 +5,7 @@ import unittest
 import unittest.mock
 
 import livy.client as module
+import livy.exception as exception
 
 
 class LivyClientInitTester(unittest.TestCase):
@@ -13,9 +14,9 @@ class LivyClientInitTester(unittest.TestCase):
         self.client._request = self.request = unittest.mock.Mock()
 
     def test___init___url(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             module.LivyClient(1234)
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(exception.OperationError):
             module.LivyClient("hxxp://example.com")
 
     def test___init___verify(self):
@@ -26,16 +27,16 @@ class LivyClientInitTester(unittest.TestCase):
         module.LivyClient("http://example.com", ssl.create_default_context())
 
         # failed: path is currently not supportted
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             module.LivyClient("http://example.com", "/path/to/certificates")
 
     def test_create_batch(self):
         # required argument (file)
         self.client.create_batch("foo.py")
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.create_batch(1234)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.create_batch(None)
 
         # optional arguments
@@ -53,7 +54,7 @@ class LivyClientInitTester(unittest.TestCase):
             # malformed
             for m in malformed:
                 self.request.reset_mock()
-                with self.assertRaises(TypeError):
+                with self.assertRaises(exception.TypeError):
                     self.client.create_batch(**{"file": "foo.py", name: m})
                 self.request.assert_not_called()
 
@@ -80,7 +81,7 @@ class LivyClientInitTester(unittest.TestCase):
 
         # fail
         self.request.reset_mock()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.delete_batch("app")
         self.request.assert_not_called()
 
@@ -91,7 +92,7 @@ class LivyClientInitTester(unittest.TestCase):
 
         # fail
         self.request.reset_mock()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.get_batch_information("app")
         self.request.assert_not_called()
 
@@ -109,7 +110,7 @@ class LivyClientInitTester(unittest.TestCase):
 
         # type error
         self.request.reset_mock()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.get_batch_state("app")
         self.request.assert_not_called()
 
@@ -140,15 +141,15 @@ class LivyClientInitTester(unittest.TestCase):
         # type error
         self.request.reset_mock()
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.get_batch_log("app")
         self.request.assert_not_called()
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.get_batch_log(1234, "foo")
         self.request.assert_not_called()
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exception.TypeError):
             self.client.get_batch_log(1234, 100, "baz")
         self.request.assert_not_called()
 
@@ -187,18 +188,18 @@ class LivyClientRequestTester(unittest.TestCase):
     def test_http_status_wanted(self):
         self.getresponse.return_value = self.mock_response(500)
 
-        with self.assertRaises(IOError):
+        with self.assertRaises(exception.RequestError):
             self.client._request("GET", "/test")
 
     def test_timeout(self):
-        client = module.LivyClient("http://example.com:22", True, 5.0)
-        with self.assertRaises(IOError):
+        client = module.LivyClient("http://10.255.255.255:80", True, 5.0)
+        with self.assertRaises(exception.RequestError):
             client._request("GET", "")
 
     def test_connection_error(self):
         self.getresponse.side_effect = ConnectionError()
 
-        with self.assertRaises(IOError):
+        with self.assertRaises(exception.RequestError):
             self.client._request("GET", "/test")
 
     def test_keyboard_interrupt(self):
@@ -210,7 +211,7 @@ class LivyClientRequestTester(unittest.TestCase):
     def test_json_error(self):
         self.getresponse.return_value = self.mock_response(200, b"{")
 
-        with self.assertRaises(IOError):
+        with self.assertRaises(exception.RequestError):
             self.client._request("GET", "/test")
 
     def test_real_get(self):
@@ -226,7 +227,7 @@ class LivyClientRequestTester(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertIn("foo", resp["json"])
 
-    def test_real_connection_error(self):
+    def test_real_connection_refused(self):
         c = module.LivyClient("http://127.0.0.1", True)
-        with self.assertRaises(IOError):
+        with self.assertRaises(exception.RequestError):
             c._request("GET", "/foo")
