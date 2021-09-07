@@ -4,7 +4,7 @@ import argparse
 
 import livy
 import livy.cli.config
-import livy.cli.log
+import livy.cli.logging
 
 
 def main(argv=None):
@@ -45,13 +45,13 @@ def main(argv=None):
         help="Only read log once",
     )
 
-    livy.cli.log.setup_argparse(parser)
+    livy.cli.logging.setup_argparse(parser)
 
     args = parser.parse_args(argv)
 
     # setup logger
-    livy.cli.log.init(args)
-    console = livy.cli.log.get("livy-read-log.main")
+    livy.cli.logging.init(args)
+    console = livy.cli.logging.get("livy-read-log.main")
 
     console.info("Reading logs from batch %d", args.batch_id)
 
