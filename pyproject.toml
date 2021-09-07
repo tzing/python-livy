@@ -18,6 +18,11 @@ pytest-cov = "^2.12.1"
 [tool.poetry.extras]
 pretty = ["colorlog"]
 
+[tool.poetry.scripts]
+livy = "livy.__main__:main"
+livy-read-log = "livy.cli.read_log:main"
+livy-config = "livy.cli.config:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
