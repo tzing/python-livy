@@ -6,7 +6,7 @@ import unittest
 import unittest.mock
 
 import livy.client
-import livy.log as module
+import livy.logreader as module
 
 
 class LivyBatchLogReaderTester(unittest.TestCase):
@@ -74,7 +74,7 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             "\nstderr: ",
             "ERROR: assert raise error on this line",
         ]
-        with self.assertLogs("livy.log", "ERROR"):
+        with self.assertLogs("livy.logreader", "ERROR"):
             self.reader.read()
 
     def test_read_until_finish_block(self):
