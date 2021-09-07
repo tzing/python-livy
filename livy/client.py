@@ -135,6 +135,8 @@ class LivyClient:
             self._client.connect()
         except socket.timeout as e:
             raise RequestError(0, "Connection timeout", e)
+        except ConnectionRefusedError as e:
+            raise RequestError(0, "Connection refused", e)
 
         self._client.putrequest(
             method=method,
@@ -182,7 +184,7 @@ class LivyClient:
         try:
             response_data = json.loads(response_bytes)
         except json.JSONDecodeError as e:
-            raise RequestError(0, "JSON decode error", e)
+            raise RequestError(response.status, "JSON decode error", e)
 
         return response_data
 
