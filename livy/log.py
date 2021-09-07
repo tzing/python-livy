@@ -386,7 +386,6 @@ def default_parser(match: typing.Match):
 
 def timed_stdout(match: typing.Match):
     """Parser for text that is with timestamp but is without level."""
-    print(match)
     time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
     return LivyLogParseResult(
         created=time,

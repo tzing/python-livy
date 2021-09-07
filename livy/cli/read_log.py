@@ -69,14 +69,28 @@ def main(argv=None):
     # fetch log
     reader = livy.LivyBatchLogReader(client, args.batch_id)
 
-    if not args.keep_watch:
-        reader.read()
-        return 0
+    if args.keep_watch:
+        read_func = reader.read_until_finish
+    else:
+        read_func = reader.read
 
-    reader.read_until_finish()
+    try:
+        read_func()
+    except livy.RequestError as e:
+        console.error(
+            "Error occurs during read log. HTTP code=%d, Reason=%s", e.code, e.reason
+        )
+        return 1
+    except KeyboardInterrupt:
+        console.warning("Keyboard interrupt")
+        return 1
 
-    state = client.get_batch_state(args.batch_id)
-    console.info("Task ended with state %s. Stop reading.", state)
+    # finish
+    if args.keep_watch:
+        console.info(
+            "Batch finished with state=%s", client.get_batch_state(args.batch_id)
+        )
+
     return 0
 
 
