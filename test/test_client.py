@@ -1,5 +1,6 @@
 import http.client
 import io
+import socket
 import ssl
 import unittest
 import unittest.mock
@@ -192,9 +193,15 @@ class LivyClientRequestTester(unittest.TestCase):
             self.client._request("GET", "/test")
 
     def test_timeout(self):
-        client = module.LivyClient("http://10.255.255.255:80", True, 5.0)
+        # getresponse
+        self.getresponse.side_effect = socket.timeout()
         with self.assertRaises(exception.RequestError):
-            client._request("GET", "")
+            self.client._request("GET", "")
+
+        # connect
+        self.client._client.connect.side_effect = socket.timeout()
+        with self.assertRaises(exception.RequestError):
+            self.client._request("GET", "")
 
     def test_connection_error(self):
         self.getresponse.side_effect = ConnectionError()
@@ -227,7 +234,12 @@ class LivyClientRequestTester(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertIn("foo", resp["json"])
 
+    def test_real_timeout(self):
+        client = module.LivyClient("http://10.255.255.255:80", True, 5.0)
+        with self.assertRaises(exception.RequestError):
+            client._request("GET", "")
+
     def test_real_connection_refused(self):
-        c = module.LivyClient("http://127.0.0.1", True)
+        c = module.LivyClient("http://127.0.0.1:8080", True)
         with self.assertRaises(exception.RequestError):
             c._request("GET", "/foo")

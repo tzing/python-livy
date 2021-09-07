@@ -42,6 +42,7 @@ class _LocalLogSection:
 @dataclasses.dataclass
 class _ReadLogSection:
     keep_watch: bool = True
+    """Keep watching for batch activity until it is finished."""
 
 
 @dataclasses.dataclass

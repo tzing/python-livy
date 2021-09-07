@@ -166,11 +166,11 @@ class LivyClient:
             # keyboard interruption causes connection failed on next request
             self._client.close()
             raise
+        except socket.timeout as e:
+            raise RequestError(0, "Connection timeout", e)
         except ConnectionError as e:
             self._client.close()
             raise RequestError(0, "Connection error", e)
-
-        response: "http.client.HTTPResponse"
 
         with response as buf:
             response_bytes = buf.read()
