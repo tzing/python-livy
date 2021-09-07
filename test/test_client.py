@@ -192,7 +192,7 @@ class LivyClientRequestTester(unittest.TestCase):
             self.client._request("GET", "/test")
 
     def test_timeout(self):
-        client = module.LivyClient("http://example.com:22", True, 5.0)
+        client = module.LivyClient("http://10.255.255.255:80", True, 5.0)
         with self.assertRaises(exception.RequestError):
             client._request("GET", "")
 
