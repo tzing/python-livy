@@ -101,7 +101,7 @@ def cbool(s: str) -> bool:
 
 def main(argv=None):
     """CLI entrypoint"""
-    import livy.cli.log
+    import livy.cli.logging
 
     # parse args
     parser = argparse.ArgumentParser(
@@ -111,19 +111,19 @@ def main(argv=None):
     action = parser.add_subparsers(title="action", dest="action")
 
     p = action.add_parser("get", help="Get config value")
-    livy.cli.log.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p)
     p.add_argument("name", help="Config name to be retrieved.")
 
     p = action.add_parser("set", help="Set config value")
-    livy.cli.log.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p)
     p.add_argument("name", help="Name of config to be updated.")
     p.add_argument("value", help="Value to be set.")
 
     args = parser.parse_args(argv)
 
-    livy.cli.log.init(args)
-    console = livy.cli.log.get("livy-config.main")
-    logger = livy.cli.log.get(__name__)
+    livy.cli.logging.init(args)
+    console = livy.cli.logging.get("livy-config.main")
+    logger = livy.cli.logging.get(__name__)
 
     # check action
     if args.action not in ("get", "set"):
