@@ -28,7 +28,37 @@ This tool is designed for the entire livy submission task, including creating a 
 Python >= 3.6. No third-party library is required for core features.
 
 
+## Installation
+
+Basic installation:
+
+```bash
+pip install 'git+https://github.com/tzing/python-livy.git'
+```
+
+If you're using CLI, we could have a better view by install with extra dependencies:
+
+```bash
+pip install 'git+https://github.com/tzing/python-livy.git[pretty]'
+```
+
+
 ## Usage
+
+#### Command line tool
+
+Configure the server URL:
+
+```bash
+livy config set root.api_url http://ip-10-12-34-56.us-west-2.compute.internal:8998/
+```
+
+Read log:
+
+```bash
+livy read-log 1234
+```
+
 
 #### Use as library
 
