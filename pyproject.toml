@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "livy"
-version = "0.7.2"
+version = "0.8.0"
 description = "Library to interact with Apache livy"
 authors = ["tzing <tzingshih@gmail.com>"]
 license = "MIT"
@@ -32,6 +32,7 @@ pretty = ["colorlog"]
 
 [tool.poetry.scripts]
 livy = "livy.__main__:main"
+livy-submit = "livy.cli.submit:main"
 livy-read-log = "livy.cli.read_log:main"
 livy-config = "livy.cli.config:main"
 

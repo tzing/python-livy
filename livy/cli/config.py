@@ -46,10 +46,17 @@ class _ReadLogSection:
 
 
 @dataclasses.dataclass
+class _SubmitSection:
+    watch_log: bool = True
+    """Watching for logs after the task is submitted"""
+
+
+@dataclasses.dataclass
 class _Settings:
     root: _RootSection = dataclasses.field(default_factory=_RootSection)
     logs: _LocalLogSection = dataclasses.field(default_factory=_LocalLogSection)
     read_log: _ReadLogSection = dataclasses.field(default_factory=_ReadLogSection)
+    submit: _SubmitSection = dataclasses.field(default_factory=_SubmitSection)
 
 
 _settings = None
