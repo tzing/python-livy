@@ -14,7 +14,7 @@ _is_initialized = False
 
 
 def setup_argparse(parser: "argparse.ArgumentParser"):
-    group = parser.add_argument_group("logging")
+    group = parser.add_argument_group("Logging")
     cfg = livy.cli.config.load()
 
     # level

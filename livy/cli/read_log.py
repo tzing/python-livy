@@ -23,7 +23,8 @@ def main(argv=None):
         help="Livy batch ID for fetching logs",
     )
 
-    parser.add_argument(
+    group = parser.add_argument_group("Livy server configuration")
+    group.add_argument(
         "--api-url",
         required=cfg.root.api_url is None,
         default=cfg.root.api_url,

@@ -25,14 +25,16 @@ def main(argv=None):
         help="Arguments for the task script",
     )
 
-    parser.add_argument(
+    group = parser.add_argument_group("Livy server configuration")
+    group.add_argument(
         "--api-url",
         required=cfg.root.api_url is None,
         default=cfg.root.api_url,
         help="Base-URL for Livy API server",
     )
 
-    g = parser.add_mutually_exclusive_group()
+    group = parser.add_argument_group("Post-submit actions")
+    g = group.add_mutually_exclusive_group()
     g.set_defaults(keep_watch=cfg.submit.watch_log)
     g.add_argument(
         "--watch-log",
