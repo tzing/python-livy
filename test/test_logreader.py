@@ -116,6 +116,12 @@ class LivyBatchLogReaderTester(unittest.TestCase):
 
 
 class ParserTester(unittest.TestCase):
+    def test_simple_stdout(self):
+        p = module.simple_stdout("Foo")
+
+        assert isinstance(p, module.LivyLogParseResult)
+        assert p.message == "Foo"
+
     def test_default_parser(self):
         pattern = re.compile(
             r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)"
@@ -148,8 +154,18 @@ class ParserTester(unittest.TestCase):
             "Application is added to the scheduler and is not yet activated."
         )
 
-    def test_simple_stdout(self):
-        p = module.simple_stdout("Foo")
+    def test_traceback_parser(self):
+        pattern = re.compile(
+            r"Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
+            re.RegexFlag.MULTILINE,
+        )
+
+        m = pattern.match(
+            'Traceback (most recent call last):\n  File "<string>", line 1, in <module>\nValueError'
+        )
+        p = module.traceback_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
-        assert p.message == "Foo"
+        assert p.created == None
+        assert p.level == logging.ERROR
+        assert p.message.startswith("\n  File")

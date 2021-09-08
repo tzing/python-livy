@@ -106,6 +106,11 @@ class LivyBatchLogReader:
                 r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)",
                 re.RegexFlag.MULTILINE,
             ): timed_stdout,
+            # python traceback
+            re.compile(
+                r"Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
+                re.RegexFlag.MULTILINE,
+            ): traceback_parser,
         }
 
         self.thread = None
@@ -210,7 +215,7 @@ class LivyBatchLogReader:
 
             # cache for preventing emit duplicated logs
             digest = hashlib.md5(
-                b"%f--%d--%d--%d"
+                b"%d--%d--%d--%d"
                 % (
                     result.created.timestamp() if result.created else 0,
                     result.level,
@@ -288,15 +293,17 @@ class LivyBatchLogReader:
             parser = simple_stdout
             return new_pos, match, parser
 
-        # get match that is neatest to current pos
+        # get matched text that is neatest to current pos
         pattern, match = min(matches.items(), key=lambda x: x[1].start())
 
         if match.start() == pos:
+            # following text matches the syntax to some parser
             new_pos = match.end()
             parser = self._parsers[pattern]
         else:
+            # following text not match any wanted syntax, fallback to stdout
             new_pos = match.start()
-            # trick: `simple_stdout` takes str for input
+            # trick: `simple_stdout` takes str as input
             match = logs[pos : match.start()].strip()
             parser = simple_stdout
 
@@ -361,6 +368,16 @@ class LivyBatchLogReader:
         self._stop_event.set()
 
 
+def simple_stdout(text: str):
+    """Convert stdout (and stderr) text to parse result object."""
+    return LivyLogParseResult(
+        created=None,
+        level=logging.INFO,
+        name=None,
+        message=text.strip(),
+    )
+
+
 def default_parser(match: typing.Match):
     """Parser for default PySpark log format."""
     LEVEL_MAPPING = {
@@ -395,11 +412,11 @@ def timed_stdout(match: typing.Match):
     )
 
 
-def simple_stdout(text: str):
-    """Convert stdout (and stderr) text to parse result object."""
+def traceback_parser(match: typing.Match):
+    """Special case derived from stdout: Python traceback on exception raised."""
     return LivyLogParseResult(
         created=None,
-        level=logging.INFO,
+        level=logging.ERROR,
         name=None,
-        message=text.strip(),
+        message=match.group(1),
     )
