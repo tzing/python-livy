@@ -16,6 +16,7 @@ DEFAULT_LEVEL = {
     "stdout": logging.INFO,
     "stderr": logging.ERROR,
     "YARN Diagnostics": logging.WARNING,
+    "YARN": logging.WARNING,
 }
 
 
@@ -88,7 +89,10 @@ class LivyBatchLogReader:
         self.timezone = timezone
         self.prefix = prefix or ""
 
-        self._section_match = object()  # marker
+        # markers
+        self._section_match = object()
+        self._plain_logs = object()
+
         self._parsers = {
             # indicator that the section is changed
             re.compile(
@@ -99,13 +103,13 @@ class LivyBatchLogReader:
                 r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
                 re.RegexFlag.MULTILINE,
             ): default_parser,
-            # some log without level
+            # some log with time but without level
             re.compile(
                 r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
                 r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
                 r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)",
                 re.RegexFlag.MULTILINE,
-            ): timed_stdout,
+            ): yarn_parser,
             # python traceback
             re.compile(
                 r"Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
@@ -204,14 +208,25 @@ class LivyBatchLogReader:
             if not match:
                 continue
 
-            # parse log
-            try:
-                result = parser(match)
-            except:
-                logger.exception(
-                    "Error during parsing log in %s. Raw match=%s", parser, match
+            # parse logs
+            if parser is self._plain_logs:
+                # special case: fallback to plain logger
+                result = LivyLogParseResult(
+                    created=None,
+                    level=DEFAULT_LEVEL[current_section],
+                    name=current_section,
+                    message=match.strip(),
                 )
-                continue
+
+            else:
+                # normal case
+                try:
+                    result = parser(match)
+                except:
+                    logger.exception(
+                        "Error during parsing log in %s. Raw match=%s", parser, match
+                    )
+                    continue
 
             # cache for preventing emit duplicated logs
             digest = hashlib.md5(
@@ -231,12 +246,6 @@ class LivyBatchLogReader:
                     self._emitted_logs.add(digest)
 
             # emit
-            name = result.name
-            level = result.level
-            if not name:
-                name = current_section
-                level = DEFAULT_LEVEL[current_section]
-
             created = result.created
             with self._lock:
                 if not created:
@@ -249,8 +258,8 @@ class LivyBatchLogReader:
 
             record = logging.makeLogRecord(
                 {
-                    "name": self.prefix + name,
-                    "levelno": level,
+                    "name": self.prefix + result.name,
+                    "levelno": result.level,
                     "levelname": logging.getLevelName(result.level),
                     "msg": result.message,
                     "created": int(created.timestamp()),
@@ -290,7 +299,7 @@ class LivyBatchLogReader:
             # flush all to fallback logger
             match = logs[pos:]
             new_pos = len(logs)
-            parser = simple_stdout
+            parser = self._plain_logs
             return new_pos, match, parser
 
         # get matched text that is neatest to current pos
@@ -303,9 +312,8 @@ class LivyBatchLogReader:
         else:
             # following text not match any wanted syntax, fallback to stdout
             new_pos = match.start()
-            # trick: `simple_stdout` takes str as input
             match = logs[pos : match.start()].strip()
-            parser = simple_stdout
+            parser = self._plain_logs
 
         # find next match
         next_match = pattern.search(logs, new_pos)
@@ -368,16 +376,6 @@ class LivyBatchLogReader:
         self._stop_event.set()
 
 
-def simple_stdout(text: str):
-    """Convert stdout (and stderr) text to parse result object."""
-    return LivyLogParseResult(
-        created=None,
-        level=logging.INFO,
-        name=None,
-        message=text.strip(),
-    )
-
-
 def default_parser(match: typing.Match):
     """Parser for default PySpark log format."""
     LEVEL_MAPPING = {
@@ -401,13 +399,13 @@ def default_parser(match: typing.Match):
     )
 
 
-def timed_stdout(match: typing.Match):
-    """Parser for text that is with timestamp but is without level."""
+def yarn_parser(match: typing.Match):
+    """Logs from YARN."""
     time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
     return LivyLogParseResult(
         created=time,
-        level=logging.INFO,
-        name=None,
+        level=DEFAULT_LEVEL["YARN"],
+        name="YARN",
         message=match.group(2),
     )
 
@@ -417,6 +415,6 @@ def traceback_parser(match: typing.Match):
     return LivyLogParseResult(
         created=None,
         level=logging.ERROR,
-        name=None,
+        name="Traceback",
         message=match.group(1),
     )

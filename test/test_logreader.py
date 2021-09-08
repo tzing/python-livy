@@ -116,12 +116,6 @@ class LivyBatchLogReaderTester(unittest.TestCase):
 
 
 class ParserTester(unittest.TestCase):
-    def test_simple_stdout(self):
-        p = module.simple_stdout("Foo")
-
-        assert isinstance(p, module.LivyLogParseResult)
-        assert p.message == "Foo"
-
     def test_default_parser(self):
         pattern = re.compile(
             r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)"
@@ -136,7 +130,7 @@ class ParserTester(unittest.TestCase):
         assert p.name == "Foo"
         assert p.message == "test message"
 
-    def test_timed_stdout(self):
+    def test_yarn_parser(self):
         pattern = re.compile(
             r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
             r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
@@ -146,7 +140,7 @@ class ParserTester(unittest.TestCase):
         m = pattern.match(
             "[Tue May 25 08:40:24 +0800 2021] Application is added to the scheduler and is not yet activated. Queue's AM resource limit exceeded.  Details : AM Partition = CORE; AM Resource Request = <memory:896, max memory:253952, vCores:1, max vCores:48>; Queue Resource Limit for AM = <memory:0, vCores:0>; User AM Resource Limit of the queue = <memory:0, vCores:0>; Queue AM Resource Usage = <memory:896, vCores:1>;"
         )
-        p = module.timed_stdout(m)
+        p = module.yarn_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
         assert p.created.timestamp() == 1621903224
