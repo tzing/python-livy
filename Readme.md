@@ -33,13 +33,13 @@ Python >= 3.6. No third-party library is required for core features.
 Basic installation:
 
 ```bash
-pip install 'git+https://github.com/tzing/python-livy.git'
+pip install 'git+https://github.com/tzing/python-livy.git#egg=livy'
 ```
 
 If you're using CLI, we could have a better view by install with extra dependencies:
 
 ```bash
-pip install 'git+https://github.com/tzing/python-livy.git[pretty]'
+pip install 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty]'
 ```
 
 
