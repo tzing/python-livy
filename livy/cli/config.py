@@ -25,7 +25,7 @@ class _LocalLogSection:
     """Configure logging behavior on local"""
 
     format: str = (
-        "%(log_color)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
+        "%(levelcolor)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
     )
     """Log message format."""
 

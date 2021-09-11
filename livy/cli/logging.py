@@ -37,6 +37,21 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         help="Silent mode. Only show warning and error log on console.",
     )
 
+    # highlight and lowlight
+    group.add_argument(
+        "--highlight-logger",
+        nargs="+",
+        default=[],
+        help="Highlight logs from the given loggers on console. "
+        "This option would be discarded if `colorama` is not installed.",
+    )
+    group.add_argument(
+        "--hide-logger",
+        nargs="+",
+        default=[],
+        help="Do not show logs from the given loggers on console.",
+    )
+
     # file
     g = group.add_mutually_exclusive_group()
     g.set_defaults(log_file=cfg.logs.output_file)
@@ -75,8 +90,13 @@ def init(args: "argparse.Namespace"):
     # console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO - 10 * args.verbose)
-    console_handler.setFormatter(_get_console_formatter())
     root_logger.addHandler(console_handler)
+
+    console_formatter = _get_console_formatter()
+    console_handler.setFormatter(console_formatter)
+
+    if hasattr(console_formatter, "highlight_loggers"):
+        console_formatter.highlight_loggers.update(args.highlight_logger)
 
     # file handler
     if args.log_file or args.log_file is None:
@@ -101,18 +121,7 @@ def init(args: "argparse.Namespace"):
 
 def _use_color_handler():
     """Return true if `colorlog` is installed and tty is attached."""
-    return sys.stdout.isatty() and importlib.util.find_spec("colorlog")
-
-
-def _get_console_formatter():
-    """Return colored formatter if avaliable."""
-    if not _use_color_handler():
-        return _get_general_formatter()
-
-    import colorlog
-
-    cfg = livy.cli.config.load()
-    return colorlog.ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
+    return sys.stdout.isatty() and importlib.util.find_spec("colorama")
 
 
 def _get_general_formatter():
@@ -121,6 +130,81 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(log_color)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
+
+
+def _get_console_formatter():
+    """Return colored formatter if avaliable."""
+    if not _use_color_handler():
+        return _get_general_formatter()
+
+    import colorama
+
+    colorama.init(strip=True)
+
+    class _ColoredRecord:
+        def __init__(
+            self, record: logging.LogRecord, escapes: typing.Dict[str, str]
+        ) -> None:
+            self.__dict__.update(record.__dict__)
+            self.__dict__.update(escapes)
+
+    class _ColoredFormatter(logging.Formatter):
+        _COLOR_DEFAULT = {
+            "DEBUG": colorama.Fore.WHITE,
+            "INFO": colorama.Fore.GREEN,
+            "WARNING": colorama.Fore.YELLOW,
+            "ERROR": colorama.Fore.RED,
+            "CRITICAL": colorama.Fore.LIGHTRED_EX,
+        }
+
+        _COLOR_HIGHLIGHT = {
+            "DEBUG": colorama.Back.WHITE + colorama.Fore.WHITE,
+            "INFO": colorama.Back.GREEN + colorama.Fore.WHITE,
+            "WARNING": colorama.Back.YELLOW + colorama.Fore.WHITE,
+            "ERROR": colorama.Back.RED + colorama.Fore.WHITE,
+            "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
+        }
+
+        _COLOR_RESET = colorama.Style.RESET_ALL
+
+        def __init__(self, fmt: str, datefmt: str) -> None:
+            super().__init__(fmt=fmt, datefmt=datefmt)
+            self.highlight_loggers = set()
+
+        def formatMessage(self, record: logging.LogRecord) -> str:
+            colors = self.get_color_map(record)
+            wrapper = _ColoredRecord(record, colors)
+            message = super().formatMessage(wrapper)
+            if not message.endswith(colorama.Style.RESET_ALL):
+                message += colorama.Style.RESET_ALL
+            return message
+
+        def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
+            colors = {
+                "reset": self._COLOR_RESET,
+            }
+
+            if self.should_highlight(record):
+                colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
+                    record.levelname, self._COLOR_RESET
+                )
+            else:
+                colors["levelcolor"] = self._COLOR_DEFAULT.get(
+                    record.levelname, self._COLOR_RESET
+                )
+
+            return colors
+
+        def should_highlight(self, record: logging.LogRecord) -> bool:
+            for name in self.highlight_loggers:
+                if name == record.name:  # full match
+                    return True
+                if record.name and record.name.startswith(name + "."):  # subloggers
+                    return True
+            return False
+
+    cfg = livy.cli.config.load()
+    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 get = logging.getLogger
