@@ -3,6 +3,7 @@ import importlib.util
 import logging
 import os
 import tempfile
+import time
 import unittest.mock
 
 import livy.cli.logging as module
@@ -28,12 +29,56 @@ def test_init():
     module.init(args)
 
 
-def test__get_console_formatter():
-    with unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=False):
-        assert isinstance(module._get_console_formatter(), logging.Formatter)
+@unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=True)
+def test__get_console_formatter_colored(_):
+    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
+        return
 
-    if importlib.util.find_spec("colorlog"):  # test-core does not install colorlog
-        with unittest.mock.patch(
-            "livy.cli.logging._use_color_handler", return_value=True
-        ):
-            assert isinstance(module._get_console_formatter(), logging.Formatter)
+    formatter = module._get_console_formatter()
+    assert isinstance(formatter, logging.Formatter)
+
+    formatter.highlight_loggers.add("Test.Foo")
+
+    # default
+    formatter.format(
+        logging.makeLogRecord(
+            {
+                "name": "Test.Bar",
+                "levelno": logging.INFO,
+                "levelname": "INFO",
+                "msg": "Test log message",
+                "created": (time.time()),
+            }
+        )
+    )
+
+    # highlight, exact match
+    formatter.format(
+        logging.makeLogRecord(
+            {
+                "name": "Test.Foo",
+                "levelno": logging.INFO,
+                "levelname": "INFO",
+                "msg": "Test log message",
+                "created": (time.time()),
+            }
+        )
+    )
+
+    # highlight, sub logger
+    formatter.format(
+        logging.makeLogRecord(
+            {
+                "name": "Test.Foo.Baz",
+                "levelno": logging.INFO,
+                "levelname": "INFO",
+                "msg": "Test log message",
+                "created": (time.time()),
+            }
+        )
+    )
+
+
+@unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=False)
+def test__get_console_formatter_fallback(_):
+    assert isinstance(module._get_console_formatter(), logging.Formatter)

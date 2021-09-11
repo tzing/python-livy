@@ -11,6 +11,7 @@ if typing.TYPE_CHECKING:
     import argparse
 
 _is_initialized = False
+_console_formatter = None
 
 
 def setup_argparse(parser: "argparse.ArgumentParser"):
@@ -78,7 +79,7 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
 
 def init(args: "argparse.Namespace"):
     """Initialize loggers"""
-    global _is_initialized
+    global _is_initialized, _console_formatter
     if _is_initialized:
         return
 
@@ -92,11 +93,11 @@ def init(args: "argparse.Namespace"):
     console_handler.setLevel(logging.INFO - 10 * args.verbose)
     root_logger.addHandler(console_handler)
 
-    console_formatter = _get_console_formatter()
-    console_handler.setFormatter(console_formatter)
+    _console_formatter = _get_console_formatter()
+    console_handler.setFormatter(_console_formatter)
 
-    if hasattr(console_formatter, "highlight_loggers"):
-        console_formatter.highlight_loggers.update(args.highlight_logger)
+    # if hasattr(console_formatter, "highlight_loggers"):
+    #     console_formatter.highlight_loggers.update(args.highlight_logger)
 
     # file handler
     if args.log_file or args.log_file is None:
@@ -128,7 +129,7 @@ def _get_general_formatter():
     """Return general formatter. Removed colorlog package specificed format
     syntax before use it."""
     cfg = livy.cli.config.load()
-    fmt = cfg.logs.format.replace("%(log_color)s", "").replace("%(reset)s", "")
+    fmt = cfg.logs.format.replace("%(loglevel)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
 
 
