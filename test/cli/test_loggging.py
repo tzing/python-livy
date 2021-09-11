@@ -22,7 +22,8 @@ def test_init():
     args = argparse.Namespace()
     args.verbose = 0
     args.log_file = True
-    args.highlight_logger = ["test-logger"]
+    args.highlight_logger = ["test-highlight-logger"]
+    args.hide_logger = ["test-hide-logger"]
 
     with tempfile.NamedTemporaryFile() as fp, unittest.mock.patch(
         "os.getcwd", return_value=os.path.dirname(fp.name)
@@ -42,7 +43,7 @@ def test__get_console_formatter_colored(_):
 
 
 @pytest.fixture
-def record():
+def record() -> logging.LogRecord:
     return logging.makeLogRecord(
         {
             "name": "Test.Bar",
@@ -54,7 +55,7 @@ def record():
     )
 
 
-def test__ColoredFormatter(record):
+def test__ColoredFormatter(record: logging.LogRecord):
     if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
         return
 
@@ -70,7 +71,7 @@ def test__ColoredFormatter(record):
         formatter.format(record)
 
 
-def test__is_wanted_logger(record):
+def test__is_wanted_logger(record: logging.LogRecord):
     wantted_names = {"Foo.Bar", "Baz"}
 
     record.name = "Foo.Bar"
@@ -108,3 +109,14 @@ def test_register_highlight_logger(fmt):
     # success
     fmt.highlight_loggers = set()
     module.register_highlight_logger("foo")
+
+
+def test__LogFilter(record: logging.LogRecord):
+    filter_ = module._LogFilter()
+    filter_.unwanted_loggers.add("Foo")
+
+    record.name = "Test"
+    assert filter_.filter(record)
+
+    record.name = "Foo.Bar"
+    assert not filter_.filter(record)

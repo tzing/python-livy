@@ -12,6 +12,7 @@ if typing.TYPE_CHECKING:
 
 _is_initialized = False
 _console_formatter = None
+_log_filter = None
 
 
 def setup_argparse(parser: "argparse.ArgumentParser"):
@@ -79,7 +80,7 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
 
 def init(args: "argparse.Namespace"):
     """Initialize loggers"""
-    global _is_initialized, _console_formatter
+    global _is_initialized, _console_formatter, _log_filter
     if _is_initialized:
         return
 
@@ -95,6 +96,9 @@ def init(args: "argparse.Namespace"):
 
     _console_formatter = _get_console_formatter()
     console_handler.setFormatter(_console_formatter)
+
+    _log_filter = _LogFilter()
+    console_handler.addFilter(_log_filter)
 
     # file handler
     if args.log_file or args.log_file is None:
@@ -117,6 +121,8 @@ def init(args: "argparse.Namespace"):
     # set highlight / lowlight loggers
     for name in args.highlight_logger:
         register_highlight_logger(name)
+    for name in args.hide_logger:
+        register_ignore_logger(name)
 
     _is_initialized = True
 
@@ -155,6 +161,8 @@ class _ColoredFormatter(logging.Formatter):
     """A formatter that could add ANSI colors to logs, should use with console
     stream. Inspired by borntyping/python-colorlog, and add feature that
     supports different color scheme via logger name."""
+
+    __slots__ = ("highlight_loggers",)
 
     class ColoredRecord:
         def __init__(
@@ -236,7 +244,7 @@ def register_highlight_logger(name: str):
     """
     global _console_formatter
     assert isinstance(name, str)
-    assert _console_formatter, "Console formatter does not exists"
+    assert _console_formatter, "Console formatter does not exist"
 
     if not hasattr(_console_formatter, "highlight_loggers"):
         get(__name__).warning(
@@ -246,6 +254,38 @@ def register_highlight_logger(name: str):
         return
 
     _console_formatter.highlight_loggers.add(name)
+
+
+class _LogFilter(object):
+    """Drop logs from the unwanted logger list."""
+
+    __slots__ = ("unwanted_loggers",)
+
+    def __init__(self) -> None:
+        self.unwanted_loggers = set()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Determine if the specified record is to be logged.
+        Returns True if the record should be logged, or False otherwise.
+        """
+        if _is_wanted_logger(record, self.unwanted_loggers):
+            return False
+        return True
+
+
+def register_ignore_logger(name: str):
+    """Register logger name to be ignored on console.
+
+    Parameters
+    ----------
+        name : str
+            Logger name
+    """
+    global _log_filter
+    assert isinstance(name, str)
+    assert _log_filter, "Log filter does not exists"
+
+    _log_filter.unwanted_loggers.add(name)
 
 
 get = logging.getLogger
