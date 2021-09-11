@@ -20,6 +20,7 @@ def test_init():
     args = argparse.Namespace()
     args.verbose = 0
     args.log_file = True
+    args.highlight_logger = ["test-logger"]
 
     with tempfile.NamedTemporaryFile() as fp, unittest.mock.patch(
         "os.getcwd", return_value=os.path.dirname(fp.name)
@@ -38,47 +39,42 @@ def test__get_console_formatter_colored(_):
     assert isinstance(formatter, logging.Formatter)
 
     formatter.highlight_loggers.add("Test.Foo")
+    record = logging.makeLogRecord(
+        {
+            "name": "Test.Bar",
+            "levelno": logging.INFO,
+            "levelname": "INFO",
+            "msg": "Test log message",
+            "created": (time.time()),
+        }
+    )
 
     # default
-    formatter.format(
-        logging.makeLogRecord(
-            {
-                "name": "Test.Bar",
-                "levelno": logging.INFO,
-                "levelname": "INFO",
-                "msg": "Test log message",
-                "created": (time.time()),
-            }
-        )
-    )
+    formatter.format(record)
 
     # highlight, exact match
-    formatter.format(
-        logging.makeLogRecord(
-            {
-                "name": "Test.Foo",
-                "levelno": logging.INFO,
-                "levelname": "INFO",
-                "msg": "Test log message",
-                "created": (time.time()),
-            }
-        )
-    )
+    record.name = "Test.Foo"
+    formatter.format(record)
 
     # highlight, sub logger
-    formatter.format(
-        logging.makeLogRecord(
-            {
-                "name": "Test.Foo.Baz",
-                "levelno": logging.INFO,
-                "levelname": "INFO",
-                "msg": "Test log message",
-                "created": (time.time()),
-            }
-        )
-    )
+    record.name = "Test.Foo.Baz"
+    formatter.format(record)
+
+    # hierarchy not match
+    record.name = "Test"
+    formatter.format(record)
 
 
 @unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=False)
 def test__get_console_formatter_fallback(_):
     assert isinstance(module._get_console_formatter(), logging.Formatter)
+
+
+@unittest.mock.patch("livy.cli.logging._console_formatter")
+def test_register_highlight_logger(fmt):
+    # fail
+    module.register_highlight_logger("foo")
+
+    # success
+    fmt.highlight_loggers = set()
+    module.register_highlight_logger("foo")

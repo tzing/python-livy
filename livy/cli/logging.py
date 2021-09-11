@@ -96,9 +96,6 @@ def init(args: "argparse.Namespace"):
     _console_formatter = _get_console_formatter()
     console_handler.setFormatter(_console_formatter)
 
-    # if hasattr(console_formatter, "highlight_loggers"):
-    #     console_formatter.highlight_loggers.update(args.highlight_logger)
-
     # file handler
     if args.log_file or args.log_file is None:
         if not isinstance(args.log_file, str):
@@ -117,19 +114,22 @@ def init(args: "argparse.Namespace"):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
+    # set highlight / lowlight loggers
+    for name in args.highlight_logger:
+        register_highlight_logger(name)
+
     _is_initialized = True
 
 
 def _use_color_handler():
-    """Return true if `colorlog` is installed and tty is attached."""
+    """Return true if `colorama` is installed and tty is attached."""
     return sys.stdout.isatty() and importlib.util.find_spec("colorama")
 
 
 def _get_general_formatter():
-    """Return general formatter. Removed colorlog package specificed format
-    syntax before use it."""
+    """Return general formatter. Removed color-related syntax before apply."""
     cfg = livy.cli.config.load()
-    fmt = cfg.logs.format.replace("%(loglevel)s", "").replace("%(reset)s", "")
+    fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
 
 
@@ -197,15 +197,45 @@ def _get_console_formatter():
             return colors
 
         def should_highlight(self, record: logging.LogRecord) -> bool:
+            # match full name
+            if record.name in self.highlight_loggers:
+                return True
+
+            # early escape if it could not be a sub logger
+            if not record.name or "." not in record.name:
+                return False
+
+            # match by logger hierarchy
             for name in self.highlight_loggers:
-                if name == record.name:  # full match
+                if record.name.startswith(name + "."):
                     return True
-                if record.name and record.name.startswith(name + "."):  # subloggers
-                    return True
+
             return False
 
     cfg = livy.cli.config.load()
     return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
+
+
+def register_highlight_logger(name: str):
+    """Register logger name to be highlighted on console.
+
+    Parameters
+    ----------
+        name : str
+            Logger name
+    """
+    global _console_formatter
+    assert isinstance(name, str)
+    assert _console_formatter, "Console formatter does not exists"
+
+    if not hasattr(_console_formatter, "highlight_loggers"):
+        get(__name__).warning(
+            "Log highlighting feature is currently not avaliable. "
+            "Do you have python library `colorama` installed?",
+        )
+        return
+
+    _console_formatter.highlight_loggers.add(name)
 
 
 get = logging.getLogger
