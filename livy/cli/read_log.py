@@ -1,6 +1,7 @@
 """Read livy batch execution log from server
 """
 import argparse
+import logging
 
 import livy
 import livy.cli.config
@@ -87,9 +88,9 @@ def main(argv=None):
 
     # finish
     if args.keep_watch:
-        console.info(
-            "Batch finished with state=%s", client.get_batch_state(args.batch_id)
-        )
+        state = client.get_batch_state(args.batch_id)
+        level = logging.INFO if state == "success" else logging.WARNING
+        console.log(level, "Batch finished with state=%s", state)
 
     return 0
 

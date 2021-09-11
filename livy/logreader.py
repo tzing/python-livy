@@ -12,13 +12,6 @@ __all__ = ["LivyBatchLogReader"]
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LEVEL = {
-    "stdout": logging.INFO,
-    "stderr": logging.ERROR,
-    "YARN Diagnostics": logging.WARNING,
-    "YARN": logging.WARNING,
-}
-
 
 class LivyLogParseResult(typing.NamedTuple):
     """Log parse result."""
@@ -211,6 +204,11 @@ class LivyBatchLogReader:
             # parse logs
             if parser is self._plain_logs:
                 # special case: fallback to plain logger
+                DEFAULT_LEVEL = {
+                    "stdout": logging.INFO,
+                    "stderr": logging.ERROR,
+                    "YARN Diagnostics": logging.WARNING,
+                }
                 result = LivyLogParseResult(
                     created=None,
                     level=DEFAULT_LEVEL[current_section],
@@ -404,7 +402,7 @@ def yarn_parser(match: typing.Match):
     time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
     return LivyLogParseResult(
         created=time,
-        level=DEFAULT_LEVEL["YARN"],
+        level=logging.WARNING,
         name="YARN",
         message=match.group(2),
     )
