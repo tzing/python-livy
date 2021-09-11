@@ -31,6 +31,18 @@ class LivyClientInitTester(unittest.TestCase):
         with self.assertRaises(exception.TypeError):
             module.LivyClient("http://example.com", "/path/to/certificates")
 
+    def test_check(self):
+        # true
+        self.assertTrue(self.client.check(True))
+
+        # failed, caputred
+        self.request.side_effect = exception.RequestError(0, "Foo")
+        self.assertFalse(self.client.check(True))
+
+        # failed, not captured
+        with self.assertRaises(exception.RequestError):
+            self.client.check(False)
+
     def test_create_batch(self):
         # required argument (file)
         self.client.create_batch("foo.py")

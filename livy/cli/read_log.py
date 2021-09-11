@@ -60,7 +60,7 @@ def main(argv=None):
     client = livy.LivyClient(url=args.api_url)
 
     try:
-        client.get_batch_state(args.batch_id)
+        client.check(captue=False)
     except livy.RequestError as e:
         console.error(
             "Failed to check batch status. HTTP code=%d, Reason=%s", e.code, e.reason
