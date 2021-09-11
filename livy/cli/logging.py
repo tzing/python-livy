@@ -133,32 +133,38 @@ def _get_general_formatter():
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
 
 
-def _get_console_formatter():
-    """Return colored formatter if avaliable."""
-    if not _use_color_handler():
-        return _get_general_formatter()
+class _ColoredFormatter(logging.Formatter):
+    """A formatter that could add ANSI colors to logs, should use with console
+    stream. Inspired by borntyping/python-colorlog, and add feature that
+    supports different color scheme via logger name."""
 
-    import colorama
-
-    colorama.init(strip=True)
-
-    class _ColoredRecord:
+    class ColoredRecord:
         def __init__(
             self, record: logging.LogRecord, escapes: typing.Dict[str, str]
         ) -> None:
             self.__dict__.update(record.__dict__)
             self.__dict__.update(escapes)
 
-    class _ColoredFormatter(logging.Formatter):
-        _COLOR_DEFAULT = {
+    _COLOR_RESET: str = ""
+    _COLOR_DEFAULT: typing.Dict[str, str] = {}
+    _COLOR_HIGHLIGHT: typing.Dict[str, str] = {}
+
+    def __init__(self, fmt: str, datefmt: str) -> None:
+        """Create ColorFormatter instance"""
+        super().__init__(fmt=fmt, datefmt=datefmt)
+        import colorama
+
+        colorama.init(strip=True)
+
+        self._COLOR_RESET = colorama.Style.RESET_ALL
+        self._COLOR_DEFAULT = {
             "DEBUG": colorama.Fore.WHITE,
             "INFO": colorama.Fore.GREEN,
             "WARNING": colorama.Fore.YELLOW,
             "ERROR": colorama.Fore.RED,
             "CRITICAL": colorama.Fore.LIGHTRED_EX,
         }
-
-        _COLOR_HIGHLIGHT = {
+        self._COLOR_HIGHLIGHT = {
             "DEBUG": colorama.Back.WHITE + colorama.Fore.WHITE,
             "INFO": colorama.Back.GREEN + colorama.Fore.WHITE,
             "WARNING": colorama.Back.YELLOW + colorama.Fore.WHITE,
@@ -166,51 +172,53 @@ def _get_console_formatter():
             "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
         }
 
-        _COLOR_RESET = colorama.Style.RESET_ALL
+        self.highlight_loggers = set()
 
-        def __init__(self, fmt: str, datefmt: str) -> None:
-            super().__init__(fmt=fmt, datefmt=datefmt)
-            self.highlight_loggers = set()
+    def formatMessage(self, record: logging.LogRecord) -> str:
+        colors = self.get_color_map(record)
+        wrapper = self.ColoredRecord(record, colors)
+        message = super().formatMessage(wrapper)
+        if not message.endswith(self._COLOR_RESET):
+            message += self._COLOR_RESET
+        return message
 
-        def formatMessage(self, record: logging.LogRecord) -> str:
-            colors = self.get_color_map(record)
-            wrapper = _ColoredRecord(record, colors)
-            message = super().formatMessage(wrapper)
-            if not message.endswith(colorama.Style.RESET_ALL):
-                message += colorama.Style.RESET_ALL
-            return message
+    def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
+        colors = {
+            "reset": self._COLOR_RESET,
+        }
 
-        def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
-            colors = {
-                "reset": self._COLOR_RESET,
-            }
+        if self.should_highlight(record):
+            colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
+                record.levelname, self._COLOR_RESET
+            )
+        else:
+            colors["levelcolor"] = self._COLOR_DEFAULT.get(
+                record.levelname, self._COLOR_RESET
+            )
 
-            if self.should_highlight(record):
-                colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
-                    record.levelname, self._COLOR_RESET
-                )
-            else:
-                colors["levelcolor"] = self._COLOR_DEFAULT.get(
-                    record.levelname, self._COLOR_RESET
-                )
+        return colors
 
-            return colors
+    def should_highlight(self, record: logging.LogRecord) -> bool:
+        # match full name
+        if record.name in self.highlight_loggers:
+            return True
 
-        def should_highlight(self, record: logging.LogRecord) -> bool:
-            # match full name
-            if record.name in self.highlight_loggers:
+        # early escape if it could not be a sub logger
+        if not record.name or "." not in record.name:
+            return False
+
+        # match by logger hierarchy
+        for name in self.highlight_loggers:
+            if record.name.startswith(name + "."):
                 return True
 
-            # early escape if it could not be a sub logger
-            if not record.name or "." not in record.name:
-                return False
+        return False
 
-            # match by logger hierarchy
-            for name in self.highlight_loggers:
-                if record.name.startswith(name + "."):
-                    return True
 
-            return False
+def _get_console_formatter():
+    """Return colored formatter if avaliable."""
+    if not _use_color_handler():
+        return _get_general_formatter()
 
     cfg = livy.cli.config.load()
     return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)

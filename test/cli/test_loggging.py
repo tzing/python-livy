@@ -38,6 +38,16 @@ def test__get_console_formatter_colored(_):
     formatter = module._get_console_formatter()
     assert isinstance(formatter, logging.Formatter)
 
+
+def test__ColoredFormatter():
+    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
+        return
+
+    formatter = module._ColoredFormatter(
+        "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
+        "%Y-%m-%d %H:%M:%S %z",
+    )
+
     formatter.highlight_loggers.add("Test.Foo")
     record = logging.makeLogRecord(
         {
