@@ -124,7 +124,7 @@ class LivyClient:
             On any error during this funcition, including connection error, http
             status is not expected or response data decode error.
         """
-        assert method in ("GET", "POST", "DELETE")
+        assert method in ("GET", "POST", "DELETE", "HEAD")
         assert isinstance(path, str)
         assert data is None or isinstance(data, dict)
 
@@ -187,6 +187,23 @@ class LivyClient:
             raise RequestError(response.status, "JSON decode error", e)
 
         return response_data
+
+    def check(self, capture: bool = True) -> bool:
+        """Check if server is live.
+
+        Parameters
+        ----------
+            capture : bool
+                Capture exceptions or not.
+        """
+        try:
+            self._request("HEAD", "/batches")
+            return True
+        except RequestError:
+            if capture:
+                return False
+            else:
+                raise
 
     def create_batch(
         self,

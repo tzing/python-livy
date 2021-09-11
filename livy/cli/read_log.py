@@ -1,6 +1,7 @@
 """Read livy batch execution log from server
 """
 import argparse
+import logging
 
 import livy
 import livy.cli.config
@@ -53,20 +54,25 @@ def main(argv=None):
     livy.cli.logging.init(args)
     console = livy.cli.logging.get("livy-read-log.main")
 
-    console.info("Reading logs from batch %d", args.batch_id)
-
     # check batch status
+    console.info("Connecting to server: %s", args.api_url)
+
     client = livy.LivyClient(url=args.api_url)
 
     try:
-        client.get_batch_state(args.batch_id)
+        client.check(capture=False)
     except livy.RequestError as e:
         console.error(
             "Failed to check batch status. HTTP code=%d, Reason=%s", e.code, e.reason
         )
         return 1
+    except KeyboardInterrupt:
+        console.warning("Keyboard interrupt")
+        return 1
 
     # fetch log
+    console.info("Reading logs from batch %d", args.batch_id)
+
     reader = livy.LivyBatchLogReader(client, args.batch_id)
 
     if args.keep_watch:
@@ -87,9 +93,9 @@ def main(argv=None):
 
     # finish
     if args.keep_watch:
-        console.info(
-            "Batch finished with state=%s", client.get_batch_state(args.batch_id)
-        )
+        state = client.get_batch_state(args.batch_id)
+        level = logging.INFO if state == "success" else logging.WARNING
+        console.log(level, "Batch finished with state=%s", state)
 
     return 0
 
