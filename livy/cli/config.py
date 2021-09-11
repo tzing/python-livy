@@ -38,6 +38,9 @@ class _LocalLogSection:
     logfile_level: T_LOGLEVEL = "DEBUG"
     """Default log level on output to log file"""
 
+    with_progressbar: bool = True
+    """Convert TaskSetManager's logs into progress bar"""
+
 
 @dataclasses.dataclass
 class _ReadLogSection:

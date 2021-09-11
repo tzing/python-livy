@@ -16,8 +16,9 @@ _log_filter = None
 
 
 def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
-    group = parser.add_argument_group("logging")
     cfg = livy.cli.config.load()
+
+    group = parser.add_argument_group("console")
 
     # level
     g = group.add_mutually_exclusive_group()
@@ -28,7 +29,7 @@ def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
         dest="verbose",
         action="count",
         default=0,
-        help="Enable debug log on console.",
+        help="Enable debug log.",
     )
     g.add_argument(
         "-q",
@@ -36,24 +37,48 @@ def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
         dest="verbose",
         action="store_const",
         const=-1,
-        help="Silent mode. Only show warning and error log on console.",
+        help="Silent mode. Only show warning and error log.",
     )
 
     # highlight and lowlight
     if for_display:
         group.add_argument(
             "--highlight-logger",
+            metavar="NAME",
             nargs="+",
             default=[],
-            help="Highlight logs from the given loggers on console. "
-            "This option would be discarded if `colorama` is not installed.",
+            help="Highlight logs from the given loggers. "
+            "This option only takes effect when `colorama` is installed.",
         )
         group.add_argument(
             "--hide-logger",
+            metavar="NAME",
             nargs="+",
             default=[],
-            help="Do not show logs from the given loggers on console.",
+            help="Do not show logs from the given loggers.",
         )
+
+    # progress bar
+    if for_display:
+        g = group.add_mutually_exclusive_group()
+        g.set_defaults(with_progressbar=cfg.logs.with_progressbar)
+        g.add_argument(
+            "--pb",
+            "--with-progressbar",
+            action="store_true",
+            dest="with_progressbar",
+            help="Convert TaskSetManager's `Finished task XX in stage Y` logs into progress bar. "
+            "This option only takes effect when `tqdm` is installed.",
+        )
+        g.add_argument(
+            "--no-pb",
+            "--without-progressbar",
+            action="store_false",
+            dest="with_progressbar",
+            help="Not to convert TaskSetManager's logs into progress bar.",
+        )
+
+    group = parser.add_argument_group("file logging")
 
     # file
     g = group.add_mutually_exclusive_group()
