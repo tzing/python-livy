@@ -6,6 +6,8 @@ import tempfile
 import time
 import unittest.mock
 
+import pytest
+
 import livy.cli.logging as module
 
 
@@ -39,17 +41,9 @@ def test__get_console_formatter_colored(_):
     assert isinstance(formatter, logging.Formatter)
 
 
-def test__ColoredFormatter():
-    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
-        return
-
-    formatter = module._ColoredFormatter(
-        "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
-        "%Y-%m-%d %H:%M:%S %z",
-    )
-
-    formatter.highlight_loggers.add("Test.Foo")
-    record = logging.makeLogRecord(
+@pytest.fixture
+def record():
+    return logging.makeLogRecord(
         {
             "name": "Test.Bar",
             "levelno": logging.INFO,
@@ -59,20 +53,46 @@ def test__ColoredFormatter():
         }
     )
 
-    # default
-    formatter.format(record)
 
-    # highlight, exact match
-    record.name = "Test.Foo"
-    formatter.format(record)
+def test__ColoredFormatter(record):
+    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
+        return
 
-    # highlight, sub logger
-    record.name = "Test.Foo.Baz"
-    formatter.format(record)
+    formatter = module._ColoredFormatter(
+        "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
+        "%Y-%m-%d %H:%M:%S %z",
+    )
 
-    # hierarchy not match
-    record.name = "Test"
-    formatter.format(record)
+    with unittest.mock.patch("livy.cli.logging._is_wanted_logger", return_value=True):
+        formatter.format(record)
+
+    with unittest.mock.patch("livy.cli.logging._is_wanted_logger", return_value=False):
+        formatter.format(record)
+
+
+def test__is_wanted_logger(record):
+    wantted_names = {"Foo.Bar", "Baz"}
+
+    record.name = "Foo.Bar"
+    assert module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Foo.Bar.Baz"
+    assert module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Baz"
+    assert module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Baz.Foo"
+    assert module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Foo"
+    assert not module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Foo.BarBaz"
+    assert not module._is_wanted_logger(record, wantted_names)
+
+    record.name = "Qax"
+    assert not module._is_wanted_logger(record, wantted_names)
 
 
 @unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=False)

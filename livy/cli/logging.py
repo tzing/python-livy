@@ -133,6 +133,24 @@ def _get_general_formatter():
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
 
 
+def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
+    """Return True if the record is from any of wanted logger."""
+    # match by full name
+    if record.name in logger_names:
+        return True
+
+    # early escape if it could not be a sub logger
+    if not record.name or "." not in record.name:
+        return False
+
+    # match by logger hierarchy
+    for name in logger_names:
+        if record.name.startswith(name + "."):
+            return True
+
+    return False
+
+
 class _ColoredFormatter(logging.Formatter):
     """A formatter that could add ANSI colors to logs, should use with console
     stream. Inspired by borntyping/python-colorlog, and add feature that
@@ -187,7 +205,7 @@ class _ColoredFormatter(logging.Formatter):
             "reset": self._COLOR_RESET,
         }
 
-        if self.should_highlight(record):
+        if _is_wanted_logger(record, self.highlight_loggers):
             colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
                 record.levelname, self._COLOR_RESET
             )
@@ -197,22 +215,6 @@ class _ColoredFormatter(logging.Formatter):
             )
 
         return colors
-
-    def should_highlight(self, record: logging.LogRecord) -> bool:
-        # match full name
-        if record.name in self.highlight_loggers:
-            return True
-
-        # early escape if it could not be a sub logger
-        if not record.name or "." not in record.name:
-            return False
-
-        # match by logger hierarchy
-        for name in self.highlight_loggers:
-            if record.name.startswith(name + "."):
-                return True
-
-        return False
 
 
 def _get_console_formatter():
