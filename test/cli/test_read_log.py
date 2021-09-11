@@ -23,8 +23,8 @@ class TestMain(unittest.TestCase):
     def test_success(self):
         module.main(["--api-url", "http://example.com", "--keep-watch", "1234"])
 
-    def test_batch_error(self):
-        self.client.get_batch_state.side_effect = livy.RequestError(0, "foo")
+    def test_server_error(self):
+        self.client.check.side_effect = livy.RequestError(0, "foo")
         module.main(["--api-url", "http://example.com", "--keep-watch", "1234"])
 
     def test_read_once(self):
@@ -35,5 +35,10 @@ class TestMain(unittest.TestCase):
         module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])
 
     def test_keyboard_interrupt(self):
+        # on reading log
         self.reader.read.side_effect = KeyboardInterrupt()
+        module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])
+
+        # on initial check
+        self.client.check.side_effect = KeyboardInterrupt()
         module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])

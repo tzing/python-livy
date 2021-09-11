@@ -124,7 +124,7 @@ class LivyClient:
             On any error during this funcition, including connection error, http
             status is not expected or response data decode error.
         """
-        assert method in ("GET", "POST", "DELETE")
+        assert method in ("GET", "POST", "DELETE", "HEAD")
         assert isinstance(path, str)
         assert data is None or isinstance(data, dict)
 
