@@ -46,7 +46,7 @@ def main(argv=None):
         help="Only read log once",
     )
 
-    livy.cli.logging.setup_argparse(parser)
+    livy.cli.logging.setup_argparse(parser, True)
 
     args = parser.parse_args(argv)
 

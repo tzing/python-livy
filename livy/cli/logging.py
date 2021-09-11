@@ -15,7 +15,7 @@ _console_formatter = None
 _log_filter = None
 
 
-def setup_argparse(parser: "argparse.ArgumentParser"):
+def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
     group = parser.add_argument_group("logging")
     cfg = livy.cli.config.load()
 
@@ -40,19 +40,20 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
     )
 
     # highlight and lowlight
-    group.add_argument(
-        "--highlight-logger",
-        nargs="+",
-        default=[],
-        help="Highlight logs from the given loggers on console. "
-        "This option would be discarded if `colorama` is not installed.",
-    )
-    group.add_argument(
-        "--hide-logger",
-        nargs="+",
-        default=[],
-        help="Do not show logs from the given loggers on console.",
-    )
+    if for_display:
+        group.add_argument(
+            "--highlight-logger",
+            nargs="+",
+            default=[],
+            help="Highlight logs from the given loggers on console. "
+            "This option would be discarded if `colorama` is not installed.",
+        )
+        group.add_argument(
+            "--hide-logger",
+            nargs="+",
+            default=[],
+            help="Do not show logs from the given loggers on console.",
+        )
 
     # file
     g = group.add_mutually_exclusive_group()
@@ -119,9 +120,9 @@ def init(args: "argparse.Namespace"):
         logger.info("Log file is created at %s", args.log_file)
 
     # set highlight / lowlight loggers
-    for name in args.highlight_logger:
+    for name in getattr(args, "highlight_logger", []):
         register_highlight_logger(name)
-    for name in args.hide_logger:
+    for name in getattr(args, "hide_logger", []):
         register_ignore_logger(name)
 
     _is_initialized = True

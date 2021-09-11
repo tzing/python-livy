@@ -111,11 +111,11 @@ def main(argv=None):
     action = parser.add_subparsers(title="action", dest="action")
 
     p = action.add_parser("get", help="Get config value")
-    livy.cli.logging.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Config name to be retrieved.")
 
     p = action.add_parser("set", help="Set config value")
-    livy.cli.logging.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Name of config to be updated.")
     p.add_argument("value", help="Value to be set.")
 

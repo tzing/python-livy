@@ -13,17 +13,20 @@ import livy.cli.logging as module
 
 def test_setup_argparse():
     p = argparse.ArgumentParser()
-    module.setup_argparse(p)
+    module.setup_argparse(p, True)
     p.parse_args(["-q"])
 
 
+@pytest.mark.parametrize("with_display_feature", [True, False])
 @unittest.mock.patch("livy.cli.logging._is_initialized", False)
-def test_init():
+def test_init_with_display(with_display_feature):
     args = argparse.Namespace()
     args.verbose = 0
     args.log_file = True
-    args.highlight_logger = ["test-highlight-logger"]
-    args.hide_logger = ["test-hide-logger"]
+
+    if with_display_feature:
+        args.highlight_logger = ["test-highlight-logger"]
+        args.hide_logger = ["test-hide-logger"]
 
     with tempfile.NamedTemporaryFile() as fp, unittest.mock.patch(
         "os.getcwd", return_value=os.path.dirname(fp.name)
