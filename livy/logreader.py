@@ -13,6 +13,85 @@ __all__ = ["LivyBatchLogReader"]
 logger = logging.getLogger(__name__)
 
 
+def default_parser(match: typing.Match):
+    """Parser for default PySpark log format."""
+    LEVEL_MAPPING = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARN": logging.WARNING,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "FATAL": logging.CRITICAL,
+        "CRITICAL": logging.CRITICAL,
+    }
+
+    time = datetime.datetime.strptime(match.group(1), "%y/%m/%d %H:%M:%S")
+    level = LEVEL_MAPPING.get(match.group(2), logging.CRITICAL)
+
+    return LivyLogParseResult(
+        created=time,
+        level=level,
+        name=match.group(3),
+        message=match.group(4).lstrip().replace("\n\t", "\n"),
+    )
+
+
+def yarn_warning_parser(match: typing.Match):
+    """Warning message from YARN."""
+    time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
+    return LivyLogParseResult(
+        created=time,
+        level=logging.WARNING,
+        name="YARN",
+        message=match.group(2),
+    )
+
+
+def python_traceback_parser(match: typing.Match):
+    """Special case derived from stdout: Python traceback on exception raised."""
+    return LivyLogParseResult(
+        created=None,
+        level=logging.ERROR,
+        name="stdout.traceback",
+        message=match.group(1),
+    )
+
+
+_SECTION_CHANGE = object()  # marker
+_BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Match, typing.Callable]] = {
+    "Indicats that section is changed": (
+        re.compile(
+            r"^(stdout|stderr|YARN Diagnostics): ",
+            re.RegexFlag.MULTILINE,
+        ),
+        _SECTION_CHANGE,
+    ),
+    "Default": (
+        re.compile(
+            r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
+            re.RegexFlag.MULTILINE,
+        ),
+        default_parser,
+    ),
+    "YARN warning": (
+        re.compile(
+            r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
+            r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
+            r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)",
+            re.RegexFlag.MULTILINE,
+        ),
+        yarn_warning_parser,
+    ),
+    "Python Traceback": (
+        re.compile(
+            r"^Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
+            re.RegexFlag.MULTILINE,
+        ),
+        python_traceback_parser,
+    ),
+}
+
+
 class LivyLogParseResult(typing.NamedTuple):
     """Log parse result."""
 
@@ -83,32 +162,11 @@ class LivyBatchLogReader:
         self.prefix = prefix or ""
 
         # markers
-        self._section_match = object()
         self._plain_logs = object()
 
-        self._parsers = {
-            # indicator that the section is changed
-            re.compile(
-                "^(stdout|stderr|YARN Diagnostics): ", re.RegexFlag.MULTILINE
-            ): self._section_match,
-            # default parser
-            re.compile(
-                r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
-                re.RegexFlag.MULTILINE,
-            ): default_parser,
-            # some log with time but without level
-            re.compile(
-                r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
-                r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
-                r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)",
-                re.RegexFlag.MULTILINE,
-            ): yarn_parser,
-            # python traceback
-            re.compile(
-                r"Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
-                re.RegexFlag.MULTILINE,
-            ): traceback_parser,
-        }
+        self._parsers = {}
+        for pattern, parser in _BUILTIN_PARSERS.values():
+            self._parsers[pattern] = parser
 
         self.thread = None
         self._stop_event = None
@@ -372,47 +430,3 @@ class LivyBatchLogReader:
                 "Do you already called `read_until_finish`?"
             )
         self._stop_event.set()
-
-
-def default_parser(match: typing.Match):
-    """Parser for default PySpark log format."""
-    LEVEL_MAPPING = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARN": logging.WARNING,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "FATAL": logging.CRITICAL,
-        "CRITICAL": logging.CRITICAL,
-    }
-
-    time = datetime.datetime.strptime(match.group(1), "%y/%m/%d %H:%M:%S")
-    level = LEVEL_MAPPING.get(match.group(2), logging.CRITICAL)
-
-    return LivyLogParseResult(
-        created=time,
-        level=level,
-        name=match.group(3),
-        message=match.group(4).lstrip().replace("\n\t", "\n"),
-    )
-
-
-def yarn_parser(match: typing.Match):
-    """Logs from YARN."""
-    time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
-    return LivyLogParseResult(
-        created=time,
-        level=logging.WARNING,
-        name="YARN",
-        message=match.group(2),
-    )
-
-
-def traceback_parser(match: typing.Match):
-    """Special case derived from stdout: Python traceback on exception raised."""
-    return LivyLogParseResult(
-        created=None,
-        level=logging.ERROR,
-        name="Traceback",
-        message=match.group(1),
-    )

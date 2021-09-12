@@ -117,10 +117,7 @@ class LivyBatchLogReaderTester(unittest.TestCase):
 
 class ParserTester(unittest.TestCase):
     def test_default_parser(self):
-        pattern = re.compile(
-            r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)"
-        )
-
+        pattern, _ = module._BUILTIN_PARSERS["Default"]
         m = pattern.match("21/05/01 12:34:56 DEBUG Foo: test message")
         p = module.default_parser(m)
 
@@ -130,17 +127,12 @@ class ParserTester(unittest.TestCase):
         assert p.name == "Foo"
         assert p.message == "test message"
 
-    def test_yarn_parser(self):
-        pattern = re.compile(
-            r"^\[((?:Sun|Mon|Tue|Wed|Thr|Fri|Sat) "
-            r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
-            r"\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4})\] (.+)"
-        )
-
+    def test_yarn_warning_parser(self):
+        pattern, _ = module._BUILTIN_PARSERS["YARN warning"]
         m = pattern.match(
             "[Tue May 25 08:40:24 +0800 2021] Application is added to the scheduler and is not yet activated. Queue's AM resource limit exceeded.  Details : AM Partition = CORE; AM Resource Request = <memory:896, max memory:253952, vCores:1, max vCores:48>; Queue Resource Limit for AM = <memory:0, vCores:0>; User AM Resource Limit of the queue = <memory:0, vCores:0>; Queue AM Resource Usage = <memory:896, vCores:1>;"
         )
-        p = module.yarn_parser(m)
+        p = module.yarn_warning_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
         assert p.created.timestamp() == 1621903224
@@ -148,16 +140,12 @@ class ParserTester(unittest.TestCase):
             "Application is added to the scheduler and is not yet activated."
         )
 
-    def test_traceback_parser(self):
-        pattern = re.compile(
-            r"Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
-            re.RegexFlag.MULTILINE,
-        )
-
+    def test_python_traceback_parser(self):
+        pattern, _ = module._BUILTIN_PARSERS["Python Traceback"]
         m = pattern.match(
             'Traceback (most recent call last):\n  File "<string>", line 1, in <module>\nValueError'
         )
-        p = module.traceback_parser(m)
+        p = module.python_traceback_parser(m)
 
         assert isinstance(p, module.LivyLogParseResult)
         assert p.created == None
