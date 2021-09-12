@@ -57,8 +57,19 @@ def python_traceback_parser(match: typing.Match):
     )
 
 
+def python_warning_parser(match: typing.Match):
+    """Special case derived from stdout: Output of `warnings.warn`."""
+    path, lineno, type_, msg = match.groups()
+    return LivyLogParseResult(
+        created=None,
+        level=logging.WARNING,
+        name=f"stdout.warning.{type_}",
+        message=f"{msg} (from line {lineno} @{path})",
+    )
+
+
 _SECTION_CHANGE = object()  # marker
-_BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Match, typing.Callable]] = {
+_BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Pattern, typing.Callable]] = {
     "Indicats that section is changed": (
         re.compile(
             r"^(stdout|stderr|YARN Diagnostics): ",
@@ -68,7 +79,7 @@ _BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Match, typing.Callable]] 
     ),
     "Default": (
         re.compile(
-            r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)\n",
+            r"^(\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+) (.+?):(.*(?:\n\t.+)*)$",
             re.RegexFlag.MULTILINE,
         ),
         default_parser,
@@ -88,6 +99,14 @@ _BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Match, typing.Callable]] 
             re.RegexFlag.MULTILINE,
         ),
         python_traceback_parser,
+    ),
+    # python warning message
+    "Python warning": (
+        re.compile(
+            r"^((?:[A-Z]:\\|\.|\/).+\.py):(\d+): (\w+): ([\s\S]+?)\n  .+",
+            re.RegexFlag.MULTILINE,
+        ),
+        python_warning_parser,
     ),
 }
 
@@ -161,8 +180,7 @@ class LivyBatchLogReader:
         self.timezone = timezone
         self.prefix = prefix or ""
 
-        # markers
-        self._plain_logs = object()
+        self._plain_logs = object()  # marker
 
         self._parsers = {}
         for pattern, parser in _BUILTIN_PARSERS.values():
@@ -252,7 +270,7 @@ class LivyBatchLogReader:
             pos, match, parser = self._match_log(matches, logs, pos)
 
             # special case: change section name
-            if parser is self._section_match:
+            if parser is _SECTION_CHANGE:
                 current_section = match.group(1)
                 continue
 

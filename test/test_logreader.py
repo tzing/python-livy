@@ -151,3 +151,15 @@ class ParserTester(unittest.TestCase):
         assert p.created == None
         assert p.level == logging.ERROR
         assert p.message.startswith("\n  File")
+
+    def test_python_warning_parser(self):
+        pattern, _ = module._BUILTIN_PARSERS["Python warning"]
+        m = pattern.match(
+            '/livy/logreader.py:115: UserWarning: Test\n  warnings.warn("Test")'
+        )
+        p = module.python_warning_parser(m)
+
+        assert isinstance(p, module.LivyLogParseResult)
+        assert p.created == None
+        assert p.level == logging.WARNING
+        assert p.message.startswith("Test")
