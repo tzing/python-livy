@@ -395,6 +395,28 @@ class LivyClient:
         resp = self._request("GET", f"/batches/{batch_id}/state")
         return resp.get("state", "(unknown)")
 
+    def is_batch_finished(self, batch_id: int) -> bool:
+        """Check batch state and return True if it is finished.
+
+        Parameter
+        ---------
+            batch_id : int
+                Batch ID
+
+        Return
+        ------
+            finished : bool
+                Task is over
+
+        Raises
+        ------
+        TypeError
+            On input parameters not matches expected data type
+        RequestError
+            On connection error
+        """
+        return self.get_batch_state(batch_id).lower() not in ("starting", "running")
+
     def get_batch_log(
         self, batch_id: int, from_: Optional[int] = None, size: Optional[int] = None
     ):
