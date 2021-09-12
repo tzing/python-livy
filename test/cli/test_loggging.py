@@ -1,4 +1,5 @@
 import argparse
+import decimal
 import importlib.util
 import logging
 import os
@@ -10,6 +11,7 @@ import livy.cli.logging as module
 
 # some package are optional; they are not installed in `test-core`
 no_colorama = importlib.util.find_spec("colorama") is None
+no_tqdm = importlib.util.find_spec("tqdm") is None
 
 
 class TestArgumentParse(unittest.TestCase):
@@ -46,6 +48,128 @@ class TestArgumentParse(unittest.TestCase):
             unittest.mock.patch("livy.cli.logging._get_console_handler", return_value=[logging.StreamHandler(), "Test message"]):
             module.init(args)
         # fmt: on
+
+
+class TestGetConsoleHandler(unittest.TestCase):
+    def setUp(self) -> None:
+        self.stream = unittest.mock.MagicMock()
+        self.stream.isatty.return_value = True
+
+    def test_get_console_handler_1(self):
+        handler, msg = module._get_console_handler(self.stream, False)
+        assert isinstance(handler, logging.Handler)
+        assert msg is None
+
+    def test_get_console_handler_2(self):
+        self.stream.isatty.return_value = False
+        handler, msg = module._get_console_handler(self.stream, True)
+        assert isinstance(handler, logging.Handler)
+        assert isinstance(msg, str)
+
+    @unittest.mock.patch("importlib.util.find_spec", return_value=None)
+    def test_get_console_handler_3(self, _):
+        handler, msg = module._get_console_handler(self.stream, True)
+        assert isinstance(handler, logging.Handler)
+        assert isinstance(msg, str)
+
+    @unittest.mock.patch("importlib.util.find_spec", return_value=True)
+    @unittest.mock.patch("livy.cli.logging._StreamHandlerWithProgressbar")
+    def test_get_console_handler_4(self, _1, _2):
+        _, msg = module._get_console_handler(self.stream, True)
+        assert msg is None
+
+
+@unittest.skipIf(no_tqdm, "tqdm is not installed")
+class TestHandler(unittest.TestCase):
+    def setUp(self) -> None:
+        stream = unittest.mock.MagicMock()
+        self.handler = module._StreamHandlerWithProgressbar(stream)
+
+        self.handler.filter = unittest.mock.Mock()
+
+    def record(self, name: str, msg: str) -> logging.LogRecord:
+        return logging.makeLogRecord(
+            {
+                "name": name,
+                "levelno": logging.INFO,
+                "levelname": "INFO",
+                "msg": msg,
+                "created": 1631440284,
+            }
+        )
+
+    def test_handle(self):
+        self.handler._set_progressbar = unittest.mock.Mock()
+        self.handler._close_progressbar = unittest.mock.Mock()
+        self.handler.filter.side_effect = [True, False, True]
+
+        self.handler.handle(
+            self.record(
+                "YarnScheduler",
+                "Adding task set 1.0 with 10 tasks",
+            )
+        )
+        self.handler.handle(
+            self.record(
+                "TaskSetManager",
+                "Finished task 1.0 in stage 1.0 (TID 1) in 0 ms on example.com (executor 2) (1/10)",
+            )
+        )
+        self.handler.handle(
+            self.record(
+                "YarnScheduler",
+                "Removed TaskSet 1.0, whose tasks have all completed, from pool",
+            )
+        )
+
+    def test_handle_not_related_message(self):
+        self.handler._set_progressbar = unittest.mock.Mock()
+        self.handler._close_progressbar = unittest.mock.Mock()
+
+        self.handler.handle(self.record("SomeOtherSource", "Not related message"))
+        self.handler.handle(self.record("TaskSetManager", "Not related message"))
+        self.handler.handle(self.record("YarnScheduler", "Not related message"))
+
+        self.handler._set_progressbar.assert_not_called()
+        self.handler._close_progressbar.assert_not_called()
+
+    def test_set_progressbar(self):
+        self.handler._close_progressbar = unittest.mock.Mock()
+
+        pb = unittest.mock.MagicMock()
+        pb.n = 6
+        self.handler._new_tqdm = unittest.mock.Mock(return_value=pb)
+
+        # success
+        self.handler._set_progressbar("2.0", 5, 10)
+        pb.update.assert_called()
+
+        # failed: older task
+        self.handler._set_progressbar("1.0", 9, 10)
+
+        # update
+        self.handler._set_progressbar("2.0", 7, 10)
+        self.handler._set_progressbar("2.0", 6, 10)
+
+        # new task
+        self.handler._set_progressbar("3.0", 7, 10)
+
+        assert pb.update.call_count == 3
+
+    def test_close_progressbar(self):
+        # not exists
+        self.handler._close_progressbar("1.0")
+
+        # version not match
+        self.handler._current_progressbar = pb = unittest.mock.MagicMock()
+        self.handler._latest_taskset = decimal.Decimal("1.5")
+
+        self.handler._close_progressbar("1.0")
+        pb.close.assert_not_called()
+
+        # closed
+        self.handler._close_progressbar("1.5")
+        pb.close.assert_called()
 
 
 class TestFormatter(unittest.TestCase):

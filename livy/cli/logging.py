@@ -217,8 +217,10 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
                     progress=0,
                     total=int(m.group(2)),
                 )
-            elif self._PATTERN_REMOVE_TASKSET.match(msg):
-                self._close_progressbar()
+            else:
+                m = self._PATTERN_REMOVE_TASKSET.match(msg)
+                if m:
+                    self._close_progressbar(m.group(1))
 
         elif record.name == "TaskSetManager":
             m = self._PATTERN_FINISH_TASK.match(record.getMessage())
@@ -247,12 +249,13 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         # update progress
         elif self._current_progressbar and task_set == self._latest_taskset:
             update = progress - self._current_progressbar.n
-            self._current_progressbar.update(update)
+            if update > 0:
+                self._current_progressbar.update(update)
             return
 
         # overwrite progressbar for new task set
         elif task_set > self._latest_taskset:
-            self._close_progressbar()
+            self._close_progressbar(self._latest_taskset)
             self._latest_taskset = task_set
 
         # create new progress bar
@@ -264,11 +267,17 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
 
         self._current_progressbar.update(progress)
 
-    def _close_progressbar(self) -> None:
+    def _close_progressbar(self, task_set: str) -> bool:
         if not self._current_progressbar:
-            return
+            return False
+
+        task_set = decimal.Decimal(task_set)
+        if task_set != self._latest_taskset:
+            return False
+
         self._current_progressbar.close()
         self._current_progressbar = None
+        return True
 
 
 def _get_general_formatter():
