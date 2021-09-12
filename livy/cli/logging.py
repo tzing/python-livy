@@ -1,6 +1,9 @@
+import contextlib
+import decimal
 import importlib.util
 import logging
 import os
+import re
 import sys
 import tempfile
 import typing
@@ -116,11 +119,16 @@ def init(args: "argparse.Namespace"):
     logging.captureWarnings(True)
 
     # console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    stream = sys.stdout
+
+    console_handler, msg_console_handler_create = _get_console_handler(
+        stream=stream,
+        with_progressbar=getattr(args, "with_progressbar", False),
+    )
     console_handler.setLevel(logging.INFO - 10 * args.verbose)
     root_logger.addHandler(console_handler)
 
-    _console_formatter = _get_console_formatter()
+    _console_formatter = _get_console_formatter(stream)
     console_handler.setFormatter(_console_formatter)
 
     _log_filter = _LogFilter()
@@ -144,6 +152,12 @@ def init(args: "argparse.Namespace"):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
+    # buffered message: progress bar handler creation
+    if msg_console_handler_create:
+        logger.warning(
+            "%s. Progressbar feature is disabled.", msg_console_handler_create
+        )
+
     # set highlight / lowlight loggers
     for name in getattr(args, "highlight_logger", []):
         register_highlight_logger(name)
@@ -153,6 +167,108 @@ def init(args: "argparse.Namespace"):
     _is_initialized = True
 
 
+def _get_console_handler(
+    stream: typing.TextIO, with_progressbar: bool
+) -> typing.Tuple[logging.StreamHandler, str]:
+    """Return fancy console handler if it is wanted and is avaliable."""
+    if not with_progressbar:
+        return logging.StreamHandler(stream), None
+    if not stream.isatty():
+        return logging.StreamHandler(stream), "Output stream is not attached to TTY"
+    if not importlib.util.find_spec("tqdm"):
+        return logging.StreamHandler(stream), "Dependency `tqdm` not found"
+    return _StreamHandlerWithProgressbar(stream), None
+
+
+class _StreamHandlerWithProgressbar(logging.StreamHandler):
+    _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
+    _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
+    _PATTERN_FINISH_TASK = re.compile(
+        r"Finished task [\d.]+ in stage (\d+).0 \(.+?\) in \d+ ms on \S+ "
+        r"\(executor \d+\) \((\d+)\/(\d+)\)"
+    )
+
+    def __init__(self, stream: typing.TextIO) -> None:
+        super().__init__(stream)
+        import tqdm
+
+        self._current_progressbar: tqdm.tqdm = None
+        self._latest_taskset: decimal.Decimal = decimal.Decimal(-1)
+
+        @contextlib.contextmanager
+        def lock():
+            self.acquire()
+            with tqdm.tqdm.external_write_mode():
+                yield
+            self.release()
+
+        self._writer_lock = lock
+        self._new_tqdm = tqdm.tqdm
+
+    def handle(self, record: logging.LogRecord) -> None:
+        """Override `handle` for reteriving the log before it is filtered."""
+        # capture logs from YarnScheduler / TaskSetManager for updating progressbar
+        if record.name == "YarnScheduler":
+            msg = record.getMessage()
+            m = self._PATTERN_ADD_TASKSET.match(msg)
+            if m:
+                self._set_progressbar(
+                    task_set=m.group(1),
+                    progress=0,
+                    total=int(m.group(2)),
+                )
+            elif self._PATTERN_REMOVE_TASKSET.match(msg):
+                self._close_progressbar()
+
+        elif record.name == "TaskSetManager":
+            m = self._PATTERN_FINISH_TASK.match(record.getMessage())
+            if m:
+                self._set_progressbar(
+                    task_set=m.group(1),
+                    progress=int(m.group(2)),
+                    total=int(m.group(3)),
+                )
+
+        # filter should be proceed in logging.Handler
+        if not self.filter(record):
+            return
+
+        # write
+        with self._writer_lock():
+            self.emit(record)
+
+    def _set_progressbar(self, task_set: str, progress: int, total: int) -> None:
+        task_set = decimal.Decimal(task_set)
+
+        # no update by status of older task set
+        if task_set < self._latest_taskset:
+            return
+
+        # update progress
+        elif self._current_progressbar and task_set == self._latest_taskset:
+            update = progress - self._current_progressbar.n
+            self._current_progressbar.update(update)
+            return
+
+        # overwrite progressbar for new task set
+        elif task_set > self._latest_taskset:
+            self._close_progressbar()
+            self._latest_taskset = task_set
+
+        # create new progress bar
+        self._current_progressbar = self._new_tqdm(
+            desc=f"TaskSet {task_set}",
+            total=total,
+            leave=True,
+        )
+
+        self._current_progressbar.update(progress)
+
+    def _close_progressbar(self) -> None:
+        if not self._current_progressbar:
+            return
+        self._current_progressbar.close()
+        self._current_progressbar = None
 
 
 def _get_general_formatter():
@@ -162,9 +278,9 @@ def _get_general_formatter():
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
 
 
-def _get_console_formatter():
+def _get_console_formatter(stream: typing.TextIO):
     """Return colored formatter if avaliable."""
-    if not sys.stdout.isatty() and importlib.util.find_spec("colorama"):
+    if not stream.isatty() or not importlib.util.find_spec("colorama"):
         return _get_general_formatter()
 
     cfg = livy.cli.config.load()
