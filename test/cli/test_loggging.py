@@ -171,6 +171,47 @@ class TestHandler(unittest.TestCase):
         self.handler._close_progressbar("1.5")
         pb.close.assert_called()
 
+    def test_handle_integration(self):
+        self.handler.handle(  # new task
+            self.record(
+                "YarnScheduler",
+                "Adding task set 1.0 with 10 tasks",
+            )
+        )
+        self.handler.handle(  # update progress
+            self.record(
+                "TaskSetManager",
+                "Finished task 1.0 in stage 1.0 (TID 1) in 0 ms on example.com (executor 2) (1/10)",
+            )
+        )
+        self.handler.handle(  # new stage
+            self.record(
+                "TaskSetManager",
+                "Finished task 5.0 in stage 3.0 (TID 1) in 0 ms on example.com (executor 2) (3/10)",
+            )
+        )
+        self.handler.handle(  # update progress failed
+            self.record(
+                "TaskSetManager",
+                "Finished task 7.0 in stage 3.0 (TID 1) in 0 ms on example.com (executor 2) (2/10)",
+            )
+        )
+        self.handler.handle(  # new task failed
+            self.record(
+                "YarnScheduler",
+                "Adding task set 2.0 with 10 tasks",
+            )
+        )
+        self.handler.handle(  # remove task failed
+            self.record(
+                "YarnScheduler",
+                "Removed TaskSet 1.0, whose tasks have all completed, from pool",
+            )
+        )
+
+        assert self.handler._current_progressbar.n == 3
+        assert self.handler._latest_taskset == decimal.Decimal("3.0")
+
 
 class TestFormatter(unittest.TestCase):
     def setUp(self) -> None:
