@@ -184,7 +184,7 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
     _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
     _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
     _PATTERN_FINISH_TASK = re.compile(
-        r"Finished task [\d.]+ in stage (\d+).0 \(.+?\) in \d+ ms on \S+ "
+        r"Finished task [\d.]+ in stage ([\d.]+) \(.+?\) in \d+ ms on \S+ "
         r"\(executor \d+\) \((\d+)\/(\d+)\)"
     )
 
