@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "livy"
-version = "0.10.0"
+version = "0.10.1"
 description = "Library to interact with Apache livy"
 authors = ["tzing <tzingshih@gmail.com>"]
 license = "MIT"
@@ -29,7 +29,7 @@ pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
 
 [tool.poetry.extras]
-pretty = ["colorama", "tqdmg"]
+pretty = ["colorama", "tqdm"]
 
 [tool.poetry.scripts]
 livy = "livy.__main__:main"
