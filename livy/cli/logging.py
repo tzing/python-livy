@@ -153,9 +153,6 @@ def init(args: "argparse.Namespace"):
     _is_initialized = True
 
 
-def _use_color_handler():
-    """Return true if `colorama` is installed and tty is attached."""
-    return sys.stdout.isatty() and importlib.util.find_spec("colorama")
 
 
 def _get_general_formatter():
@@ -163,6 +160,15 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
+
+
+def _get_console_formatter():
+    """Return colored formatter if avaliable."""
+    if not sys.stdout.isatty() and importlib.util.find_spec("colorama"):
+        return _get_general_formatter()
+
+    cfg = livy.cli.config.load()
+    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
@@ -249,15 +255,6 @@ class _ColoredFormatter(logging.Formatter):
             )
 
         return colors
-
-
-def _get_console_formatter():
-    """Return colored formatter if avaliable."""
-    if not _use_color_handler():
-        return _get_general_formatter()
-
-    cfg = livy.cli.config.load()
-    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 def register_highlight_logger(name: str):

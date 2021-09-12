@@ -4,6 +4,7 @@ import logging
 import os
 import tempfile
 import time
+import typing
 import unittest.mock
 
 import pytest
@@ -36,12 +37,18 @@ def test_init_with_display(with_display_feature):
     module.init(args)
 
 
-@unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=True)
-def test__get_console_formatter_colored(_):
-    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
+@pytest.fixture
+def stream():
+    s = unittest.mock.MagicMock()
+    return s
+
+
+def test__get_console_formatter_colored(stream: typing.TextIO):
+    if not importlib.util.find_spec("colorama"):  # test-core does not install colorama
         return
 
-    formatter = module._get_console_formatter()
+    stream.isatty.return_value = True
+    formatter = module._get_console_formatter(stream)
     assert isinstance(formatter, logging.Formatter)
 
 
@@ -59,7 +66,7 @@ def record() -> logging.LogRecord:
 
 
 def test__ColoredFormatter(record: logging.LogRecord):
-    if not importlib.util.find_spec("colorama"):  # test-core does not install colorlog
+    if not importlib.util.find_spec("colorama"):  # test-core does not install colorama
         return
 
     formatter = module._ColoredFormatter(
@@ -99,9 +106,9 @@ def test__is_wanted_logger(record: logging.LogRecord):
     assert not module._is_wanted_logger(record, wantted_names)
 
 
-@unittest.mock.patch("livy.cli.logging._use_color_handler", return_value=False)
-def test__get_console_formatter_fallback(_):
-    assert isinstance(module._get_console_formatter(), logging.Formatter)
+def test__get_console_formatter_fallback(stream: typing.TextIO):
+    stream.isatty.return_value = False
+    assert isinstance(module._get_console_formatter(stream), logging.Formatter)
 
 
 @unittest.mock.patch("livy.cli.logging._console_formatter")
