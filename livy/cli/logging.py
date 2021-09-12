@@ -260,7 +260,7 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
 
         # create new progress bar
         self._current_progressbar = self._new_tqdm(
-            desc=f"TaskSet {task_set}",
+            desc=f"Stage {task_set}",
             total=total,
             leave=True,
         )

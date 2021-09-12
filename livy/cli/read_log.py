@@ -60,7 +60,7 @@ def main(argv=None):
     client = livy.LivyClient(url=args.api_url)
 
     try:
-        client.check(capture=False)
+        is_finished = client.is_batch_finished(args.batch_id)
     except livy.RequestError as e:
         console.error(
             "Failed to check batch status. HTTP code=%d, Reason=%s", e.code, e.reason
@@ -72,6 +72,11 @@ def main(argv=None):
 
     # fetch log
     console.info("Reading logs from batch %d", args.batch_id)
+    if is_finished:
+        args.keep_watch = False
+        console.warning(
+            "Batch %d is already finished. Disable keep-watch behavior.", args.batch_id
+        )
 
     reader = livy.LivyBatchLogReader(client, args.batch_id)
 
