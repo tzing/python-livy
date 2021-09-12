@@ -1,6 +1,9 @@
+import contextlib
+import decimal
 import importlib.util
 import logging
 import os
+import re
 import sys
 import tempfile
 import typing
@@ -15,9 +18,10 @@ _console_formatter = None
 _log_filter = None
 
 
-def setup_argparse(parser: "argparse.ArgumentParser"):
-    group = parser.add_argument_group("logging")
+def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
     cfg = livy.cli.config.load()
+
+    group = parser.add_argument_group("console")
 
     # level
     g = group.add_mutually_exclusive_group()
@@ -28,7 +32,7 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         dest="verbose",
         action="count",
         default=0,
-        help="Enable debug log on console.",
+        help="Enable debug log.",
     )
     g.add_argument(
         "-q",
@@ -36,23 +40,48 @@ def setup_argparse(parser: "argparse.ArgumentParser"):
         dest="verbose",
         action="store_const",
         const=-1,
-        help="Silent mode. Only show warning and error log on console.",
+        help="Silent mode. Only show warning and error log.",
     )
 
     # highlight and lowlight
-    group.add_argument(
-        "--highlight-logger",
-        nargs="+",
-        default=[],
-        help="Highlight logs from the given loggers on console. "
-        "This option would be discarded if `colorama` is not installed.",
-    )
-    group.add_argument(
-        "--hide-logger",
-        nargs="+",
-        default=[],
-        help="Do not show logs from the given loggers on console.",
-    )
+    if for_display:
+        group.add_argument(
+            "--highlight-logger",
+            metavar="NAME",
+            nargs="+",
+            default=[],
+            help="Highlight logs from the given loggers. "
+            "This option only takes effect when `colorama` is installed.",
+        )
+        group.add_argument(
+            "--hide-logger",
+            metavar="NAME",
+            nargs="+",
+            default=[],
+            help="Do not show logs from the given loggers.",
+        )
+
+    # progress bar
+    if for_display:
+        g = group.add_mutually_exclusive_group()
+        g.set_defaults(with_progressbar=cfg.logs.with_progressbar)
+        g.add_argument(
+            "--pb",
+            "--with-progressbar",
+            action="store_true",
+            dest="with_progressbar",
+            help="Convert TaskSetManager's `Finished task XX in stage Y` logs into progress bar. "
+            "This option only takes effect when `tqdm` is installed.",
+        )
+        g.add_argument(
+            "--no-pb",
+            "--without-progressbar",
+            action="store_false",
+            dest="with_progressbar",
+            help="Not to convert TaskSetManager's logs into progress bar.",
+        )
+
+    group = parser.add_argument_group("file logging")
 
     # file
     g = group.add_mutually_exclusive_group()
@@ -90,11 +119,16 @@ def init(args: "argparse.Namespace"):
     logging.captureWarnings(True)
 
     # console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    stream = sys.stdout
+
+    console_handler, msg_console_handler_create = _get_console_handler(
+        stream=stream,
+        with_progressbar=getattr(args, "with_progressbar", False),
+    )
     console_handler.setLevel(logging.INFO - 10 * args.verbose)
     root_logger.addHandler(console_handler)
 
-    _console_formatter = _get_console_formatter()
+    _console_formatter = _get_console_formatter(stream)
     console_handler.setFormatter(_console_formatter)
 
     _log_filter = _LogFilter()
@@ -118,18 +152,132 @@ def init(args: "argparse.Namespace"):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
+    # buffered message: progress bar handler creation
+    if msg_console_handler_create:
+        logger.warning(
+            "%s. Progressbar feature is disabled.", msg_console_handler_create
+        )
+
     # set highlight / lowlight loggers
-    for name in args.highlight_logger:
+    for name in getattr(args, "highlight_logger", []):
         register_highlight_logger(name)
-    for name in args.hide_logger:
+    for name in getattr(args, "hide_logger", []):
         register_ignore_logger(name)
 
     _is_initialized = True
 
 
-def _use_color_handler():
-    """Return true if `colorama` is installed and tty is attached."""
-    return sys.stdout.isatty() and importlib.util.find_spec("colorama")
+def _get_console_handler(
+    stream: typing.TextIO, with_progressbar: bool
+) -> typing.Tuple[logging.StreamHandler, str]:
+    """Return fancy console handler if it is wanted and is avaliable."""
+    if not with_progressbar:
+        return logging.StreamHandler(stream), None
+    if not stream.isatty():
+        return logging.StreamHandler(stream), "Output stream is not attached to TTY"
+    if not importlib.util.find_spec("tqdm"):
+        return logging.StreamHandler(stream), "Dependency `tqdm` not found"
+    return _StreamHandlerWithProgressbar(stream), None
+
+
+class _StreamHandlerWithProgressbar(logging.StreamHandler):
+    _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
+    _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
+    _PATTERN_FINISH_TASK = re.compile(
+        r"Finished task [\d.]+ in stage (\d+).0 \(.+?\) in \d+ ms on \S+ "
+        r"\(executor \d+\) \((\d+)\/(\d+)\)"
+    )
+
+    def __init__(self, stream: typing.TextIO) -> None:
+        super().__init__(stream)
+        import tqdm
+
+        self._current_progressbar: tqdm.tqdm = None
+        self._latest_taskset: decimal.Decimal = decimal.Decimal(-1)
+
+        @contextlib.contextmanager
+        def lock():
+            self.acquire()
+            with tqdm.tqdm.external_write_mode():
+                yield
+            self.release()
+
+        self._writer_lock = lock
+        self._new_tqdm = tqdm.tqdm
+
+    def handle(self, record: logging.LogRecord) -> None:
+        """Override `handle` for reteriving the log before it is filtered."""
+        # capture logs from YarnScheduler / TaskSetManager for updating progressbar
+        if record.name == "YarnScheduler":
+            msg = record.getMessage()
+            m = self._PATTERN_ADD_TASKSET.match(msg)
+            if m:
+                self._set_progressbar(
+                    task_set=m.group(1),
+                    progress=0,
+                    total=int(m.group(2)),
+                )
+            else:
+                m = self._PATTERN_REMOVE_TASKSET.match(msg)
+                if m:
+                    self._close_progressbar(m.group(1))
+
+        elif record.name == "TaskSetManager":
+            m = self._PATTERN_FINISH_TASK.match(record.getMessage())
+            if m:
+                self._set_progressbar(
+                    task_set=m.group(1),
+                    progress=int(m.group(2)),
+                    total=int(m.group(3)),
+                )
+
+        # filter should be proceed in logging.Handler
+        if not self.filter(record):
+            return
+
+        # write
+        with self._writer_lock():
+            self.emit(record)
+
+    def _set_progressbar(self, task_set: str, progress: int, total: int) -> None:
+        task_set = decimal.Decimal(task_set)
+
+        # no update by status of older task set
+        if task_set < self._latest_taskset:
+            return
+
+        # update progress
+        elif self._current_progressbar and task_set == self._latest_taskset:
+            update = progress - self._current_progressbar.n
+            if update > 0:
+                self._current_progressbar.update(update)
+            return
+
+        # overwrite progressbar for new task set
+        elif task_set > self._latest_taskset:
+            self._close_progressbar(self._latest_taskset)
+            self._latest_taskset = task_set
+
+        # create new progress bar
+        self._current_progressbar = self._new_tqdm(
+            desc=f"TaskSet {task_set}",
+            total=total,
+            leave=True,
+        )
+
+        self._current_progressbar.update(progress)
+
+    def _close_progressbar(self, task_set: str) -> bool:
+        if not self._current_progressbar:
+            return False
+
+        task_set = decimal.Decimal(task_set)
+        if task_set != self._latest_taskset:
+            return False
+
+        self._current_progressbar.close()
+        self._current_progressbar = None
+        return True
 
 
 def _get_general_formatter():
@@ -137,6 +285,15 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
+
+
+def _get_console_formatter(stream: typing.TextIO):
+    """Return colored formatter if avaliable."""
+    if not stream.isatty() or not importlib.util.find_spec("colorama"):
+        return _get_general_formatter()
+
+    cfg = livy.cli.config.load()
+    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
@@ -223,15 +380,6 @@ class _ColoredFormatter(logging.Formatter):
             )
 
         return colors
-
-
-def _get_console_formatter():
-    """Return colored formatter if avaliable."""
-    if not _use_color_handler():
-        return _get_general_formatter()
-
-    cfg = livy.cli.config.load()
-    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 def register_highlight_logger(name: str):
