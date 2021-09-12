@@ -3,6 +3,7 @@ import hashlib
 import logging
 import re
 import threading
+import time
 import typing
 
 import livy.client
@@ -424,8 +425,11 @@ class LivyBatchLogReader:
 
         def watch():
             while not self.client.is_batch_finished(self.batch_id):
+                tick = time.time()
                 self.read()
-                if stop_event.wait(interval):
+                tock = time.time()
+                wait = max(interval - (tock - tick), 1e-6)
+                if stop_event.wait(wait):
                     return
 
         self.read()  # at least read once
