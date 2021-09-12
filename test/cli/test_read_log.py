@@ -7,7 +7,7 @@ import livy
 
 class TestMain(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = unittest.mock.Mock(spec=livy.LivyClient)
+        self.client = unittest.mock.MagicMock(spec=livy.LivyClient)
         self.reader = unittest.mock.Mock(spec=livy.LivyBatchLogReader)
 
         patcher = unittest.mock.patch("livy.LivyClient", return_value=self.client)
@@ -21,6 +21,7 @@ class TestMain(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_success(self):
+        self.client.is_batch_finished.return_value = False
         module.main(["--api-url", "http://example.com", "--keep-watch", "1234"])
 
     def test_server_error(self):

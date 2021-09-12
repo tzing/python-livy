@@ -71,14 +71,12 @@ def main(argv=None):
         return 1
 
     # fetch log
+    console.info("Reading logs from batch %d", args.batch_id)
     if is_finished:
         args.keep_watch = False
         console.warning(
             "Batch %d is already finished. Disable keep-watch behavior.", args.batch_id
         )
-        console.info("Fetching remaining logs from batch %d", args.batch_id)
-    else:
-        console.info("Reading logs from batch %d", args.batch_id)
 
     reader = livy.LivyBatchLogReader(client, args.batch_id)
 
