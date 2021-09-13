@@ -87,6 +87,9 @@ class TestHandler(unittest.TestCase):
 
         self.handler.filter = unittest.mock.Mock()
 
+    def tearDown(self) -> None:
+        del self.handler
+
     def record(self, name: str, msg: str) -> logging.LogRecord:
         return logging.makeLogRecord(
             {
@@ -138,7 +141,7 @@ class TestHandler(unittest.TestCase):
 
         pb = unittest.mock.MagicMock()
         pb.n = 6
-        self.handler._new_tqdm = unittest.mock.Mock(return_value=pb)
+        self.handler._tqdm_create = unittest.mock.Mock(return_value=pb)
 
         # success
         self.handler._set_progressbar("2.0", 5, 10)
