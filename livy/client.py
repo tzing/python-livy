@@ -75,6 +75,7 @@ class LivyClient:
 
         purl = urllib.parse.urlsplit(url)
         self._prefix = purl.path.rstrip("/")
+        self.host = purl.hostname.lower()
 
         # SSL verify
         if not isinstance(verify, (bool, ssl.SSLContext)):
@@ -101,6 +102,9 @@ class LivyClient:
         else:
             raise OperationError(f"Unsupported scheme: {scheme}")
 
+    def __repr__(self) -> str:
+        return f"<LivyClient for '{self.host}'>"
+
     def _request(self, method: str, path: str, data: dict = None) -> dict:
         """Firing request and decode response
 
@@ -124,7 +128,7 @@ class LivyClient:
             On any error during this funcition, including connection error, http
             status is not expected or response data decode error.
         """
-        assert method in ("GET", "POST", "DELETE")
+        assert method in ("GET", "POST", "DELETE", "HEAD")
         assert isinstance(path, str)
         assert data is None or isinstance(data, dict)
 
@@ -187,6 +191,23 @@ class LivyClient:
             raise RequestError(response.status, "JSON decode error", e)
 
         return response_data
+
+    def check(self, capture: bool = True) -> bool:
+        """Check if server is live.
+
+        Parameters
+        ----------
+            capture : bool
+                Capture exceptions or not.
+        """
+        try:
+            self._request("HEAD", "/batches")
+            return True
+        except RequestError:
+            if capture:
+                return False
+            else:
+                raise
 
     def create_batch(
         self,
@@ -377,6 +398,28 @@ class LivyClient:
             raise _TypeError("batch_id", int, batch_id)
         resp = self._request("GET", f"/batches/{batch_id}/state")
         return resp.get("state", "(unknown)")
+
+    def is_batch_finished(self, batch_id: int) -> bool:
+        """Check batch state and return True if it is finished.
+
+        Parameter
+        ---------
+            batch_id : int
+                Batch ID
+
+        Return
+        ------
+            finished : bool
+                Task is over
+
+        Raises
+        ------
+        TypeError
+            On input parameters not matches expected data type
+        RequestError
+            On connection error
+        """
+        return self.get_batch_state(batch_id).lower() not in ("starting", "running")
 
     def get_batch_log(
         self, batch_id: int, from_: Optional[int] = None, size: Optional[int] = None

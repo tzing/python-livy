@@ -25,7 +25,7 @@ class _LocalLogSection:
     """Configure logging behavior on local"""
 
     format: str = (
-        "%(log_color)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
+        "%(levelcolor)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
     )
     """Log message format."""
 
@@ -37,6 +37,9 @@ class _LocalLogSection:
 
     logfile_level: T_LOGLEVEL = "DEBUG"
     """Default log level on output to log file"""
+
+    with_progressbar: bool = True
+    """Convert TaskSetManager's logs into progress bar"""
 
 
 @dataclasses.dataclass
@@ -118,11 +121,11 @@ def main(argv=None):
     action = parser.add_subparsers(title="action", dest="action")
 
     p = action.add_parser("get", help="Get config value")
-    livy.cli.logging.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Config name to be retrieved.")
 
     p = action.add_parser("set", help="Set config value")
-    livy.cli.logging.setup_argparse(p)
+    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Name of config to be updated.")
     p.add_argument("value", help="Value to be set.")
 

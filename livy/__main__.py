@@ -24,7 +24,8 @@ def main():
     remain += sys.argv[2:]
 
     if args.subcommand is None:
-        print("Sub-command is required")
+        print("Sub-command is required: ", end="")
+        print(*subparsers.choices, sep=" / ")
         return 1
 
     # pass remain argv to subcommand

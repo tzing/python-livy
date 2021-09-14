@@ -7,7 +7,7 @@ import livy
 
 class TestMain(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = unittest.mock.Mock(spec=livy.LivyClient)
+        self.client = unittest.mock.MagicMock(spec=livy.LivyClient)
         self.reader = unittest.mock.Mock(spec=livy.LivyBatchLogReader)
 
         patcher = unittest.mock.patch("livy.LivyClient", return_value=self.client)
@@ -21,10 +21,11 @@ class TestMain(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_success(self):
+        self.client.is_batch_finished.return_value = False
         module.main(["--api-url", "http://example.com", "--keep-watch", "1234"])
 
-    def test_batch_error(self):
-        self.client.get_batch_state.side_effect = livy.RequestError(0, "foo")
+    def test_server_error(self):
+        self.client.is_batch_finished.side_effect = livy.RequestError(0, "foo")
         module.main(["--api-url", "http://example.com", "--keep-watch", "1234"])
 
     def test_read_once(self):
@@ -35,5 +36,10 @@ class TestMain(unittest.TestCase):
         module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])
 
     def test_keyboard_interrupt(self):
+        # on reading log
         self.reader.read.side_effect = KeyboardInterrupt()
+        module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])
+
+        # on initial check
+        self.client.is_batch_finished.side_effect = KeyboardInterrupt()
         module.main(["--api-url", "http://example.com", "--no-keep-watch", "1234"])

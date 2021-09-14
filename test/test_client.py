@@ -31,6 +31,22 @@ class LivyClientInitTester(unittest.TestCase):
         with self.assertRaises(exception.TypeError):
             module.LivyClient("http://example.com", "/path/to/certificates")
 
+    def test___repr__(self):
+        c = module.LivyClient("HTTP://EXAMPLE.COM:8998/FOO")
+        self.assertEqual(repr(c), "<LivyClient for 'example.com'>")
+
+    def test_check(self):
+        # true
+        self.assertTrue(self.client.check(True))
+
+        # failed, caputred
+        self.request.side_effect = exception.RequestError(0, "Foo")
+        self.assertFalse(self.client.check(True))
+
+        # failed, not captured
+        with self.assertRaises(exception.RequestError):
+            self.client.check(False)
+
     def test_create_batch(self):
         # required argument (file)
         self.client.create_batch("foo.py")
@@ -114,6 +130,15 @@ class LivyClientInitTester(unittest.TestCase):
         with self.assertRaises(exception.TypeError):
             self.client.get_batch_state("app")
         self.request.assert_not_called()
+
+    def test_is_batch_finished(self):
+        self.client.get_batch_state = get_state = unittest.mock.Mock()
+
+        get_state.return_value = "success"
+        self.assertTrue(self.client.is_batch_finished(1234))
+
+        get_state.return_value = "running"
+        self.assertFalse(self.client.is_batch_finished(1234))
 
     def test_get_batch_log(self):
         # success: no optional arg
