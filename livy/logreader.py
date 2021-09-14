@@ -194,6 +194,9 @@ class LivyBatchLogReader:
         self._emitted_logs = set()
         self._last_emit_timestamp = None
 
+    def __repr__(self) -> str:
+        return f"<LivyBatchLogReader for '{self.client.host}' batch#{self.batch_id}>"
+
     def add_parsers(
         self,
         pattern: typing.Pattern,

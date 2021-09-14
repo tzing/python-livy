@@ -25,6 +25,12 @@ class LivyBatchLogReaderTester(unittest.TestCase):
         with self.assertRaises(TypeError):
             module.LivyBatchLogReader(self.client, 1234, timezone=8)
 
+    def test___repr__(self):
+        self.client.host = "example.com"
+        self.assertEqual(
+            repr(self.reader), "<LivyBatchLogReader for 'example.com' batch#1234>"
+        )
+
     def test_add_parsers(self):
         # success
         pattern = re.compile(r"(.+): (.+)")  # dummy
