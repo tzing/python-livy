@@ -1,11 +1,13 @@
-import contextlib
 import decimal
 import importlib.util
 import logging
 import os
+import queue
 import re
 import sys
 import tempfile
+import threading
+import time
 import typing
 
 import livy.cli.config
@@ -184,9 +186,12 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
     _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
     _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
     _PATTERN_FINISH_TASK = re.compile(
-        r"Finished task [\d.]+ in stage (\d+).0 \(.+?\) in \d+ ms on \S+ "
+        r"Finished task [\d.]+ in stage ([\d.]+) \(.+?\) in \d+ ms on \S+ "
         r"\(executor \d+\) \((\d+)\/(\d+)\)"
     )
+
+    _tqdm_create = None
+    _tqdm_suppress = None
 
     def __init__(self, stream: typing.TextIO) -> None:
         super().__init__(stream)
@@ -195,15 +200,22 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         self._current_progressbar: tqdm.tqdm = None
         self._latest_taskset: decimal.Decimal = decimal.Decimal(-1)
 
-        @contextlib.contextmanager
-        def lock():
-            self.acquire()
-            with tqdm.tqdm.external_write_mode():
-                yield
-            self.release()
+        # tqdm is only avaliable in this scope
+        self._tqdm_create = tqdm.tqdm
+        self._tqdm_suppress = tqdm.tqdm.external_write_mode
 
-        self._writer_lock = lock
-        self._new_tqdm = tqdm.tqdm
+        # background worker and queue for write log by batch
+        self._log_queue = queue.Queue()
+
+        thread = threading.Thread(target=self._trigger_flush, args=())
+        thread.daemon = True
+        thread.start()
+
+    def _trigger_flush(self):
+        while True:
+            if self._log_queue.qsize() > 0:
+                self.flush()
+            time.sleep(0.1)
 
     def handle(self, record: logging.LogRecord) -> None:
         """Override `handle` for reteriving the log before it is filtered."""
@@ -235,9 +247,15 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         if not self.filter(record):
             return
 
-        # write
-        with self._writer_lock():
-            self.emit(record)
+        # enqueue
+        #
+        # Normally, `handle()` might emits log here. But as it use tqdm, which
+        # changes the cursor position.
+        # Suppressing the progress bar every time it emits log might make the
+        # progress bar flashing on too many logs proceed in short time.
+        # As the alternative, it proceed the logs by batch (in flush) and use a
+        # background thread to trigger flushing.
+        self._log_queue.put(record)
 
     def _set_progressbar(self, task_set: str, progress: int, total: int) -> None:
         task_set = decimal.Decimal(task_set)
@@ -259,7 +277,7 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
             self._latest_taskset = task_set
 
         # create new progress bar
-        self._current_progressbar = self._new_tqdm(
+        self._current_progressbar = self._tqdm_create(
             desc=f"Stage {task_set}",
             total=total,
             leave=True,
@@ -278,6 +296,23 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         self._current_progressbar.close()
         self._current_progressbar = None
         return True
+
+    def flush(self) -> None:
+        # get logs
+        logs: typing.List[logging.LogRecord] = []
+        while True:
+            try:
+                logs.append(self._log_queue.get_nowait())
+            except queue.Empty:
+                break
+
+        if not logs:
+            return
+
+        # emit logs
+        with self.lock, self._tqdm_suppress():
+            for record in logs:
+                self.emit(record)
 
 
 def _get_general_formatter():

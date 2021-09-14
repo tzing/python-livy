@@ -31,6 +31,10 @@ class LivyClientInitTester(unittest.TestCase):
         with self.assertRaises(exception.TypeError):
             module.LivyClient("http://example.com", "/path/to/certificates")
 
+    def test___repr__(self):
+        c = module.LivyClient("HTTP://EXAMPLE.COM:8998/FOO")
+        self.assertEqual(repr(c), "<LivyClient for 'example.com'>")
+
     def test_check(self):
         # true
         self.assertTrue(self.client.check(True))

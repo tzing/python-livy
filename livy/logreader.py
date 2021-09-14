@@ -3,6 +3,7 @@ import hashlib
 import logging
 import re
 import threading
+import time
 import typing
 
 import livy.client
@@ -192,6 +193,9 @@ class LivyBatchLogReader:
         self._lock = threading.Lock()
         self._emitted_logs = set()
         self._last_emit_timestamp = None
+
+    def __repr__(self) -> str:
+        return f"<LivyBatchLogReader for '{self.client.host}' batch#{self.batch_id}>"
 
     def add_parsers(
         self,
@@ -424,8 +428,11 @@ class LivyBatchLogReader:
 
         def watch():
             while not self.client.is_batch_finished(self.batch_id):
+                tick = time.time()
                 self.read()
-                if stop_event.wait(interval):
+                elapsed = time.time() - tick
+                sleep_time = max(interval - elapsed, 1e-4)
+                if stop_event.wait(sleep_time):
                     return
 
         self.read()  # at least read once

@@ -75,6 +75,7 @@ class LivyClient:
 
         purl = urllib.parse.urlsplit(url)
         self._prefix = purl.path.rstrip("/")
+        self.host = purl.hostname.lower()
 
         # SSL verify
         if not isinstance(verify, (bool, ssl.SSLContext)):
@@ -100,6 +101,9 @@ class LivyClient:
             )
         else:
             raise OperationError(f"Unsupported scheme: {scheme}")
+
+    def __repr__(self) -> str:
+        return f"<LivyClient for '{self.host}'>"
 
     def _request(self, method: str, path: str, data: dict = None) -> dict:
         """Firing request and decode response
