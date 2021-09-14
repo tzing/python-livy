@@ -50,8 +50,8 @@ class _ReadLogSection:
 
 @dataclasses.dataclass
 class _SubmitSection:
-    watch_log: bool = True
-    """Watching for logs after the task is submitted"""
+    pre_submit: typing.List[str] = None
+    """Pre-submit processor list"""
 
     driver_memory: str = None
     """Amount of memory to use for the driver process."""
@@ -70,6 +70,9 @@ class _SubmitSection:
 
     spark_conf: typing.List[typing.Tuple[str, str]] = None
     """Spark configuration properties"""
+
+    watch_log: bool = True
+    """Watching for logs after the task is submitted"""
 
 
 @dataclasses.dataclass
@@ -203,8 +206,9 @@ def main(argv=None):
             value_given = int(value_given)
         elif dtype is T_LOGLEVEL:
             assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
-        else:
-            logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
+        else:  # pragma: no cover
+            logger.warning("Unregistered data type %s", dtype)
+            return 1
     except:
         logger.error("Failed to parse given input %s into %s type", value_given, dtype)
         return 1

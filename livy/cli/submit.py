@@ -66,6 +66,15 @@ def main(argv=None):
         help="The session name to execute this batch",
     )
 
+    group = parser.add_argument_group("pre-submit actions")
+    group.add_argument(
+        "--pre-submit",
+        metavar="FUNC_NAME",
+        nargs="+",
+        default=cfg.submit.pre_submit,
+        help="Run specific processor before submit",
+    )
+
     group = parser.add_argument_group("livy server configuration")
     group.add_argument(
         "--api-url",
