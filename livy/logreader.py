@@ -430,9 +430,9 @@ class LivyBatchLogReader:
             while not self.client.is_batch_finished(self.batch_id):
                 tick = time.time()
                 self.read()
-                tock = time.time()
-                wait = max(interval - (tock - tick), 1e-6)
-                if stop_event.wait(wait):
+                elapsed = time.time() - tick
+                sleep_time = max(interval - elapsed, 1e-4)
+                if stop_event.wait(sleep_time):
                     return
 
         self.read()  # at least read once
