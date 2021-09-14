@@ -20,20 +20,16 @@ class TestArgumentParse(unittest.TestCase):
 
     def test_setup_argparse(self):
         p = argparse.ArgumentParser()
-        module.setup_argparse(p, True)
+        module.setup_argparse(p)
         p.parse_args(["-q"])
 
     def test_init(self):
-        args = argparse.Namespace()
-        args.verbose = 0
-        args.log_file = True
-
         with tempfile.NamedTemporaryFile() as fp, unittest.mock.patch(
             "os.getcwd", return_value=os.path.dirname(fp.name)
         ):
-            module.init(args)
+            module.init()
 
-        module.init(args)  # test cache
+        module.init()  # test cache
 
     def test_init_with_display(self):
         args = argparse.Namespace()
