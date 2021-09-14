@@ -53,6 +53,24 @@ class _SubmitSection:
     watch_log: bool = True
     """Watching for logs after the task is submitted"""
 
+    driver_memory: str = None
+    """Amount of memory to use for the driver process."""
+
+    driver_cores: int = None
+    """Number of cores to use for the driver process"""
+
+    executor_memory: str = None
+    """Amount of memory to use per executor process"""
+
+    executor_cores: int = None
+    """Number of cores to use for each executor"""
+
+    num_executors: int = None
+    """Number of executors to launch for this batch"""
+
+    spark_conf: typing.List[typing.Tuple[str, str]] = None
+    """Spark configuration properties"""
+
 
 @dataclasses.dataclass
 class _Settings:
@@ -181,6 +199,8 @@ def main(argv=None):
             ...
         elif dtype is bool:
             value_given = cbool(value_given)
+        elif dtype is int:
+            value_given = int(value_given)
         elif dtype is T_LOGLEVEL:
             assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
         else:
