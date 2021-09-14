@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "livy"
-version = "0.10.2"
+version = "0.10.3"
 description = "Library to interact with Apache livy"
 authors = ["tzing <tzingshih@gmail.com>"]
 license = "MIT"
