@@ -14,7 +14,29 @@ __all__ = ["LivyBatchLogReader"]
 logger = logging.getLogger(__name__)
 
 
-def default_parser(match: typing.Match):
+class LivyLogParseResult(typing.NamedTuple):
+    """Log parse result."""
+
+    created: datetime.datetime
+    """Timestamp that the log is created. Could be None if we could not determine
+    when does it created, would use the time last log is created.
+    """
+
+    level: int
+    """Log level.
+    """
+
+    name: str
+    """Logger name. Could be None if unknown, would be fallback to corresponding
+    output stream name (stdout/stderr).
+    """
+
+    message: str
+    """Log message.
+    """
+
+
+def default_parser(match: typing.Match) -> LivyLogParseResult:
     """Parser for default PySpark log format."""
     LEVEL_MAPPING = {
         "DEBUG": logging.DEBUG,
@@ -37,7 +59,7 @@ def default_parser(match: typing.Match):
     )
 
 
-def yarn_warning_parser(match: typing.Match):
+def yarn_warning_parser(match: typing.Match) -> LivyLogParseResult:
     """Warning message from YARN."""
     time = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %z %Y")
     return LivyLogParseResult(
@@ -48,7 +70,7 @@ def yarn_warning_parser(match: typing.Match):
     )
 
 
-def python_traceback_parser(match: typing.Match):
+def python_traceback_parser(match: typing.Match) -> LivyLogParseResult:
     """Special case derived from stdout: Python traceback on exception raised."""
     return LivyLogParseResult(
         created=None,
@@ -58,7 +80,7 @@ def python_traceback_parser(match: typing.Match):
     )
 
 
-def python_warning_parser(match: typing.Match):
+def python_warning_parser(match: typing.Match) -> LivyLogParseResult:
     """Special case derived from stdout: Output of `warnings.warn`."""
     path, lineno, type_, msg = match.groups()
     return LivyLogParseResult(
@@ -66,6 +88,17 @@ def python_warning_parser(match: typing.Match):
         level=logging.WARNING,
         name=f"stdout.warning.{type_}",
         message=f"{msg} (from line {lineno} @{path})",
+    )
+
+
+def python_argerror_parser(match: typing.Match) -> LivyLogParseResult:
+    """Special case derived from stdout: argument error from argparse."""
+    usage, msg = match.groups()
+    return LivyLogParseResult(
+        created=None,
+        level=logging.ERROR,
+        name="stdout.argerror",
+        message=f"{msg}\n{usage}",
     )
 
 
@@ -94,14 +127,13 @@ _BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Pattern, typing.Callable]
         ),
         yarn_warning_parser,
     ),
-    "Python Traceback": (
+    "Python traceback": (
         re.compile(
             r"^Traceback \(most recent call last\):(\n[\s\S]+?^[a-zA-Z].+)",
             re.RegexFlag.MULTILINE,
         ),
         python_traceback_parser,
     ),
-    # python warning message
     "Python warning": (
         re.compile(
             r"^((?:[A-Z]:\\|\.|\/).+\.py):(\d+): (\w+): ([\s\S]+?)\n  .+",
@@ -109,29 +141,14 @@ _BUILTIN_PARSERS: typing.Dict[str, typing.Tuple[typing.Pattern, typing.Callable]
         ),
         python_warning_parser,
     ),
+    "Python argerror": (
+        re.compile(
+            r"(usage: .+ \[-h\].+(?:\n .+)*)\n.+: error: (.+)",
+            re.RegexFlag.MULTILINE,
+        ),
+        python_argerror_parser,
+    ),
 }
-
-
-class LivyLogParseResult(typing.NamedTuple):
-    """Log parse result."""
-
-    created: datetime.datetime
-    """Timestamp that the log is created. Could be None if we could not determine
-    when does it created, would use the time last log is created.
-    """
-
-    level: int
-    """Log level.
-    """
-
-    name: str
-    """Logger name. Could be None if unknown, would be fallback to corresponding
-    output stream name (stdout/stderr).
-    """
-
-    message: str
-    """Log message.
-    """
 
 
 LivyLogParser = typing.Callable[[typing.Match], LivyLogParseResult]
