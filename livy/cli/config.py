@@ -1,12 +1,16 @@
 """Configuration management for python-livy CLI tool."""
 import argparse
 import dataclasses
-import pathlib
 import json
+import logging
+import pathlib
+import re
 import typing
 
 
 MAIN_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -104,8 +108,6 @@ def cbool(s: str) -> bool:
 
 def main(argv=None):
     """CLI entrypoint"""
-    import livy.cli.logging
-
     # parse args
     parser = argparse.ArgumentParser(
         prog="livy-config",
@@ -113,89 +115,126 @@ def main(argv=None):
     )
     action = parser.add_subparsers(title="action", dest="action")
 
+    p = action.add_parser("list", help="List configurations")
+
     p = action.add_parser("get", help="Get config value")
-    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Config name to be retrieved.")
 
     p = action.add_parser("set", help="Set config value")
-    livy.cli.logging.setup_argparse(p, False)
     p.add_argument("name", help="Name of config to be updated.")
     p.add_argument("value", help="Value to be set.")
 
     args = parser.parse_args(argv)
 
-    livy.cli.logging.init(args)
-    console = livy.cli.logging.get("livy-config.main")
-    logger = livy.cli.logging.get(__name__)
-
-    # check action
-    if args.action not in ("get", "set"):
-        console.error("action is required: get/set")
-        return 1
-
-    # check config name exists
-    if args.name.count(".") != 1:
-        console.error(
-            "Config name is always in `section.key` format. Got `%s`.", args.name
-        )
-        return 1
-
-    section_name, key_name = args.name.split(".", 1)
-    section_name = section_name.lower()
-    key_name = key_name.lower()
-
-    config = load()
-    if section_name not in config.__annotations__:
-        console.error("Unknown section %s", section_name)
-        return 1
-
-    section = getattr(config, section_name)
-    if key_name not in section.__annotations__:
-        console.error("Unknown key %s.%s", section_name, key_name)
-        return 1
-
-    # action: get
-    value_original = getattr(section, key_name)
+    # run
     if args.action == "get":
-        if value_original is None:
-            value_original = "<Not set>"
-        console.info("%s.%s = %s", section_name, key_name, value_original)
-        return 0
+        return cli_get_configure(args.name)
 
-    # otherwise, action: set
-    value_given = args.value
-    if not value_given.strip():
-        console.error("Could not set value as none")
+    elif args.action == "set":
+        raise NotImplementedError()
+
+    elif args.action == "list":
+        raise NotImplementedError()
+
+    else:
+        print("Action is required: list/get/set")
         return 1
 
-    dtype = section.__annotations__[key_name]
-    try:
-        if dtype is str:
-            ...
-        elif dtype is bool:
-            value_given = cbool(value_given)
-        elif dtype is T_LOGLEVEL:
-            assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
-        else:
-            logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
-    except:
-        logger.error("Failed to parse given input %s into %s type", value_given, dtype)
+    # # otherwise, action: set
+    # value_given = args.value
+    # if not value_given.strip():
+    #     console.error("Could not set value as none")
+    #     return 1
+
+    # dtype = section.__annotations__[key_name]
+    # try:
+    #     if dtype is str:
+    #         ...
+    #     elif dtype is bool:
+    #         value_given = cbool(value_given)
+    #     elif dtype is T_LOGLEVEL:
+    #         assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
+    #     else:
+    #         logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
+    # except:
+    #     logger.error("Failed to parse given input %s into %s type", value_given, dtype)
+    #     return 1
+
+    # if value_given == value_original:
+    #     console.info("%s.%s = %s (not changed)", section_name, key_name, value_given)
+    #     return 0
+
+    # setattr(section, key_name, value_given)
+
+    # # write value file
+    # logger.debug("Write config to %s", MAIN_CONFIG_PATH)
+
+    # with open(MAIN_CONFIG_PATH, "w") as fp:
+    #     json.dump(dataclasses.asdict(config), fp, indent=2)
+
+    # console.info("%s.%s = %s (updated)", section_name, key_name, value_given)
+    # return 0
+
+
+def cli_get_configure(name: str):
+    """Get configure, print on console"""
+    if not check_conf_name_format(name):
         return 1
 
-    if value_given == value_original:
-        console.info("%s.%s = %s (not changed)", section_name, key_name, value_given)
-        return 0
+    section, key = name.split(".", 1)
 
-    setattr(section, key_name, value_given)
+    cfg_root = load()
+    cfg_group = getattr(cfg_root, section.lower())
+    value = getattr(cfg_group, key.lower())
 
-    # write value file
-    logger.debug("Write config to %s", MAIN_CONFIG_PATH)
+    print(f"{name} = {value}")
 
-    with open(MAIN_CONFIG_PATH, "w") as fp:
-        json.dump(dataclasses.asdict(config), fp, indent=2)
-
-    console.info("%s.%s = %s (updated)", section_name, key_name, value_given)
     return 0
+
+
+def check_conf_name_format(name: str) -> bool:
+    """Check if key format is right"""
+    if not name.strip():
+        logger.error("Empty name is given")
+        return False
+
+    # no separator
+    cnt_dots = name.count(".")
+    if cnt_dots != 1:
+        logger.error("Config name is always in `section.key` format")
+        if cnt_dots == 0:
+            check_section_exist(name)
+        return False
+
+    # get and check keys
+    section, key = name.split(".", 1)
+
+    if not check_section_exist(section):
+        return False
+
+    if not check_key_exist(section, key):
+        return False
+
+    return True
+
+
+def check_section_exist(name: str) -> bool:
+    """Check if section name exists"""
+    if name.lower() in _Settings.__annotations__:
+        return True
+    logger.error("Given section name is invalid: %s", name)
+    logger.error("Acceptable section names: %s", ", ".join(_Settings.__annotations__))
+    return False
+
+
+def check_key_exist(section: str, key: str) -> bool:
+    """Check if key exists. It assumes section name is verified."""
+    section_class = _Settings.__annotations__[section.lower()]
+    if key.lower() in section_class.__annotations__:
+        return True
+    logger.error("Key `%s` does not exist in section %s", key, section)
+    logger.error("Acceptable key names: %s", ", ".join(section_class.__annotations__))
+    return False
 
 
 if __name__ == "__main__":
