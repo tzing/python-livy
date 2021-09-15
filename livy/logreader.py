@@ -435,7 +435,7 @@ class LivyBatchLogReader:
                 if stop_event.wait(sleep_time):
                     return
 
-        self.read()  # at least read once
+            self.read()  # fetch remaining logs
 
         if block:
             watch()
