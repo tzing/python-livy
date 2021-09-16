@@ -7,23 +7,116 @@ import unittest.mock
 import livy.cli.config as module
 
 
-class TestConfig(unittest.TestCase):
+class TestConfigSectionBase(unittest.TestCase):
+    def test___init__(self):
+        class Foo(module.ConfigSectionBase):
+            baz: int = 456
+            qax: int
+
+        class Bar(module.ConfigSectionBase):
+            foo: Foo
+            bar: int = 123
+            qaz: str = "hello"
+
+        t = Bar(qaz="world")
+
+        assert t.bar == 123
+        assert t.foo.baz == 456
+        assert t.qaz == "world"
+
+    def test___repr__(self):
+        class Foo(module.ConfigSectionBase):
+            bar: int = 123
+            qaz: str = "hello"
+
+        t = Foo()
+        assert repr(t) == "Foo(bar=123, qaz=hello)"
+
+    def test_merge(self):
+        # data
+        class Foo(module.ConfigSectionBase):
+            baz: int
+            qax: int
+
+        a = Foo()
+        a.baz = 1
+        a.qax = 2
+
+        b = Foo()
+        b.qax = 3
+        b.foo = 4
+        assert a.baz == 1
+        assert a.qax == 2
+
+        # run
+        a.merge(b)
+
+        # check
+        assert a.baz == 1
+        assert a.qax == 3
+        with self.assertRaises(AttributeError):
+            a.foo
+
+    def test_from_dict(self):
+        class Foo(module.ConfigSectionBase):
+            baz: int = 456
+
+        class Bar(module.ConfigSectionBase):
+            foo: Foo
+            bar: int = 123
+
+        # success
+        t = Bar.from_dict({"foo": {"baz": 789}})
+        assert isinstance(t, Bar)
+        assert t.bar == 123
+        assert t.foo.baz == 789
+
+        # failed
+        t = Bar.from_dict({"foo": 3})
+        assert isinstance(t, Bar)
+        assert t.foo.baz == 456
+
+    def test_to_dict(self):
+        class Foo(module.ConfigSectionBase):
+            baz: int = 456
+            qaz: str = "hello"
+
+        class Bar(module.ConfigSectionBase):
+            foo: Foo
+            bar: int = 123
+
+        self.assertDictEqual(
+            Bar().to_dict(),
+            {
+                "bar": 123,
+                "foo": {
+                    "baz": 456,
+                    "qaz": "hello",
+                },
+            },
+        )
+
+
+class TestConfiguration(unittest.TestCase):
     def setUp(self) -> None:
         _, path = tempfile.mkstemp()
         self.config_path = path
 
-        patcher = unittest.mock.patch("livy.cli.config.MAIN_CONFIG_PATH", path)
+        patcher = unittest.mock.patch("livy.cli.config.CONFIG_LOAD_ORDER", [path])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = unittest.mock.patch("livy.cli.config._configuration", None)
         patcher.start()
         self.addCleanup(patcher.stop)
 
     def tearDown(self) -> None:
-        module._settings = None
         os.remove(self.config_path)
 
     def test_load_default(self):
         s1 = module.load()
         s2 = module.load()
-        assert s1 is s2
+        assert s1 is s2  # cache
 
     def test_load_with_config(self):
         # prepare
@@ -41,41 +134,7 @@ class TestConfig(unittest.TestCase):
             )
 
         # test
-        s = module.load(self.config_path)
+        s = module.load()
 
         assert s.root.api_url == "http://example.com/"
         assert s.read_log.keep_watch == False
-
-    def test_main(self):
-        self.assertEqual(0, module.main(["get", "root.api_url"]))
-        self.assertEqual(0, module.main(["set", "root.api_url", "http://example.com/"]))
-        self.assertEqual(0, module.main(["get", "root.api_url"]))
-        self.assertEqual(0, module.main(["set", "root.api_url", "http://example.com/"]))
-
-    def test_main_error(self):
-        self.assertNotEqual(0, module.main([]))
-        self.assertNotEqual(0, module.main(["get", "foo"]))
-        self.assertNotEqual(0, module.main(["get", "foo.bar"]))
-        self.assertNotEqual(0, module.main(["get", "root.foo"]))
-        self.assertNotEqual(0, module.main(["set", "root.api_url", " "]))
-        self.assertNotEqual(0, module.main(["set", "logs.logfile_level", "foo"]))
-        self.assertNotEqual(0, module.main(["set", "read_log.keep_watch", "foo"]))
-
-
-class TestValidator(unittest.TestCase):
-    def test_cbool(self):
-        # true
-        self.assertEqual(module.cbool(True), True)
-        self.assertEqual(module.cbool("True"), True)
-        self.assertEqual(module.cbool("yes"), True)
-        self.assertEqual(module.cbool(1), True)
-
-        # false
-        self.assertEqual(module.cbool(False), False)
-        self.assertEqual(module.cbool("F"), False)
-        self.assertEqual(module.cbool("N"), False)
-        self.assertEqual(module.cbool("0"), False)
-
-        # fail
-        with self.assertRaises(ValueError):
-            module.cbool("foo")
