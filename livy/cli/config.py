@@ -1,21 +1,17 @@
 """Configuration management for python-livy CLI tool."""
 import abc
 import argparse
-import dataclasses
+import enum
 import json
 import logging
 import pathlib
-import re
-import typing
 
 
+USER_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
 CONFIG_LOAD_ORDER = [
     pathlib.Path(__file__).resolve().parent.parent / "default-configure.json",
-    pathlib.Path.home() / ".config" / "python-livy.json",
+    USER_CONFIG_PATH,
 ]
-
-
-T_LOGLEVEL = typing.TypeVar("T_LOGLEVEL")
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +97,12 @@ class Configuration(ConfigSectionBase):
     class LocalLoggingSection(ConfigSectionBase):
         """Logging behavior on local"""
 
+        class LogLevel(enum.IntEnum):
+            DEBUG = logging.DEBUG
+            INFO = logging.INFO
+            WARNING = logging.WARNING
+            ERROR = logging.ERROR
+
         format: str = (
             "%(levelcolor)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
         )
@@ -112,7 +114,7 @@ class Configuration(ConfigSectionBase):
         output_file: bool = False
         """Output logs into file by default"""
 
-        logfile_level: T_LOGLEVEL = "DEBUG"
+        logfile_level: LogLevel = LogLevel.DEBUG
         """Default log level on output to log file"""
 
         with_progressbar: bool = True
@@ -157,28 +159,17 @@ def load() -> Configuration:
     return _configuration
 
 
-def cbool(s: str) -> bool:
-    if isinstance(s, bool):
-        return s
-    s = str(s).lower()
-    if s in ("1", "t", "true", "y", "yes"):
-        return True
-    elif s in ("0", "f", "false", "n", "no"):
-        return False
-    else:
-        raise ValueError()
-
-
 def main(argv=None):
     """CLI entrypoint"""
     # parse args
     parser = argparse.ArgumentParser(
         prog="livy-config",
-        description=f"{__doc__} All configured would be saved and loaded in {CONFIG_LOAD_ORDER}.",
+        description=f"{__doc__} All configured would be saved and loaded from {USER_CONFIG_PATH}.",
     )
     action = parser.add_subparsers(title="action", dest="action")
 
     p = action.add_parser("list", help="List configurations")
+    p.add_argument("section", nargs="?", help="Only show specific section")
 
     p = action.add_parser("get", help="Get config value")
     p.add_argument("name", help="Config name to be retrieved.")
@@ -194,65 +185,78 @@ def main(argv=None):
         return cli_get_configure(args.name)
 
     elif args.action == "set":
-        raise NotImplementedError()
+        return cli_set_configure(args.name, args.value)
 
     elif args.action == "list":
-        raise NotImplementedError()
+        return cli_list_configure(args.section)
 
     else:
         print("Action is required: list/get/set")
         return 1
 
-    # # otherwise, action: set
-    # value_given = args.value
-    # if not value_given.strip():
-    #     console.error("Could not set value as none")
-    #     return 1
-
-    # dtype = section.__annotations__[key_name]
-    # try:
-    #     if dtype is str:
-    #         ...
-    #     elif dtype is bool:
-    #         value_given = cbool(value_given)
-    #     elif dtype is T_LOGLEVEL:
-    #         assert value_given in ("DEBUG", "INFO", "WARNING", "ERROR")
-    #     else:
-    #         logger.warning("Unregistered data type %s", dtype)  # pragma: no cover
-    # except:
-    #     logger.error("Failed to parse given input %s into %s type", value_given, dtype)
-    #     return 1
-
-    # if value_given == value_original:
-    #     console.info("%s.%s = %s (not changed)", section_name, key_name, value_given)
-    #     return 0
-
-    # setattr(section, key_name, value_given)
-
-    # # write value file
-    # logger.debug("Write config to %s", MAIN_CONFIG_PATH)
-
-    # with open(MAIN_CONFIG_PATH, "w") as fp:
-    #     json.dump(dataclasses.asdict(config), fp, indent=2)
-
-    # console.info("%s.%s = %s (updated)", section_name, key_name, value_given)
-    # return 0
-
 
 def cli_get_configure(name: str):
-    """Get configure, print on console"""
+    """Get config, print on console"""
     if not check_conf_name_format(name):
         return 1
 
-    section, key = name.split(".", 1)
+    section, key = name.lower().split(".", 1)
 
     cfg_root = load()
-    cfg_group = getattr(cfg_root, section.lower())
-    value = getattr(cfg_group, key.lower())
+    cfg_group = getattr(cfg_root, section)
+    value = getattr(cfg_group, key)
 
-    print(f"{name} = {value}")
+    print(f"{section}.{key} = {value}")
 
     return 0
+
+
+def cli_set_configure(name: str, raw_input: str):
+    """Set config"""
+    if not check_conf_name_format(name):
+        return 1
+
+    # get section
+    section, key = name.lower().split(".", 1)
+    cfg_root = load()
+    cfg_group = getattr(cfg_root, section)
+    value_orig = getattr(cfg_group, key)
+    dtype = cfg_group.__annotations__[key]
+
+    # convert value
+    try:
+        value_new = convert_user_input(raw_input, dtype)
+    except Exception as e:
+        logger.error(
+            "Failed to parse input `%s`. Extra message: %s",
+            raw_input,
+            e.args[0] if e.args else "none",
+        )
+        return 1
+
+    is_changed = value_new != value_orig
+
+    # set value
+    setattr(cfg_group, key, value_new)
+
+    # show value
+    print(f"{section}.{key} = {value_new}", end=" ")
+    print("(updated)" if is_changed else "(not changed)")
+
+    # write config file
+    if is_changed:
+        try:
+            with open(USER_CONFIG_PATH, "w") as fp:
+                json.dump(cfg_root.to_dict(), fp, indent=2)
+        except Exception:
+            logger.exception("Failed to write configure file")
+            return 1
+
+    return 0
+
+
+def cli_list_configure(name: str):
+    raise NotImplementedError()  # pragma: no cover
 
 
 def check_conf_name_format(name: str) -> bool:
@@ -283,21 +287,47 @@ def check_conf_name_format(name: str) -> bool:
 
 def check_section_exist(name: str) -> bool:
     """Check if section name exists"""
-    if name.lower() in _Settings.__annotations__:
+    if name.lower() in Configuration.__annotations__:
         return True
     logger.error("Given section name is invalid: %s", name)
-    logger.error("Acceptable section names: %s", ", ".join(_Settings.__annotations__))
+    logger.error(
+        "Acceptable section names: %s", ", ".join(Configuration.__annotations__)
+    )
     return False
 
 
 def check_key_exist(section: str, key: str) -> bool:
-    """Check if key exists. It assumes section name is verified."""
-    section_class = _Settings.__annotations__[section.lower()]
+    """Check if key exists. It assumes section name is verified"""
+    section_class = Configuration.__annotations__[section.lower()]
     if key.lower() in section_class.__annotations__:
         return True
     logger.error("Key `%s` does not exist in section %s", key, section)
     logger.error("Acceptable key names: %s", ", ".join(section_class.__annotations__))
     return False
+
+
+def convert_user_input(s: str, dtype: type):
+    """Convert user input str (from CLI) to related data type"""
+    if dtype is str:
+        return s
+    elif dtype is int:
+        return int(s)
+    elif dtype is bool:
+        return cbool(s)
+    else:
+        assert False, f"data of type {dtype} is currently unsupported"
+
+
+def cbool(s: str) -> bool:
+    if isinstance(s, bool):
+        return s
+    s = str(s).lower()
+    if s in ("1", "t", "true", "y", "yes"):
+        return True
+    elif s in ("0", "f", "false", "n", "no"):
+        return False
+    else:
+        assert False, "should be [t]rue or [f]alse"
 
 
 if __name__ == "__main__":

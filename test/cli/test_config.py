@@ -138,3 +138,74 @@ class TestConfiguration(unittest.TestCase):
 
         assert s.root.api_url == "http://example.com/"
         assert s.read_log.keep_watch == False
+
+
+class TestMain(unittest.TestCase):
+    def test_main(self):
+        with unittest.mock.patch("livy.cli.config.cli_get_configure", return_value=0):
+            self.assertEqual(0, module.main(["get", "foo.bar"]))
+
+        with unittest.mock.patch("livy.cli.config.cli_set_configure", return_value=0):
+            self.assertEqual(0, module.main(["set", "foo.bar", "test"]))
+
+        with unittest.mock.patch("livy.cli.config.cli_list_configure", return_value=0):
+            self.assertEqual(0, module.main(["list"]))
+
+        self.assertEqual(1, module.main([]))
+
+    def test_cli_get_configure(self):
+        self.assertEqual(0, module.cli_get_configure("root.api_url"))
+
+        # also test assisting functions here
+        self.assertEqual(1, module.cli_get_configure(""))
+        self.assertEqual(1, module.cli_get_configure("foo"))
+        self.assertEqual(1, module.cli_get_configure("foo.bar"))
+        self.assertEqual(1, module.cli_get_configure("root.foo"))
+
+    def test_cli_set_configure(self):
+        _, path = tempfile.mkstemp()
+        self.addCleanup(lambda: os.remove(path))
+
+        # success
+        with unittest.mock.patch(
+            "livy.cli.config.USER_CONFIG_PATH", path
+        ), unittest.mock.patch(
+            "livy.cli.config.convert_user_input", return_value="foo"
+        ):
+            self.assertEqual(0, module.cli_set_configure("root.api_url", "test"))
+
+        # section not exist
+        self.assertEqual(1, module.cli_set_configure("foo", "bar"))
+
+        # parse error
+        with unittest.mock.patch(
+            "livy.cli.config.convert_user_input", side_effect=Exception()
+        ):
+            self.assertEqual(1, module.cli_set_configure("root.api_url", "test"))
+
+        # file open error
+        with unittest.mock.patch(
+            "livy.cli.config.open", side_effect=FileNotFoundError()
+        ), unittest.mock.patch(
+            "livy.cli.config.convert_user_input", return_value="bar"
+        ):
+            self.assertEqual(1, module.cli_set_configure("root.api_url", "test"))
+
+
+class TestUserInputConvert(unittest.TestCase):
+    def test_cbool(self):
+        # true
+        self.assertEqual(module.cbool(True), True)
+        self.assertEqual(module.cbool("True"), True)
+        self.assertEqual(module.cbool("yes"), True)
+        self.assertEqual(module.cbool(1), True)
+
+        # false
+        self.assertEqual(module.cbool(False), False)
+        self.assertEqual(module.cbool("F"), False)
+        self.assertEqual(module.cbool("N"), False)
+        self.assertEqual(module.cbool("0"), False)
+
+        # fail
+        with self.assertRaises(AssertionError):
+            module.cbool("foo")
