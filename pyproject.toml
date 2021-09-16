@@ -33,8 +33,6 @@ pretty = ["colorama", "tqdm"]
 
 [tool.poetry.scripts]
 livy = "livy.__main__:main"
-livy-read-log = "livy.cli.read_log:main"
-livy-config = "livy.cli.config:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
