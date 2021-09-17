@@ -65,7 +65,7 @@ class ConfigSectionBase(abc.ABC):
             value = d.get(name, cls.__missing)
             if value is cls.__missing:
                 continue
-            if issubclass(dtype, ConfigSectionBase):
+            if isinstance(dtype, type) and issubclass(dtype, ConfigSectionBase):
                 if isinstance(value, dict):
                     value = dtype.from_dict(value)
                 else:
