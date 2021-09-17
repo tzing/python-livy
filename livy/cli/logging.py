@@ -216,7 +216,7 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         while True:
             if self._log_queue.qsize() > 0:
                 self.flush()
-            time.sleep(0.1)
+            time.sleep(0.07)
 
     def handle(self, record: logging.LogRecord) -> None:
         """Override `handle` for reteriving the log before it is filtered."""

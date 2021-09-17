@@ -1,5 +1,6 @@
 import argparse
 import sys
+import time
 
 import livy.cli.config
 import livy.cli.read_log
@@ -34,4 +35,11 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    # The special logger inside livy.cli.logging has a internal queue for
+    # storing the logs and flush it by batch. Sometime the queue isn't empty at
+    # the time we exit the progream, and cause multiprocessing resource tracker
+    # warning about leaked semaphore. As a workaround, we add sleep here to
+    # ensure flush is triggered and queue should be empty.
+    code = main()
+    time.sleep(0.1)
+    exit(code)
