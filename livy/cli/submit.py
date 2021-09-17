@@ -152,7 +152,7 @@ def main(argv=None):
 
 def argmem(s: str):
     """Validate input for memory size"""
-    if not re.fullmatch("\d+[gm]b?", s, re.RegexFlag.IGNORECASE):
+    if not re.fullmatch(r"\d+[gm]b?", s, re.RegexFlag.IGNORECASE):
         raise argparse.ArgumentTypeError(s)
     return s
 
