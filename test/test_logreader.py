@@ -147,7 +147,7 @@ class ParserTester(unittest.TestCase):
         )
 
     def test_python_traceback_parser(self):
-        pattern, _ = module._BUILTIN_PARSERS["Python Traceback"]
+        pattern, _ = module._BUILTIN_PARSERS["Python traceback"]
         m = pattern.match(
             'Traceback (most recent call last):\n  File "<string>", line 1, in <module>\nValueError'
         )
@@ -169,3 +169,17 @@ class ParserTester(unittest.TestCase):
         assert p.created == None
         assert p.level == logging.WARNING
         assert p.message.startswith("Test")
+
+    def test_python_argerror_parser(self):
+        pattern, _ = module._BUILTIN_PARSERS["Python argerror"]
+        m = pattern.match(
+            "usage: example [-h] foo\n"
+            "                    bar\n"
+            "example: error: test error"
+        )
+        p = module.python_argerror_parser(m)
+
+        assert isinstance(p, module.LivyLogParseResult)
+        assert p.created == None
+        assert p.level == logging.ERROR
+        assert p.message.startswith("test error")

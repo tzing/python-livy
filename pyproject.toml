@@ -19,7 +19,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.6.2"
-dataclasses = {version = "^0.6", python = "<3.7"}
 colorama = {version = "^0.4.4", optional = true}
 tqdm = {version = "^4.62.2", optional = true}
 
@@ -33,9 +32,6 @@ pretty = ["colorama", "tqdm"]
 
 [tool.poetry.scripts]
 livy = "livy.__main__:main"
-livy-submit = "livy.cli.submit:main"
-livy-read-log = "livy.cli.read_log:main"
-livy-config = "livy.cli.config:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

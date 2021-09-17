@@ -1,3 +1,4 @@
+import argparse
 import decimal
 import importlib.util
 import logging
@@ -12,15 +13,14 @@ import typing
 
 import livy.cli.config
 
-if typing.TYPE_CHECKING:
-    import argparse
-
 _is_initialized = False
 _console_formatter = None
 _log_filter = None
 
 
-def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
+def setup_argparse(parser: argparse.ArgumentParser):
+    """Setup argparser, in very detail. For use with those complex features like
+    submit/read-log."""
     cfg = livy.cli.config.load()
 
     group = parser.add_argument_group("console")
@@ -46,42 +46,40 @@ def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
     )
 
     # highlight and lowlight
-    if for_display:
-        group.add_argument(
-            "--highlight-logger",
-            metavar="NAME",
-            nargs="+",
-            default=[],
-            help="Highlight logs from the given loggers. "
-            "This option only takes effect when `colorama` is installed.",
-        )
-        group.add_argument(
-            "--hide-logger",
-            metavar="NAME",
-            nargs="+",
-            default=[],
-            help="Do not show logs from the given loggers.",
-        )
+    group.add_argument(
+        "--highlight-logger",
+        metavar="NAME",
+        nargs="+",
+        default=[],
+        help="Highlight logs from the given loggers. "
+        "This option only takes effect when `colorama` is installed.",
+    )
+    group.add_argument(
+        "--hide-logger",
+        metavar="NAME",
+        nargs="+",
+        default=[],
+        help="Do not show logs from the given loggers.",
+    )
 
     # progress bar
-    if for_display:
-        g = group.add_mutually_exclusive_group()
-        g.set_defaults(with_progressbar=cfg.logs.with_progressbar)
-        g.add_argument(
-            "--pb",
-            "--with-progressbar",
-            action="store_true",
-            dest="with_progressbar",
-            help="Convert TaskSetManager's `Finished task XX in stage Y` logs into progress bar. "
-            "This option only takes effect when `tqdm` is installed.",
-        )
-        g.add_argument(
-            "--no-pb",
-            "--without-progressbar",
-            action="store_false",
-            dest="with_progressbar",
-            help="Not to convert TaskSetManager's logs into progress bar.",
-        )
+    g = group.add_mutually_exclusive_group()
+    g.set_defaults(with_progressbar=cfg.logs.with_progressbar)
+    g.add_argument(
+        "--pb",
+        "--with-progressbar",
+        action="store_true",
+        dest="with_progressbar",
+        help="Convert TaskSetManager's `Finished task XX in stage Y` logs into progress bar. "
+        "This option only takes effect when `tqdm` is installed.",
+    )
+    g.add_argument(
+        "--no-pb",
+        "--without-progressbar",
+        action="store_false",
+        dest="with_progressbar",
+        help="Not to convert TaskSetManager's logs into progress bar.",
+    )
 
     group = parser.add_argument_group("file logging")
 
@@ -109,11 +107,13 @@ def setup_argparse(parser: "argparse.ArgumentParser", for_display: bool):
     )
 
 
-def init(args: "argparse.Namespace"):
+def init(args: argparse.Namespace = None):
     """Initialize loggers"""
     global _is_initialized, _console_formatter, _log_filter
     if _is_initialized:
         return
+
+    args = args or argparse.Namespace()
 
     # root logger
     root_logger = logging.getLogger()
@@ -127,7 +127,7 @@ def init(args: "argparse.Namespace"):
         stream=stream,
         with_progressbar=getattr(args, "with_progressbar", False),
     )
-    console_handler.setLevel(logging.INFO - 10 * args.verbose)
+    console_handler.setLevel(logging.INFO - 10 * getattr(args, "verbose", 0))
     root_logger.addHandler(console_handler)
 
     _console_formatter = _get_console_formatter(stream)
@@ -137,7 +137,8 @@ def init(args: "argparse.Namespace"):
     console_handler.addFilter(_log_filter)
 
     # file handler
-    if args.log_file or args.log_file is None:
+    args.log_file = getattr(args, "log_file", False)
+    if args.log_file != False:  # log_file == None is possible
         if not isinstance(args.log_file, str):
             _, path = tempfile.mkstemp(
                 prefix="livy-", suffix=".log", dir=os.getcwd(), text=True
