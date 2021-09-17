@@ -340,7 +340,10 @@ def convert_user_input(s: str, dtype: type):
         return convert_bool(s)
     elif isinstance(dtype, type) and issubclass(dtype, enum.Enum):
         return convert_enum(s, dtype)
-    elif getattr(dtype, "__origin__", None) is list:
+    elif getattr(dtype, "__origin__", None) in (list, typing.List):
+        # t = typing.List[str]
+        # t.__origin__ = list        => Python >= 3.7
+        #              = typing.List => Python 3.6
         return [convert_user_input(v, dtype.__args__[0]) for v in s.split(",")]
 
     assert False, f"data of type {dtype} is currently unsupported"
