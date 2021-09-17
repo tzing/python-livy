@@ -2,6 +2,7 @@ import enum
 import json
 import os
 import tempfile
+import typing
 import unittest
 import unittest.mock
 
@@ -218,6 +219,10 @@ class TestConvertUserInput(unittest.TestCase):
         with unittest.mock.patch("livy.cli.config.convert_enum", return_value=10):
 
             self.assertEqual(module.convert_user_input("BAR", self.FooEnum), 10)
+
+        self.assertSequenceEqual(
+            module.convert_user_input("foo,bar", typing.List[str]), ["foo", "bar"]
+        )
 
         with self.assertRaises(AssertionError):
             module.convert_user_input("foo", object)

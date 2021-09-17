@@ -5,6 +5,7 @@ import enum
 import json
 import logging
 import pathlib
+import typing
 
 
 USER_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
@@ -256,10 +257,7 @@ def cli_set_configure(name: str, raw_input: str):
 
 
 def cli_list_configure(name: str):
-    print(
-        "Current configuration keys are listed below. "
-        "Please refer to document for detailed meaning:"
-    )
+    print("Current configuration keys:")
 
     if name:
         if not check_section_exist(name):
@@ -340,10 +338,13 @@ def convert_user_input(s: str, dtype: type):
         return int(s)
     elif dtype is bool:
         return convert_bool(s)
-    elif issubclass(dtype, enum.Enum):
+    elif isinstance(dtype, type) and issubclass(dtype, enum.Enum):
         return convert_enum(s, dtype)
-    else:
-        assert False, f"data of type {dtype} is currently unsupported"
+    elif isinstance(dtype, typing._GenericAlias):
+        if dtype._name == "List":
+            return [convert_user_input(v, dtype.__args__[0]) for v in s.split(",")]
+
+    assert False, f"data of type {dtype} is currently unsupported"
 
 
 def convert_bool(s: str) -> bool:
