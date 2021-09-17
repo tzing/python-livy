@@ -1,10 +1,15 @@
 """Submit a batch task to livy server."""
 import argparse
+import importlib
 import re
+import datetime
+import typing
 
 import livy
 import livy.cli.config
 import livy.cli.logging
+
+logger = livy.cli.logging.get(__name__)
 
 
 def main(argv=None):
@@ -69,10 +74,10 @@ def main(argv=None):
     group = parser.add_argument_group("pre-submit actions")
     group.add_argument(
         "--pre-submit",
-        metavar="FUNC_NAME",
+        metavar="PLUG",
         nargs="+",
         default=cfg.submit.pre_submit,
-        help="Run specific processor before submit",
+        help="Run specific plugin before submit",
     )
 
     group = parser.add_argument_group("livy server configuration")
@@ -142,12 +147,43 @@ def main(argv=None):
         help="Not to watch for logs. Only submit the task and quit.",
     )
 
-    livy.cli.logging.setup_argparse(parser, True)
+    livy.cli.logging.setup_argparse(parser)
 
     args = parser.parse_args(argv)
 
-    # TODO
-    raise NotImplementedError()
+    # setup logger
+    livy.cli.logging.init(args)
+    console = livy.cli.logging.get("livy-read-log.main")
+    console.info("Submission task started")
+
+    # run pre-submit actions
+    for action in args.pre_submit:
+        console.info("Run pre-submit action %s", action)
+
+        func = get_function(action)
+        if not func:
+            console.warning("Failed to get action function instance. Stop process.")
+            return 1
+
+        try:
+            args = func(args)
+        except:
+            console.exception("Error occurs during pre-submit action. Stop process.")
+            return 1
+
+        if not isinstance(args, argparse.Namespace):
+            console.error(
+                "Return value should be a namespace object. Got %s", type(args).__name__
+            )
+            return 1
+
+    # timing
+    tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+    start_time = datetime.datetime.now().astimezone(tzlocal)
+    console.debug("Current time= %s", start_time)
+
+    # TODO submit
+    # TODO watch log
 
 
 def argmem(s: str):
@@ -161,6 +197,31 @@ def argkvpair(val):
     """Splitting key value pair"""
     k, v = val.split("=", 1)
     return k, v
+
+
+def get_function(name: str) -> typing.Callable:
+    """Get function by module name"""
+    m = re.fullmatch(r"([\w.]+):(\w+)", name, re.RegexFlag.I)
+    if not m:
+        logger.error("Failed to resolve function name: %s", name)
+        logger.error("Please specific it in module:func format")
+        return
+
+    module_name, func_name = m.groups()
+
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError:
+        logger.error("Failed to find module: %s", module_name)
+        return
+
+    try:
+        func = getattr(module, func_name)
+    except AttributeError:
+        logger.error("Failed to find function %s in %s", func_name, module_name)
+        return
+
+    return func
 
 
 if __name__ == "__main__":
