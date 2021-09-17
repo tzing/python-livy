@@ -192,6 +192,16 @@ class TestMain(unittest.TestCase):
         ):
             self.assertEqual(1, module.cli_set_configure("root.api_url", "test"))
 
+    def test_cli_list_configure(self):
+        # list all
+        self.assertEqual(0, module.cli_list_configure(""))
+
+        # list only specific section
+        self.assertEqual(0, module.cli_list_configure("root"))
+
+        # list only specific section - but invalid
+        self.assertEqual(0, module.cli_list_configure("no-this-section"))
+
 
 class TestConvertUserInput(unittest.TestCase):
     class FooEnum(enum.Enum):

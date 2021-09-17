@@ -256,7 +256,32 @@ def cli_set_configure(name: str, raw_input: str):
 
 
 def cli_list_configure(name: str):
-    raise NotImplementedError()
+    print(
+        "Current configuration keys are listed below. "
+        "Please refer to document for detailed meaning:"
+    )
+
+    if name:
+        if not check_section_exist(name):
+            return False
+
+    for sec_name, sec_cls in Configuration.__annotations__.items():
+        if name and name != sec_name:
+            continue
+
+        # section name and description
+        doc: str = sec_cls.__doc__
+        if doc:  # un-capitalize
+            doc = doc[0].lower() + doc[1:]
+        print(f"\n$ Section {sec_name}, {doc}:")
+
+        # members
+        # python can't attach __doc__ to variable, so the docsting could only
+        # be read in sphinx
+        for attr_name in sec_cls.__annotations__:
+            print(f"  - {sec_name}.{attr_name}")
+
+    return 0
 
 
 def check_conf_name_format(name: str) -> bool:
