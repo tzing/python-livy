@@ -2,4 +2,4 @@ from livy.client import *
 from livy.exception import *
 from livy.logreader import *
 
-__version__ = "0.10.4"
+__version__ = "0.11.0"
