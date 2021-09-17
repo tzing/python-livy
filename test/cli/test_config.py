@@ -1,3 +1,4 @@
+import enum
 import json
 import os
 import tempfile
@@ -192,20 +193,47 @@ class TestMain(unittest.TestCase):
             self.assertEqual(1, module.cli_set_configure("root.api_url", "test"))
 
 
-class TestUserInputConvert(unittest.TestCase):
-    def test_cbool(self):
+class TestConvertUserInput(unittest.TestCase):
+    class FooEnum(enum.Enum):
+        FOO = 5
+        BAR = 10
+
+    def test_convert_user_input(self):
+        self.assertEqual(module.convert_user_input("foo", str), "foo")
+        self.assertEqual(module.convert_user_input("1234", int), 1234)
+
+        with unittest.mock.patch("livy.cli.config.convert_bool", return_value=True):
+            self.assertEqual(module.convert_user_input("t", bool), True)
+
+        with unittest.mock.patch("livy.cli.config.convert_enum", return_value=10):
+
+            self.assertEqual(module.convert_user_input("BAR", self.FooEnum), 10)
+
+        with self.assertRaises(AssertionError):
+            module.convert_user_input("foo", object)
+
+    def test_convert_bool(self):
         # true
-        self.assertEqual(module.cbool(True), True)
-        self.assertEqual(module.cbool("True"), True)
-        self.assertEqual(module.cbool("yes"), True)
-        self.assertEqual(module.cbool(1), True)
+        self.assertEqual(module.convert_bool(True), True)
+        self.assertEqual(module.convert_bool("True"), True)
+        self.assertEqual(module.convert_bool("yes"), True)
+        self.assertEqual(module.convert_bool(1), True)
 
         # false
-        self.assertEqual(module.cbool(False), False)
-        self.assertEqual(module.cbool("F"), False)
-        self.assertEqual(module.cbool("N"), False)
-        self.assertEqual(module.cbool("0"), False)
+        self.assertEqual(module.convert_bool(False), False)
+        self.assertEqual(module.convert_bool("F"), False)
+        self.assertEqual(module.convert_bool("N"), False)
+        self.assertEqual(module.convert_bool("0"), False)
 
         # fail
         with self.assertRaises(AssertionError):
-            module.cbool("foo")
+            module.convert_bool("foo")
+
+    def test_convert_enum(self):
+        # success
+        self.assertEqual(module.convert_enum("FOO", self.FooEnum), 5)
+        self.assertEqual(module.convert_enum("BAR", self.FooEnum), 10)
+
+        # fail
+        with self.assertRaises(AssertionError):
+            module.convert_enum("test", self.FooEnum)

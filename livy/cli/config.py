@@ -114,7 +114,7 @@ class Configuration(ConfigSectionBase):
         output_file: bool = False
         """Output logs into file by default"""
 
-        logfile_level: LogLevel = LogLevel.DEBUG
+        logfile_level: LogLevel = logging.DEBUG
         """Default log level on output to log file"""
 
         with_progressbar: bool = True
@@ -256,7 +256,7 @@ def cli_set_configure(name: str, raw_input: str):
 
 
 def cli_list_configure(name: str):
-    raise NotImplementedError()  # pragma: no cover
+    raise NotImplementedError()
 
 
 def check_conf_name_format(name: str) -> bool:
@@ -308,17 +308,20 @@ def check_key_exist(section: str, key: str) -> bool:
 
 def convert_user_input(s: str, dtype: type):
     """Convert user input str (from CLI) to related data type"""
+    assert isinstance(s, str)
     if dtype is str:
         return s
     elif dtype is int:
         return int(s)
     elif dtype is bool:
-        return cbool(s)
+        return convert_bool(s)
+    elif issubclass(dtype, enum.Enum):
+        return convert_enum(s, dtype)
     else:
         assert False, f"data of type {dtype} is currently unsupported"
 
 
-def cbool(s: str) -> bool:
+def convert_bool(s: str) -> bool:
     if isinstance(s, bool):
         return s
     s = str(s).lower()
@@ -328,6 +331,16 @@ def cbool(s: str) -> bool:
         return False
     else:
         assert False, "should be [t]rue or [f]alse"
+
+
+def convert_enum(s: str, enum_: enum.Enum) -> int:
+    for e in enum_:
+        if s == e.name:
+            return e.value
+    assert False, "unknown input %s. expected value= %s" % (
+        s,
+        " / ".join(e.name for e in enum_),
+    )
 
 
 if __name__ == "__main__":
