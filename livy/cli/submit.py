@@ -1,8 +1,9 @@
 """Submit a batch task to livy server."""
 import argparse
-import importlib
-import re
 import datetime
+import importlib
+import json
+import re
 import typing
 
 import livy
@@ -32,7 +33,7 @@ def main(argv=None):
     )
 
     parser.add_argument(
-        "--class",
+        "--class-name",
         metavar="COM.EXAMPLE.FOO",
         help="Application Java/Spark main class (for Java/Scala task)",
     )
@@ -61,12 +62,12 @@ def main(argv=None):
         help="Archives to be used in this batch",
     )
     parser.add_argument(
-        "--queue",
+        "--queue-name",
         metavar="DEFAULT",
         help="The name of the YARN queue to which submitted",
     )
     parser.add_argument(
-        "--name",
+        "--session-name",
         metavar="HELLO",
         help="The session name to execute this batch",
     )
@@ -186,12 +187,55 @@ def main(argv=None):
         console.error("Failed to connect to server: %s", e)
         return 1
 
+    # build request payload
+    submit_parameter = {}
+
+    for key, value in [
+        ("file", args.script),
+        ("class_name", args.class_name),
+        ("args", args.args),
+        ("jars", args.jars),
+        ("py_files", args.py_files),
+        ("files", args.files),
+        ("driver_memory", args.driver_memory),
+        ("driver_cores", args.driver_cores),
+        ("executor_memory", args.executor_memory),
+        ("executor_cores", args.executor_cores),
+        ("num_executors", args.num_executors),
+        ("archives", args.archives),
+        ("queue", args.queue_name),
+        ("name", args.session_name),
+        ("conf", {k: v for k, v in args.spark_conf}),
+    ]:
+        if value:
+            submit_parameter[key] = value
+
+    console.info(
+        "Creating batch with parameters: %s",
+        json.dumps(submit_parameter, indent=2),
+    )
+
     # timing
     tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
     start_time = datetime.datetime.now().astimezone(tzlocal)
     console.debug("Current time= %s", start_time)
 
     # submit
+    try:
+        submit_resp = client.create_batch(**submit_parameter)
+    except livy.RequestError as e:
+        console.error("Failed to connect to server: %s", e)
+        return 1
+
+    console.info("Server response: %s", json.dumps(submit_resp, indent=2))
+
+    batch_id: int = submit_resp.get("id", None)
+    if not isinstance(batch_id, int) or batch_id < 0:
+        logger.error("Failed to get batch id. Something goes wrong.")
+        return 1
+
+    console.info("Server response: %s", json.dumps(submit_resp, indent=2))
+
     # TODO watch log
 
     return 0

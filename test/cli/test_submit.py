@@ -29,6 +29,8 @@ class TestMain(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_success(self):
+        self.client.create_batch.return_value = {"id": 1234}
+
         self.assertEqual(
             0,
             module.main(
@@ -64,6 +66,12 @@ class TestMain(unittest.TestCase):
     def test_server_error(self):
         self.config.root.api_url = "http://example.com/"
         self.client.check.side_effect = livy.RequestError(0, "Test error")
+
+        self.assertEqual(1, module.main(["test.py"]))
+
+    def test_create_batch_error(self):
+        self.config.root.api_url = "http://example.com/"
+        self.client.create_batch.side_effect = livy.RequestError(0, "Test error")
 
         self.assertEqual(1, module.main(["test.py"]))
 
