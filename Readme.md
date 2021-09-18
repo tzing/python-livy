@@ -47,15 +47,14 @@ pip install 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty]'
 
 #### Command line tool
 
-Configure the server URL:
-
 ```bash
+# save common used variable via `livy config`
 livy config set root.api_url http://ip-10-12-34-56.us-west-2.compute.internal:8998/
-```
 
-Read log:
+# submit a task
+livy submit some-script.py
 
-```bash
+# read logs from specific batch
 livy read-log 1234
 ```
 
