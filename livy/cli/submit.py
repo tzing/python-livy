@@ -256,8 +256,6 @@ def main(argv=None):
         console.warning("Your task might be still running on the server.")
         console.warning("For reading the logs, call:")
         console.warning("    livy read-log %d --api-url %s", batch_id, args.api_url)
-        console.warning("For kill the process on the server, call:")
-        console.warning("    livy kill %d --api-url %s", batch_id, args.api_url)
         return 1
 
     # timing
