@@ -130,7 +130,7 @@ class Configuration(ConfigSectionBase):
     class SubmitSection(ConfigSectionBase):
         """For task submission tool"""
 
-        pre_submit: typing.List[str] = None
+        pre_submit: typing.List[str] = []
         """Pre-submit processor list"""
 
         driver_memory: str = None

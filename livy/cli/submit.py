@@ -177,19 +177,32 @@ def main(argv=None):
             )
             return 1
 
+    # check server state
+    client = livy.LivyClient(url=args.api_url)
+
+    try:
+        client.check(False)
+    except livy.RequestError as e:
+        console.error("Failed to connect to server: %s", e)
+        return 1
+
     # timing
     tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
     start_time = datetime.datetime.now().astimezone(tzlocal)
     console.debug("Current time= %s", start_time)
 
-    # TODO submit
+    # submit
     # TODO watch log
+
+    return 0
 
 
 def argmem(s: str):
     """Validate input for memory size"""
     if not re.fullmatch(r"\d+[gm]b?", s, re.RegexFlag.IGNORECASE):
-        raise argparse.ArgumentTypeError(s)
+        raise argparse.ArgumentTypeError(
+            "please specific memory size in format '1234mb'"
+        )
     return s
 
 
