@@ -21,14 +21,17 @@ classifiers = [
 python = "^3.6.2"
 colorama = {version = "^0.4.4", optional = true}
 tqdm = {version = "^4.62.2", optional = true}
+boto3 = {version = "^1.18.44", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^21.7b0"
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
+boto3-stubs = {version = "^1.18.44", extras = ["s3"]}
 
 [tool.poetry.extras]
 pretty = ["colorama", "tqdm"]
+aws = ["boto3"]
 
 [tool.poetry.scripts]
 livy = "livy.__main__:main"
