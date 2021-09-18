@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import unittest
 import unittest.mock
 
@@ -11,6 +12,7 @@ class TestMain(unittest.TestCase):
     def setUp(self) -> None:
         # config getter
         self.config = livy.cli.config.Configuration()
+        self.config.root.api_url = "http://example.com/"
         patcher = unittest.mock.patch("livy.cli.config.load", return_value=self.config)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -24,22 +26,29 @@ class TestMain(unittest.TestCase):
 
         # livy client
         self.client = unittest.mock.MagicMock(spec=livy.LivyClient)
+        self.client.create_batch.return_value = {"id": 1234}
         patcher = unittest.mock.patch("livy.LivyClient", return_value=self.client)
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_success(self):
-        self.client.create_batch.return_value = {"id": 1234}
+        # log reader
+        self.reader = unittest.mock.MagicMock(spec=livy.LivyBatchLogReader)
+        patcher = unittest.mock.patch(
+            "livy.LivyBatchLogReader", return_value=self.reader
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
+    def test_success(self):
+        # not reading log
         self.assertEqual(
             0,
             module.main(
                 [
                     "test.py",
-                    "--api-url",
-                    "http://example.com/",
                     "--pre-submit",
                     "test_hook",
+                    "--no-watch-log",
                 ]
             ),
         )
@@ -47,8 +56,20 @@ class TestMain(unittest.TestCase):
         self.get_presubmit.assert_called()
         self.client.check.assert_called()
 
+        # reading log
+        self.client.get_batch_state.return_value = "success"
+        self.assertEqual(
+            0,
+            module.main(
+                [
+                    "test.py",
+                    "--pre-submit",
+                    "test_hook",
+                ]
+            ),
+        )
+
     def test_pre_submit_error(self):
-        self.config.root.api_url = "http://example.com/"
         self.config.submit.pre_submit = ["test_hook"]
 
         # failed to get func
@@ -64,15 +85,31 @@ class TestMain(unittest.TestCase):
         self.assertEqual(1, module.main(["test.py"]))
 
     def test_server_error(self):
-        self.config.root.api_url = "http://example.com/"
         self.client.check.side_effect = livy.RequestError(0, "Test error")
-
         self.assertEqual(1, module.main(["test.py"]))
 
-    def test_create_batch_error(self):
-        self.config.root.api_url = "http://example.com/"
+    def test_create_batch_error_1(self):
         self.client.create_batch.side_effect = livy.RequestError(0, "Test error")
+        self.assertEqual(1, module.main(["test.py"]))
 
+    def test_create_batch_error_2(self):
+        self.client.create_batch.return_value = {"foo": "bar"}
+        self.assertEqual(1, module.main(["test.py"]))
+
+    def test_readlog_error(self):
+        self.reader.read_until_finish.side_effect = livy.RequestError(0, "Test error")
+        self.assertEqual(1, module.main(["test.py"]))
+
+    def test_readlog_interrupt(self):
+        self.reader.read_until_finish.side_effect = KeyboardInterrupt()
+        self.assertEqual(1, module.main(["test.py"]))
+
+    def test_ending_get_batch_state(self):
+        self.client.get_batch_state.side_effect = livy.RequestError(0, "Test error")
+        self.assertEqual(1, module.main(["test.py"]))
+
+    def test_task_ending_error(self):
+        self.client.get_batch_state.return_value = "dead"
         self.assertEqual(1, module.main(["test.py"]))
 
 
@@ -101,3 +138,13 @@ class TestHelperFunc(unittest.TestCase):
 
         # func error
         self.assertIsNone(module.get_function("livy.cli.submit:no_this_func"))
+
+    def test_human_readable_timeperiod(self):
+        self.assertEqual(
+            "1h 5s",
+            module.human_readable_timeperiod(datetime.timedelta(seconds=3605)),
+        )
+        self.assertEqual(
+            "2d 1m 1s",
+            module.human_readable_timeperiod(datetime.timedelta(days=2, seconds=61)),
+        )

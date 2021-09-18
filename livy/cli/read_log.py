@@ -102,7 +102,7 @@ def main(argv=None):
     if args.keep_watch:
         state = client.get_batch_state(args.batch_id)
         level = logging.INFO if state == "success" else logging.WARNING
-        console.log(level, "Batch finished with state=%s", state)
+        console.log(level, "Batch ended with state= %s", state)
 
     return 0
 

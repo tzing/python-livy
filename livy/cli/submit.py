@@ -3,6 +3,7 @@ import argparse
 import datetime
 import importlib
 import json
+import logging
 import re
 import typing
 
@@ -10,7 +11,7 @@ import livy
 import livy.cli.config
 import livy.cli.logging
 
-logger = livy.cli.logging.get(__name__)
+logger = logging.getLogger(__name__)
 
 
 def main(argv=None):
@@ -134,7 +135,7 @@ def main(argv=None):
 
     group = parser.add_argument_group("post-submit actions")
     g = group.add_mutually_exclusive_group()
-    g.set_defaults(keep_watch=cfg.submit.watch_log)
+    g.set_defaults(watch_log=cfg.submit.watch_log)
     g.add_argument(
         "--watch-log",
         dest="watch_log",
@@ -218,7 +219,7 @@ def main(argv=None):
     # timing
     tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
     start_time = datetime.datetime.now().astimezone(tzlocal)
-    console.debug("Current time= %s", start_time)
+    console.debug("Batch submission time= %s", start_time)
 
     # submit
     try:
@@ -231,14 +232,61 @@ def main(argv=None):
 
     batch_id: int = submit_resp.get("id", None)
     if not isinstance(batch_id, int) or batch_id < 0:
-        logger.error("Failed to get batch id. Something goes wrong.")
+        console.error("Failed to get batch id. Something goes wrong.")
         return 1
 
-    console.info("Server response: %s", json.dumps(submit_resp, indent=2))
+    # watch log
+    if not args.watch_log:
+        console.info("Batch %d created.", batch_id)
+        return 0
 
-    # TODO watch log
+    console.info("Start reading logs of batch %d", batch_id)
 
-    return 0
+    reader = livy.LivyBatchLogReader(client, batch_id)
+
+    try:
+        reader.read_until_finish()
+    except livy.RequestError as e:
+        console.error(
+            "Error occurs during read log. HTTP code=%d, Reason=%s", e.code, e.reason
+        )
+        return 1
+    except KeyboardInterrupt:
+        console.warning("Keyboard interrupt. Local livy-submit process terminating.")
+        console.warning("Your task might be still running on the server.")
+        console.warning("For reading the logs, call:")
+        console.warning("    livy read-log %d --api-url %s", batch_id, args.api_url)
+        console.warning("For kill the process on the server, call:")
+        console.warning("    livy kill %d --api-url %s", batch_id, args.api_url)
+        return 1
+
+    # timing
+    finish_time = datetime.datetime.now().astimezone(tzlocal)
+    elapsed_time = finish_time - start_time
+    console.debug("Batch finishing time= %s", finish_time)
+
+    # get ending state
+    try:
+        state = client.get_batch_state(batch_id)
+    except livy.RequestError:
+        console.error("Error during query batch ending state.")
+        return 1
+
+    if state == "success":
+        code = 0
+        level = logging.INFO
+    else:
+        code = 1
+        level = logging.WARNING
+
+    console.log(level, "Batch ended with state= %s", state)
+    console.info(
+        "Batch execution time: %dsec (%s)",
+        elapsed_time.total_seconds(),
+        human_readable_timeperiod(elapsed_time),
+    )
+
+    return code
 
 
 def argmem(s: str):
@@ -279,6 +327,30 @@ def get_function(name: str) -> typing.Callable:
         return
 
     return func
+
+
+def human_readable_timeperiod(period: datetime.timedelta):
+    """Convert time period to human readable format"""
+    total_seconds = int(period.total_seconds())
+
+    terms = []
+    days = total_seconds // 86400
+    if days:
+        terms.append(f"{days}d")
+
+    hours = total_seconds // 3600 % 24
+    if hours:
+        terms.append(f"{hours}h")
+
+    minutes = total_seconds // 60 % 60
+    if minutes:
+        terms.append(f"{minutes}m")
+
+    seconds = total_seconds % 60
+    if seconds:
+        terms.append(f"{seconds}s")
+
+    return " ".join(terms)
 
 
 if __name__ == "__main__":
