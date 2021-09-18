@@ -13,7 +13,7 @@ def main(argv=None):
     # parse argument
     cfg = livy.cli.config.load()
     parser = argparse.ArgumentParser(
-        prog="livy-read-log",
+        prog="livy read-log",
         description=__doc__,
     )
 

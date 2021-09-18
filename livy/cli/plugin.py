@@ -1,3 +1,13 @@
+"""Plugins to use with CLI tasks. Currently only submit task has a hook for
+utilizing this.
+
+For a task that uses the hook, it would search for the func pointer by the given
+module and function name, then pass the parsed CLI arguments
+(`argparse.Namespace` instance) to the function. The deligated function could
+do what ever it want, including overwrite the arguments to impact the behavior,
+except logging which is already configured before the hook, and return back the
+namespace back to pass to next plugins or used in the main function.
+"""
 import typing
 
 if typing.TYPE_CHECKING:

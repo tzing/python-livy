@@ -17,7 +17,7 @@ def main(argv=None):
     # parse argument
     cfg = livy.cli.config.load()
     parser = argparse.ArgumentParser(
-        prog="livy-submit",
+        prog="livy submit",
         description=__doc__,
     )
 

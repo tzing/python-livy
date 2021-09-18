@@ -148,7 +148,7 @@ class Configuration(ConfigSectionBase):
         num_executors: int = None
         """Number of executors to launch for this batch"""
 
-        spark_conf: typing.List[typing.Tuple[str, str]] = None
+        spark_conf: typing.List[typing.Tuple[str, str]] = []
         """Spark configuration properties"""
 
         watch_log: bool = True
@@ -192,7 +192,7 @@ def main(argv=None):
     """CLI entrypoint"""
     # parse args
     parser = argparse.ArgumentParser(
-        prog="livy-config",
+        prog="livy config",
         description=f"{__doc__} All configured would be saved and loaded from {USER_CONFIG_PATH}.",
     )
     action = parser.add_subparsers(title="action", dest="action")
