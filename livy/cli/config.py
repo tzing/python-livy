@@ -294,6 +294,8 @@ def cli_set_configure(name: str, raw_input: str):
         logger.exception("Failed to write configure file")
         return 1
 
+    return 0
+
 
 def cli_list_configure(name: str):
     print("Current configuration keys:")
