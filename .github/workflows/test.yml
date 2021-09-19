@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install poetry
-          poetry install --no-root --extras pretty
+          poetry install --no-root --extras pretty aws
 
       - name: Test with pytest
         run: |
