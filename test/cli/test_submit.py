@@ -19,7 +19,7 @@ class TestMain(unittest.TestCase):
 
         # hook getter
         patcher = unittest.mock.patch(
-            "livy.cli.submit.get_function", return_value=lambda x: x
+            "livy.cli.submit.get_function", return_value=lambda x, y: y
         )
         self.get_presubmit = patcher.start()
         self.addCleanup(patcher.stop)
@@ -81,7 +81,7 @@ class TestMain(unittest.TestCase):
         self.assertEqual(1, module.main(["test.py"]))
 
         # hook action's return value invalid
-        self.get_presubmit.return_value = lambda x: None
+        self.get_presubmit.return_value = lambda x, y: None
         self.assertEqual(1, module.main(["test.py"]))
 
     def test_server_error(self):
