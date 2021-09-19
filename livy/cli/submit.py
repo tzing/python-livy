@@ -168,7 +168,7 @@ def main(argv=None):
             return 1
 
         try:
-            args = func(args)
+            args = func("PRE-SUBMIT", args)
         except:
             console.exception("Error occurs during pre-submit action. Stop process.")
             return 1
