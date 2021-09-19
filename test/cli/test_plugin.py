@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import json
 import os
 import tempfile
@@ -6,6 +7,9 @@ import unittest
 import unittest.mock
 
 import livy.cli.plugin as module
+
+
+no_boto3 = importlib.util.find_spec("boto3") is None
 
 
 class TestHelper(unittest.TestCase):
@@ -39,6 +43,7 @@ class TestHelper(unittest.TestCase):
         self.assertIsNone(module.read_plugin_config("foobar2"))
 
 
+@unittest.skipIf(no_boto3, "boto3 is not installed")
 class TestUploadS3(unittest.TestCase):
     def setUp(self) -> None:
         # boto3
