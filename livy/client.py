@@ -179,7 +179,7 @@ class LivyClient:
         with response as buf:
             response_bytes = buf.read()
 
-        if response.status != http.HTTPStatus.OK:
+        if response.status < 200 or response.status >= 400:
             raise RequestError(response.status, response.reason)
 
         if not response_bytes:
