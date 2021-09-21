@@ -13,7 +13,7 @@ def main(argv=None):
     # parse argument
     cfg = livy.cli.config.load()
     parser = argparse.ArgumentParser(
-        prog="livy-read-log",
+        prog="livy read-log",
         description=__doc__,
     )
 
@@ -24,14 +24,16 @@ def main(argv=None):
         help="Livy batch ID for fetching logs",
     )
 
-    parser.add_argument(
+    group = parser.add_argument_group("livy server configuration")
+    group.add_argument(
         "--api-url",
         required=cfg.root.api_url is None,
         default=cfg.root.api_url,
         help="Base-URL for Livy API server",
     )
 
-    g = parser.add_mutually_exclusive_group()
+    group = parser.add_argument_group("actions")
+    g = group.add_mutually_exclusive_group()
     g.set_defaults(keep_watch=cfg.read_log.keep_watch)
     g.add_argument(
         "--keep-watch",
@@ -100,7 +102,7 @@ def main(argv=None):
     if args.keep_watch:
         state = client.get_batch_state(args.batch_id)
         level = logging.INFO if state == "success" else logging.WARNING
-        console.log(level, "Batch finished with state=%s", state)
+        console.log(level, "Batch ended with state= %s", state)
 
     return 0
 

@@ -65,7 +65,7 @@ class ConfigSectionBase(abc.ABC):
             value = d.get(name, cls.__missing)
             if value is cls.__missing:
                 continue
-            if issubclass(dtype, ConfigSectionBase):
+            if isinstance(dtype, type) and issubclass(dtype, ConfigSectionBase):
                 if isinstance(value, dict):
                     value = dtype.from_dict(value)
                 else:
@@ -127,9 +127,37 @@ class Configuration(ConfigSectionBase):
         keep_watch: bool = True
         """Keep watching for batch activity until it is finished."""
 
+    class SubmitSection(ConfigSectionBase):
+        """For task submission tool"""
+
+        pre_submit: typing.List[str] = []
+        """Pre-submit processor list"""
+
+        driver_memory: str = None
+        """Amount of memory to use for the driver process."""
+
+        driver_cores: int = None
+        """Number of cores to use for the driver process"""
+
+        executor_memory: str = None
+        """Amount of memory to use per executor process"""
+
+        executor_cores: int = None
+        """Number of cores to use for each executor"""
+
+        num_executors: int = None
+        """Number of executors to launch for this batch"""
+
+        spark_conf: typing.List[typing.Tuple[str, str]] = []
+        """Spark configuration properties"""
+
+        watch_log: bool = True
+        """Watching for logs after the task is submitted"""
+
     root: RootSection
     logs: LocalLoggingSection
     read_log: ReadLogSection
+    submit: SubmitSection
 
 
 _configuration = None
@@ -164,7 +192,7 @@ def main(argv=None):
     """CLI entrypoint"""
     # parse args
     parser = argparse.ArgumentParser(
-        prog="livy-config",
+        prog="livy config",
         description=f"{__doc__} All configured would be saved and loaded from {USER_CONFIG_PATH}.",
     )
     action = parser.add_subparsers(title="action", dest="action")
@@ -244,14 +272,27 @@ def cli_set_configure(name: str, raw_input: str):
     print(f"{section}.{key} = {value_new}", end=" ")
     print("(updated)" if is_changed else "(not changed)")
 
-    # write config file
-    if is_changed:
-        try:
-            with open(USER_CONFIG_PATH, "w") as fp:
-                json.dump(cfg_root.to_dict(), fp, indent=2)
-        except Exception:
-            logger.exception("Failed to write configure file")
-            return 1
+    if not is_changed:
+        return 0
+
+    # write config file, read current file and override by current settings to
+    # preserved extra fields used by config
+    try:
+        with open(USER_CONFIG_PATH, "r") as fp:
+            config: dict = json.load(fp)
+    except (FileNotFoundError, json.JSONDecodeError):
+        config = {}
+
+    # override with new settings
+    config.update(cfg_root.to_dict())
+
+    # save file
+    try:
+        with open(USER_CONFIG_PATH, "w") as fp:
+            json.dump(config, fp, indent=2)
+    except:
+        logger.exception("Failed to write configure file")
+        return 1
 
     return 0
 

@@ -121,7 +121,7 @@ def init(args: argparse.Namespace = None):
     logging.captureWarnings(True)
 
     # console handler
-    stream = sys.stdout
+    stream = sys.stderr
 
     console_handler, msg_console_handler_create = _get_console_handler(
         stream=stream,
@@ -216,7 +216,7 @@ class _StreamHandlerWithProgressbar(logging.StreamHandler):
         while True:
             if self._log_queue.qsize() > 0:
                 self.flush()
-            time.sleep(0.1)
+            time.sleep(0.07)
 
     def handle(self, record: logging.LogRecord) -> None:
         """Override `handle` for reteriving the log before it is filtered."""
@@ -373,7 +373,7 @@ class _ColoredFormatter(logging.Formatter):
         super().__init__(fmt=fmt, datefmt=datefmt)
         import colorama
 
-        colorama.init(strip=True)
+        colorama.init()
 
         self._COLOR_RESET = colorama.Style.RESET_ALL
         self._COLOR_DEFAULT = {

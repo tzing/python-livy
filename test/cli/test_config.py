@@ -176,6 +176,10 @@ class TestMain(unittest.TestCase):
         ):
             self.assertEqual(0, module.cli_set_configure("root.api_url", "test"))
 
+            # for early escape
+            self.assertEqual(0, module.cli_set_configure("root.api_url", "test"))
+
+    def test_cli_set_configure_error(self):
         # section not exist
         self.assertEqual(1, module.cli_set_configure("foo", "bar"))
 

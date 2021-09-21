@@ -4,6 +4,7 @@ import importlib.util
 import logging
 import os
 import tempfile
+import time
 import unittest
 import unittest.mock
 
@@ -170,7 +171,9 @@ class TestHandler(unittest.TestCase):
         self.handler._close_progressbar("1.5")
         pb.close.assert_called()
 
-    def test_handle_integration(self):
+    def test_flush_by_thread(self):
+        self.handler.emit = unittest.mock.MagicMock()
+
         self.handler.handle(  # new task
             self.record(
                 "YarnScheduler",
@@ -210,6 +213,9 @@ class TestHandler(unittest.TestCase):
 
         assert self.handler._current_progressbar.n == 3
         assert self.handler._latest_taskset == decimal.Decimal("3.0")
+
+        time.sleep(0.3)  # wait for background thread
+        assert self.handler.emit.call_count == 6
 
 
 class TestFormatter(unittest.TestCase):
