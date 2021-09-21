@@ -60,6 +60,11 @@ class TestUploadS3(unittest.TestCase):
         self.read_config = patcher.start()
         self.addCleanup(patcher.stop)
 
+        # open
+        patcher = unittest.mock.patch("builtins.open")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         # args
         self.args = argparse.Namespace()
         self.args.script = "test.py"
@@ -75,7 +80,7 @@ class TestUploadS3(unittest.TestCase):
         self.args.files = ["note.txt"]
         self.args.archives = ["archvie.tar.gz"]
 
-        with unittest.mock.patch("uuid.uuid4", return_value="mock-uuid") as fp:
+        with unittest.mock.patch("uuid.uuid4", return_value="mock-uuid"):
             module.upload_s3("PRE-SUBMIT", self.args)
 
         self.assertEqual(self.args.script, "s3://example-bucket/mock-uuid/test.py")
