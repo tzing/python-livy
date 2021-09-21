@@ -120,14 +120,9 @@ def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
         key = os.path.join(folder, prefix, os.path.basename(filepath))
         logger.debug("Upload %s -> s3://%s/%s", filename, bucket, key)
 
-        param = basic_param.copy()
-        param.update(
-            Filename=filepath,
-            Key=key,
-        )
-
         # upload
-        client.upload_file(**param)
+        with open(filepath, "rb") as fp:
+            client.put_object(Key=key, Body=fp, **basic_param)
 
         return f"s3://{bucket}/{key}"
 
