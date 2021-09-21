@@ -5,11 +5,13 @@ import time
 import livy.cli.config
 import livy.cli.read_log
 import livy.cli.submit
+import livy.cli.kill
 
 _ENTRYPOINT = {
     "config": livy.cli.config.main,
     "read-log": livy.cli.read_log.main,
     "submit": livy.cli.submit.main,
+    "kill": livy.cli.kill.main,
 }
 
 
@@ -19,6 +21,7 @@ def main():
     subparsers = parser.add_subparsers(title="Sub-command", dest="subcommand")
     subparsers.add_parser("submit", help=livy.cli.submit.__doc__)
     subparsers.add_parser("read-log", help=livy.cli.read_log.__doc__)
+    subparsers.add_parser("kill", help=livy.cli.kill.__doc__)
     subparsers.add_parser("config", help=livy.cli.config.__doc__)
 
     args, remain = parser.parse_known_args(sys.argv[1:2])

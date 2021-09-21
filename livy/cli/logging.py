@@ -121,7 +121,7 @@ def init(args: argparse.Namespace = None):
     logging.captureWarnings(True)
 
     # console handler
-    stream = sys.stdout
+    stream = sys.stderr
 
     console_handler, msg_console_handler_create = _get_console_handler(
         stream=stream,
@@ -373,7 +373,7 @@ class _ColoredFormatter(logging.Formatter):
         super().__init__(fmt=fmt, datefmt=datefmt)
         import colorama
 
-        colorama.init(strip=True)
+        colorama.init()
 
         self._COLOR_RESET = colorama.Style.RESET_ALL
         self._COLOR_DEFAULT = {
