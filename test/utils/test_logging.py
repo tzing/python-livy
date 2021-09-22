@@ -36,6 +36,9 @@ class EnhancedConsoleHandlerTester(unittest.TestCase):
         self.handler = module.EnhancedConsoleHandler(stream)
         self.handler.filter = unittest.mock.Mock()
 
+    def tearDown(self) -> None:
+        self.handler.close()
+
     def record(self, name: str, msg: str) -> logging.LogRecord:
         return logging.makeLogRecord(
             {
@@ -168,3 +171,8 @@ class EnhancedConsoleHandlerTester(unittest.TestCase):
 
         time.sleep(0.3)  # wait for background thread
         assert self.handler.emit.call_count == 6
+
+    def test_sink(self):
+        self.handler.close()
+        self.handler.handle(self.record("Test", "Test log"))
+        self.handler.flush()

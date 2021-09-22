@@ -9,7 +9,19 @@ import typing
 
 
 class EnhancedConsoleHandler(logging.StreamHandler):
-    """A stream handler that could shows progress bar on related log found."""
+    """A stream handler that could shows progress bar on task set related logs
+    found.
+
+    It would create a progress bar using tqdm. However, frequently suppressing
+    the progress bar (for printing logs) would make the screen flashing. To deal
+    with this issue, this handler uses a producer-consumer architecture inside.
+    Logs are not emitted in real time, they would be proceed by batch in flush().
+    And a backend worker is created to regularly flushing the logs.
+
+    This implementation comes with a pitfall: if the program exits too early,
+    some of the logs would be dropped. PR is welcome if you could resolve this
+    issue.
+    """
 
     _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
     _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
@@ -43,6 +55,7 @@ class EnhancedConsoleHandler(logging.StreamHandler):
 
         # background worker and queue for write log by batch
         self._log_queue = queue.Queue()
+        self._stop_thread = threading.Event()
 
         thread = threading.Thread(target=self._worker, args=())
         thread.daemon = True
@@ -50,7 +63,7 @@ class EnhancedConsoleHandler(logging.StreamHandler):
 
     def _worker(self):
         """Worker loop to trigger flush() regularly"""
-        while True:
+        while not self._stop_thread.is_set():
             if not self._log_queue.empty():
                 self.flush()
             time.sleep(0.07)
@@ -154,3 +167,17 @@ class EnhancedConsoleHandler(logging.StreamHandler):
         with self.lock, self._tqdm_suppress():
             for record in logs:
                 self.emit(record)
+
+    def close(self):
+        """Close this handler. Stop emitting logs to console."""
+        self._stop_thread.set()
+        self.flush()
+
+        class SinkQueue:
+            def put(self, _):
+                ...  # ignored; drop all message
+
+            def get_nowait(self):
+                raise queue.Empty()
+
+        self._log_queue = SinkQueue()
