@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "livy"
 version = "0.12.2"
-description = "CLI tool to interact with Apache livy"
+description = "Tool to interact with Apache livy"
 authors = ["tzing <tzingshih@gmail.com>"]
 license = "MIT"
 readme = "Readme.md"
