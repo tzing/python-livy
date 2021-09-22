@@ -2,6 +2,8 @@
 
 ![test status](https://github.com/tzing/python-livy/actions/workflows/test.yml/badge.svg)
 
+> Still under developing. API might not be stable at this time.
+
 Lightweight tool to interact with [Apache Livy](https://livy.incubator.apache.org/). Provide both CLI tools and library that works nicely in pure and native Python.
 
 ![screenshot](screenshot.png)
@@ -10,7 +12,7 @@ Core features:
 
 1. Native Python
 
-    It uses built in [http.client] for connection. This makes great reduction on both package size and installation time.
+    It uses built in [http.client] for connection. This makes great reduction in both package size and installation time.
 
 2. Full functioned core library
 
