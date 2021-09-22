@@ -246,25 +246,26 @@ class LivyClientRequestTester(unittest.TestCase):
         with self.assertRaises(exception.RequestError):
             self.client._request("GET", "/test")
 
-    def test_real_get(self):
-        c = module.LivyClient("http://httpbin.org")
 
+class LivyClientRequestIntegrationTester(unittest.TestCase):
+    def setUp(self) -> None:
+        self.client = module.LivyClient("https://httpbin.org", timeout=2.0)
+
+    def test_get(self):
         # run twice for testing keep-alive
-        self.assertIsInstance(c._request("GET", "/get"), dict)
-        self.assertIsInstance(c._request("GET", "/get"), dict)
+        self.assertIsInstance(self.client._request("GET", "/get"), dict)
+        self.assertIsInstance(self.client._request("GET", "/get"), dict)
 
-    def test_real_post(self):
-        c = module.LivyClient("https://httpbin.org")
-        resp = c._request("POST", "/post", {"foo": 123})
+    def test_post(self):
+        resp = self.client._request("POST", "/post", {"foo": 123})
         self.assertIsInstance(resp, dict)
         self.assertIn("foo", resp["json"])
 
-    def test_real_timeout(self):
-        client = module.LivyClient("http://10.255.255.255:80", True, 5.0)
+    def test_timeout(self):
         with self.assertRaises(exception.RequestError):
-            client._request("GET", "")
+            self.client._request("GET", "/delay/10")
 
-    def test_real_connection_refused(self):
+    def test_connection_refused(self):
         c = module.LivyClient("http://127.0.0.1:8080", True)
         with self.assertRaises(exception.RequestError):
             c._request("GET", "/foo")
