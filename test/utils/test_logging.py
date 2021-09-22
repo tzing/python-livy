@@ -1,6 +1,7 @@
 import decimal
 import importlib
 import logging
+import sys
 import time
 import unittest
 import unittest.mock
@@ -9,6 +10,23 @@ import livy.utils.logging as module
 
 
 no_tqdm = importlib.util.find_spec("tqdm") is None
+
+
+class EnhancedConsoleHandlerSwitchTester(unittest.TestCase):
+    """For testing EnhancedConsoleHandler's __new__"""
+
+    @unittest.mock.patch("importlib.util.find_spec", side_effect=ImportError())
+    def test_without_tqdm(self, _):
+        handler = module.EnhancedConsoleHandler(sys.stdout)
+        self.assertIsInstance(handler, logging.StreamHandler)
+        self.assertNotIsInstance(handler, module.EnhancedConsoleHandler)
+
+    @unittest.skipIf(no_tqdm, "tqdm is not installed")
+    @unittest.mock.patch("importlib.util.find_spec")
+    def test_with_tqdm(self, _):
+        stream = unittest.mock.MagicMock()
+        handler = module.EnhancedConsoleHandler(stream)
+        self.assertIsInstance(handler, module.EnhancedConsoleHandler)
 
 
 @unittest.skipIf(no_tqdm, "tqdm is not installed")

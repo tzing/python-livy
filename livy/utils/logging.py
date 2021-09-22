@@ -1,4 +1,5 @@
 import decimal
+import importlib
 import logging
 import queue
 import re
@@ -16,6 +17,12 @@ class EnhancedConsoleHandler(logging.StreamHandler):
         r"Finished task [\d.]+ in stage ([\d.]+) \(.+?\) in \d+ ms on \S+ "
         r"\(executor \d+\) \((\d+)\/(\d+)\)"
     )
+
+    def __new__(cls, stream: typing.TextIO) -> logging.StreamHandler:
+        """Automatically fallback to normal handler if requirement not satisfied."""
+        if not stream.isatty() or not importlib.util.find_spec("tqdm"):
+            return super().__new__(logging.StreamHandler)
+        return super().__new__(cls)
 
     def __init__(self, stream: typing.TextIO) -> None:
         """
