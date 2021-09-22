@@ -244,16 +244,35 @@ class TestFormatter(unittest.TestCase):
     @unittest.skipIf(no_colorama, "colorama is not installed")
     @unittest.mock.patch("livy.cli.logging._is_wanted_logger")
     def test_ColoredFormatter(self, is_wanted_logger):
+        import colorama
+
+        # dot not include time, local machine is not in utc timezone
         formatter = module._ColoredFormatter(
             "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
-            "%Y-%m-%d %H:%M:%S %z",
+            "%Y-%m-%d",
         )
 
+        # highlight
         is_wanted_logger.return_value = True
-        formatter.format(self.record)
+        self.assertEqual(
+            formatter.format(self.record),
+            f"{colorama.Back.GREEN}{colorama.Fore.WHITE}"
+            "2021-09-12 Test.Bar:"
+            f"{colorama.Style.RESET_ALL}"
+            " Test log message"
+            f"{colorama.Style.RESET_ALL}",
+        )
 
+        # normal
         is_wanted_logger.return_value = False
-        formatter.format(self.record)
+        self.assertEqual(
+            formatter.format(self.record),
+            f"{colorama.Fore.GREEN}"
+            "2021-09-12 Test.Bar:"
+            f"{colorama.Style.RESET_ALL}"
+            " Test log message"
+            f"{colorama.Style.RESET_ALL}",
+        )
 
     def test_is_wanted_logger(self):
         wantted_names = {"Foo.Bar", "Baz"}

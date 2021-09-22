@@ -334,8 +334,8 @@ class LivyClient:
     def delete_batch(self, batch_id: int) -> None:
         """Kill the batch job.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
             batch_id : int
                 Batch ID
 
@@ -353,8 +353,8 @@ class LivyClient:
     def get_batch_information(self, batch_id: int) -> Batch:
         """Get summary information for specific batch
 
-        Parameter
-        ---------
+        Parameters
+        ----------
             batch_id : int
                 Batch ID
 
@@ -377,8 +377,8 @@ class LivyClient:
     def get_batch_state(self, batch_id: int) -> str:
         """Get state of the batch
 
-        Parameter
-        ---------
+        Parameters
+        ----------
             batch_id : int
                 Batch ID
 
@@ -402,8 +402,8 @@ class LivyClient:
     def is_batch_finished(self, batch_id: int) -> bool:
         """Check batch state and return True if it is finished.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
             batch_id : int
                 Batch ID
 
@@ -426,8 +426,8 @@ class LivyClient:
     ):
         """Get logs from the batch
 
-        Parameter
-        ---------
+        Parameters
+        ----------
             batch_id : int
                 Batch ID
             from_ : int

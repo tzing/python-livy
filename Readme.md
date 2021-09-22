@@ -2,30 +2,44 @@
 
 ![test status](https://github.com/tzing/python-livy/actions/workflows/test.yml/badge.svg)
 
-Library to interact with [Apache livy](https://livy.incubator.apache.org/).
+Lightweight tool to interact with [Apache Livy](https://livy.incubator.apache.org/). Provide both CLI tools and library that works nicely in pure and native Python.
 
-This tool is designed for the entire livy submission task, including creating a new batch and watching for its log until job is ended.
+![screenshot](screenshot.png)
 
-> Under developing: command line interface tool for it
+Core features:
 
-#### Features
+1. Native Python
 
-* Livy communication
+    It uses built in [http.client] for connection. This makes great reduction on both package size and installation time.
 
-    It implements `LivyClient` that wraps batch-related APIs to livy server.
+2. Full functioned core library
 
-    All listed API for livy 0.7.0 is ported. Including `create_batch`, `delete_batch`, `get_batch_information`, `get_batch_state` and `get_batch_log`.
+    A client that wraps all batch-related APIs to livy server is provided.
 
-* Log watching and parsing
+3. Log watching and parsing
 
-    Class `LivyBatchLogReader` could be helpful to fetch logs from livy server.
+    It could parse livy's mixed-stdout logs back to log records and submit to Python's `logging` system. Then we could watch for the events in a much friendly way.
 
-    Once a new log is observed, it would parse it and publish into Python's `logging` system. Then we could use other familiar library/functions to handle the logs.
+4. Configurable
+
+    For using CLI tools, it provides configuration system for saving common used variables on local storage. No need to set every option on each command.
+
+5. Fully tested
+
+    100% coverage. Both with and without extra dependencies are tested, thanks to Github action.
+
+Extra features, might need extra dependencies:
+
+1. Human friendly log viewer
+
+    On using CLI for reading logs, it could have colored logs and progress bar. Besides, we could highlight or hide specific logger via arguments (e.g. hide `TaskSetManager` as we've got progress bar).
+
+2. Extensible
+
+    Custom function could be triggered during submission. So bring it to infinity...and beyond!
 
 
-## Requirement
-
-Python >= 3.6. No third-party library is required for core features.
+[http.client]: https://docs.python.org/3/library/http.client.html
 
 
 ## Installation
@@ -36,7 +50,7 @@ Basic installation:
 pip install 'git+https://github.com/tzing/python-livy.git#egg=livy'
 ```
 
-If you're using CLI, we could have a better view by install with extra dependencies:
+For extra features, install with dependencies set `pretty`:
 
 ```bash
 pip install 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty]'
