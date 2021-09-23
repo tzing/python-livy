@@ -64,5 +64,6 @@ html_theme_options = {
             "url": "https://github.com/tzing/python-livy",
             "icon": "fab fa-github-square",
         }
-    ]
+    ],
+    "show_toc_level": 1,
 }

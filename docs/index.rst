@@ -9,10 +9,10 @@ This tool is originally designed for task submission and script debugging. If yo
 
 
 .. toctree::
+   :caption: Table of content
    :maxdepth: 1
 
-   livy
-   livy.utils
+   api/index
 
 
 Indices and tables
