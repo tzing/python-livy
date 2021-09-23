@@ -11,7 +11,7 @@ __all__ = [
 
 
 class Error(Exception):
-    """Base exception type for python-livy package"""
+    """Base exception type for ``python-livy`` package"""
 
 
 class TypeError(Error, builtins.TypeError):

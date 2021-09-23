@@ -18,8 +18,9 @@ class LivyLogParseResult(typing.NamedTuple):
     """Log parse result."""
 
     created: datetime.datetime
-    """Timestamp that the log is created. Could be None if we could not determine
-    when does it created, would use the time last log is created.
+    """Timestamp that this log is created. Could be ``None`` if we could not
+    determine when does it created. The system would fill with the time which
+    last log is created.
     """
 
     level: int
@@ -27,8 +28,9 @@ class LivyLogParseResult(typing.NamedTuple):
     """
 
     name: str
-    """Logger name. Could be None if unknown, would be fallback to corresponding
-    output stream name (stdout/stderr).
+    """Logger name. Could be ``None`` if we do not know, would be fallback to
+    corresponding section name in livy's log (``stdout``, ``stderr`` or
+    ``YARN Diagnostics``).
     """
 
     message: str
@@ -155,7 +157,7 @@ LivyLogParser = typing.Callable[[typing.Match], LivyLogParseResult]
 
 
 class LivyBatchLogReader:
-    """Read Livy batch logs and publish to Python's logging infrastructure."""
+    """Read Livy batch logs and publish to Python's :py:mod:`logging` infrastructure."""
 
     _parsers: typing.Dict[typing.Pattern, LivyLogParser]
     thread: threading.Thread
@@ -170,7 +172,7 @@ class LivyBatchLogReader:
         """
         Parameters
         ----------
-            client : livy.LivyClient
+            client : livy.client.LivyClient
                 Livy client that is pre-configured
             batch_id : int
                 Batch ID to be watched
@@ -218,17 +220,19 @@ class LivyBatchLogReader:
         self,
         pattern: typing.Pattern,
         parser: LivyLogParser,
-    ):
+    ) -> None:
         """Add log parser to this reader.
 
         Parameters
         ----------
             pattern : re.Pattern
                 Regex pattern to match the log. Note the pattern must match
-                line start (^) symbol and compiled with multiline (M) flag.
+                line start (``^``) symbol and compiled with multiline
+                (:py:attr:`re.M`) flag.
             parser : callable
-                The parser to extract fields from the re.Match object. It should
-                take re.Match as input and returns LivyLogParseResult instance.
+                The parser to extract fields from the :py:class:`re.Match` object.
+                It should takes :py:class:`re.Match` as input and returns
+                :py:class:`livy.logreader.LivyLogParseResult` instance.
 
         Return
         ------
@@ -237,7 +241,7 @@ class LivyBatchLogReader:
         Note
         ----
         The pattern must wrapped entire log
-            The re.Match object is also used to locate the position in the log.
+            The :py:class:`re.Match` object is also used to locate the position in the log.
             It might cause error if the regex pattern does not match entire log
             lines.
 
@@ -251,12 +255,12 @@ class LivyBatchLogReader:
             raise livy.exception.TypeError("parser", "callable", parser)
         self._parsers[pattern] = parser
 
-    def read(self):
+    def read(self) -> None:
         """Read log once.
 
         Return
         ------
-        No data return. All logs would be pipe to Python's `logging` library.
+        No data return. All logs would be pipe to Python's :py:mod:`logging`.
 
         Note
         ----
@@ -268,7 +272,7 @@ class LivyBatchLogReader:
         and fallback to stdout/stderr if we could not parse it.
 
         Parsers are pluggable. Beyond the builtin parsers, read instruction from
-        docstring of `add_parser`.
+        docstring of :py:meth:`add_parser`.
         """
         # get log
         # use size -1 to get as much log as possible
@@ -432,11 +436,11 @@ class LivyBatchLogReader:
 
         Return
         ------
-        No data return. All logs would be pipe to Python's `logging` library.
+        No data return. All logs would be pipe to Python's :py:mod:`logging`.
 
-        See
-        ---
-        Method `read()`
+        See also
+        --------
+        :py:meth:`read()`
         """
         if self.thread is not None:
             raise livy.exception.OperationError("Background worker is already created.")
@@ -444,7 +448,7 @@ class LivyBatchLogReader:
         stop_event = threading.Event()
 
         def watch():
-            while not self.client.is_batch_finished(self.batch_id):
+            while not self.client.is_batch_ended(self.batch_id):
                 tick = time.time()
                 self.read()
                 elapsed = time.time() - tick
@@ -463,8 +467,8 @@ class LivyBatchLogReader:
             self._stop_event = stop_event
 
     def stop_read(self):
-        """Stop background which is created by `read_until_finish`. Only take
-        effects after it is created.
+        """Stop background which is created by :py:meth:`read_until_finish`. Only
+        takes effect after it is created.
         """
         if not self.thread or not self._stop_event:
             raise livy.exception.OperationError(

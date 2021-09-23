@@ -129,3 +129,8 @@ Please kindly replace the `bucket` to some bucket that is readable to EMR, and c
 >>> reader = livy.LivyBatchLogReader(client, 55)
 >>> reader.read_until_finish()  # read logs and broadcast to log handlers
 ```
+
+
+## Document
+
+Read the docs in https://tzing.github.io/python-livy/

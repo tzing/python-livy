@@ -84,12 +84,12 @@ class LivyBatchLogReaderTester(unittest.TestCase):
             self.reader.read()
 
     def test_read_until_finish_block(self):
-        self.client.is_batch_finished.side_effect = [False, True]
+        self.client.is_batch_ended.side_effect = [False, True]
         self.client.get_batch_log.return_value = []
         self.reader.read_until_finish(block=True, interval=0.01)
 
     def test_read_until_finish_unblock(self):
-        self.client.is_batch_finished.side_effect = [False, True]
+        self.client.is_batch_ended.side_effect = [False, True]
         self.client.get_batch_log.return_value = []
 
         self.reader.read_until_finish(block=False, interval=0.5)

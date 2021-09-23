@@ -18,8 +18,9 @@ class EnhancedConsoleHandler(logging.StreamHandler):
     It would create a progress bar using tqdm. However, frequently suppressing
     the progress bar (for printing logs) would make the screen flashing. To deal
     with this issue, this handler uses a producer-consumer architecture inside.
-    Logs are not emitted in real time, they would be proceed by batch in flush().
-    And a backend worker is created to regularly flushing the logs.
+    Logs are not emitted in real time, they would be proceed by batch in
+    :py:meth:`flush()`. And a backend worker is created to regularly flushing
+    the logs.
 
     This implementation comes with a pitfall: if the program exits too early,
     some of the logs would be dropped. PR is welcome if you could resolve this
@@ -74,7 +75,8 @@ class EnhancedConsoleHandler(logging.StreamHandler):
             time.sleep(0.07)
 
     def handle(self, record: logging.LogRecord) -> None:
-        """Override `handle` for reteriving the log before it is filtered."""
+        """Override :py:class:`logging.StreamHandler` for reteriving the log
+        before it is filtered."""
         # capture logs from YarnScheduler / TaskSetManager for updating progressbar
         if record.name == "YarnScheduler":
             msg = record.getMessage()
@@ -221,8 +223,8 @@ class ColoredRecord:
 
 class ColoredFormatter(logging.Formatter):
     """A formatter that could add ANSI colors to logs. Inspired by
-    borntyping/python-colorlog, and add feature that supports different color
-    scheme via logger name."""
+    `python-colorlog <https://github.com/borntyping/python-colorlog>`_, and add
+    feature that supports different color scheme via logger name."""
 
     __slots__ = ("highlight_loggers",)
 
@@ -284,7 +286,7 @@ class ColoredFormatter(logging.Formatter):
         return message
 
     def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
-        """Get dict with color code to be updated into log record's __dict__."""
+        """Get dict with color code to be updated into log record's ``__dict__``."""
         colors = {
             "reset": self._COLOR_RESET,
         }
@@ -317,7 +319,16 @@ class IngoreLogFilter(object):
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Determine if the specified record is to be logged.
-        Returns True if the record should be logged, or False otherwise.
+
+        Parameters
+        ----------
+            record : logging.LogRecord
+                Log record
+
+        Return
+        ------
+        ok : bool
+            Returns ``True`` if the record should be logged, or ``False`` otherwise.
         """
         if is_from_wanted_logger(self.unwanted_loggers, record):
             return False
