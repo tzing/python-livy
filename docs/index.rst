@@ -5,7 +5,7 @@ Welcome to python-livy's documentation!
 
 .. image:: ../screenshot.png
 
-This tool is originally design for deal with task submission in my daily routines. If you do have an idea on how to make this tool for powerful, please create a issue to share it with me :)
+This tool is originally designed for task submission and script debugging. If you do have an idea on how to make this tool for powerful, please create a issue to share it with me :)
 
 
 .. toctree::
