@@ -393,14 +393,21 @@ class LivyClient:
             On input parameters not matches expected data type
         RequestError
             On connection error
+
+        Note
+        ----
+        The listed states is mixed with session state and statement state.
+        It do not provide complete batch state list in official document and I
+        found both state from session list and statement list could be observed
+        in batch task.
         """
         if not isinstance(batch_id, int):
             raise _TypeError("batch_id", int, batch_id)
         resp = self._request("GET", f"/batches/{batch_id}/state")
         return resp.get("state", "(unknown)")
 
-    def is_batch_finished(self, batch_id: int) -> bool:
-        """Check batch state and return True if it is finished.
+    def is_batch_ended(self, batch_id: int) -> bool:
+        """Check batch state and return ``True`` if it is finished.
 
         Parameters
         ----------

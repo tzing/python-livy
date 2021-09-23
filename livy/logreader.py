@@ -444,7 +444,7 @@ class LivyBatchLogReader:
         stop_event = threading.Event()
 
         def watch():
-            while not self.client.is_batch_finished(self.batch_id):
+            while not self.client.is_batch_ended(self.batch_id):
                 tick = time.time()
                 self.read()
                 elapsed = time.time() - tick

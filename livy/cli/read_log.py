@@ -62,7 +62,7 @@ def main(argv=None):
     client = livy.LivyClient(url=args.api_url)
 
     try:
-        is_finished = client.is_batch_finished(args.batch_id)
+        is_finished = client.is_batch_ended(args.batch_id)
     except livy.RequestError as e:
         console.error(
             "Failed to check batch status. HTTP code=%d, Reason=%s", e.code, e.reason

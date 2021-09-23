@@ -135,10 +135,10 @@ class LivyClientInitTester(unittest.TestCase):
         self.client.get_batch_state = get_state = unittest.mock.Mock()
 
         get_state.return_value = "success"
-        self.assertTrue(self.client.is_batch_finished(1234))
+        self.assertTrue(self.client.is_batch_ended(1234))
 
         get_state.return_value = "running"
-        self.assertFalse(self.client.is_batch_finished(1234))
+        self.assertFalse(self.client.is_batch_ended(1234))
 
     def test_get_batch_log(self):
         # success: no optional arg
