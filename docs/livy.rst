@@ -4,14 +4,14 @@ Core library
 Core library is a set of wrapped API call and message handling classes. All of these classes could be used without extra dependency.
 
 
-LivyClient
-----------
+livy.LivyClient
+---------------
 
 .. autoclass:: livy.client.LivyClient
    :members:
 
-LivyBatchLogReader
-------------------
+livy.LivyBatchLogReader
+-----------------------
 
 .. autoclass:: livy.logreader.LivyBatchLogReader
    :members:

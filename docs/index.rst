@@ -11,7 +11,8 @@ This tool is originally design for deal with task submission in my daily routine
 .. toctree::
    :maxdepth: 1
 
-   core-library
+   livy
+   livy.utils
 
 
 Indices and tables
