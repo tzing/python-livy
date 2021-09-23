@@ -1,5 +1,4 @@
 import argparse
-import importlib.util
 import logging
 import os
 import sys
@@ -110,6 +109,7 @@ def init(args: argparse.Namespace = None):
         return
 
     args = args or argparse.Namespace()
+    cfg = livy.cli.config.load()
 
     # root logger
     root_logger = logging.getLogger()
@@ -127,8 +127,13 @@ def init(args: argparse.Namespace = None):
     console_handler.setLevel(logging.INFO - 10 * getattr(args, "verbose", 0))
     root_logger.addHandler(console_handler)
 
-    _console_formatter = _get_console_formatter(stream)
-    console_handler.setFormatter(_console_formatter)
+    console_handler.setFormatter(
+        livy.utils.ColoredFormatter(
+            fmt=cfg.logs.format,
+            datefmt=cfg.logs.date_format,
+            highlight_loggers=getattr(args, "highlight_logger", []),
+        )
+    )
 
     _log_filter = _LogFilter()
     console_handler.addFilter(_log_filter)
@@ -153,8 +158,6 @@ def init(args: argparse.Namespace = None):
         logger.info("Log file is created at %s", args.log_file)
 
     # set highlight / lowlight loggers
-    for name in getattr(args, "highlight_logger", []):
-        register_highlight_logger(name)
     for name in getattr(args, "hide_logger", []):
         register_ignore_logger(name)
 
@@ -166,15 +169,6 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
-
-
-def _get_console_formatter(stream: typing.TextIO):
-    """Return colored formatter if avaliable."""
-    if not stream.isatty() or not importlib.util.find_spec("colorama"):
-        return _get_general_formatter()
-
-    cfg = livy.cli.config.load()
-    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
 
 
 def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
