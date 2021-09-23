@@ -289,6 +289,30 @@ class ColoredFormatterTester(unittest.TestCase):
         )
 
 
+class IngoreLogFilterTester(unittest.TestCase):
+    def setUp(self) -> None:
+        self.filter = module.IngoreLogFilter(["Test.Foo"])
+
+    def record(self, name: str) -> logging.LogRecord:
+        return logging.makeLogRecord(
+            {
+                "name": name,
+                "levelno": logging.INFO,
+                "levelname": "INFO",
+                "msg": "Test log message",
+                "created": 1632401177,
+            }
+        )
+
+    def test(self):
+        self.assertTrue(self.filter.filter(self.record("Test")))
+        self.assertTrue(self.filter.filter(self.record("Test.Bar")))
+        self.assertTrue(self.filter.filter(self.record("TestFoo")))
+
+        self.assertFalse(self.filter.filter(self.record("Test.Foo")))
+        self.assertFalse(self.filter.filter(self.record("Test.Foo.Bar")))
+
+
 class HelperTester(unittest.TestCase):
     def test_is_from_wanted_logger(self):
         record = unittest.mock.Mock(spec=logging.LogRecord)

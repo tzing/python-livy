@@ -3,13 +3,11 @@ import logging
 import os
 import sys
 import tempfile
-import typing
 
 import livy.cli.config
 import livy.utils
 
 _is_initialized = False
-_log_filter = None
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
@@ -103,7 +101,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 def init(args: argparse.Namespace = None):
     """Initialize loggers"""
-    global _is_initialized, _log_filter
+    global _is_initialized
     if _is_initialized:
         return
 
@@ -134,8 +132,9 @@ def init(args: argparse.Namespace = None):
         )
     )
 
-    _log_filter = _LogFilter()
-    console_handler.addFilter(_log_filter)
+    console_handler.addFilter(
+        livy.utils.IngoreLogFilter(getattr(args, "hide_logger", []))
+    )
 
     # file handler
     args.log_file = getattr(args, "log_file", False)
@@ -156,10 +155,6 @@ def init(args: argparse.Namespace = None):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
-    # set highlight / lowlight loggers
-    for name in getattr(args, "hide_logger", []):
-        register_ignore_logger(name)
-
     _is_initialized = True
 
 
@@ -168,56 +163,6 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
-
-
-def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
-    """Return True if the record is from any of wanted logger."""
-    # match by full name
-    if record.name in logger_names:
-        return True
-
-    # early escape if it could not be a sub logger
-    if not record.name or "." not in record.name:
-        return False
-
-    # match by logger hierarchy
-    for name in logger_names:
-        if record.name.startswith(name + "."):
-            return True
-
-    return False
-
-
-class _LogFilter(object):
-    """Drop logs from the unwanted logger list."""
-
-    __slots__ = ("unwanted_loggers",)
-
-    def __init__(self) -> None:
-        self.unwanted_loggers = set()
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Determine if the specified record is to be logged.
-        Returns True if the record should be logged, or False otherwise.
-        """
-        if _is_wanted_logger(record, self.unwanted_loggers):
-            return False
-        return True
-
-
-def register_ignore_logger(name: str):
-    """Register logger name to be ignored on console.
-
-    Parameters
-    ----------
-        name : str
-            Logger name
-    """
-    global _log_filter
-    assert isinstance(name, str)
-    assert _log_filter, "Log filter does not exists"
-
-    _log_filter.unwanted_loggers.add(name)
 
 
 get = logging.getLogger

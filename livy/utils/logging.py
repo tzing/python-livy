@@ -8,7 +8,7 @@ import threading
 import time
 import typing
 
-__all__ = ["EnhancedConsoleHandler", "ColoredFormatter"]
+__all__ = ["EnhancedConsoleHandler", "ColoredFormatter", "IngoreLogFilter"]
 
 
 class EnhancedConsoleHandler(logging.StreamHandler):
@@ -299,3 +299,26 @@ class ColoredFormatter(logging.Formatter):
             )
 
         return colors
+
+
+class IngoreLogFilter(object):
+    """Drop logs from the unwanted logger list."""
+
+    __slots__ = ("unwanted_loggers",)
+
+    def __init__(self, unwanted_loggers: typing.Iterable[str]) -> None:
+        """
+        Parameters
+        ----------
+            unwanted_loggers : List[str]
+                List of logger name to be ignored
+        """
+        self.unwanted_loggers = set(unwanted_loggers or [])
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Determine if the specified record is to be logged.
+        Returns True if the record should be logged, or False otherwise.
+        """
+        if is_from_wanted_logger(self.unwanted_loggers, record):
+            return False
+        return True
