@@ -16,6 +16,10 @@ livy.LivyBatchLogReader
 .. autoclass:: livy.logreader.LivyBatchLogReader
    :members:
 
+
+.. autoclass:: livy.logreader.LivyLogParseResult
+   :members:
+
 Exceptions
 ----------
 
