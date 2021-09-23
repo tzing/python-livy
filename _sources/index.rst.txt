@@ -8,9 +8,11 @@ Welcome to python-livy's documentation!
 This tool is originally designed for task submission and script debugging. If you do have an idea on how to make this tool for powerful, please create a issue to share it with me :)
 
 
+Table of content
+----------------
+
 .. toctree::
-   :caption: Table of content
-   :maxdepth: 1
+   :maxdepth: 2
 
    api/index
 
