@@ -33,7 +33,7 @@ class EnhancedConsoleHandler(logging.StreamHandler):
     def __new__(cls, stream: typing.TextIO) -> logging.StreamHandler:
         """Automatically fallback to normal handler if requirement not satisfied."""
         if not stream.isatty() or not importlib.util.find_spec("tqdm"):
-            return super().__new__(logging.StreamHandler)
+            return logging.StreamHandler(stream)
         return super().__new__(cls)
 
     def __init__(self, stream: typing.TextIO) -> None:
@@ -170,6 +170,7 @@ class EnhancedConsoleHandler(logging.StreamHandler):
 
     def close(self):
         """Close this handler. Stop emitting logs to console."""
+        super().close()
         self._stop_thread.set()
         self.flush()
 

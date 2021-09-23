@@ -12,6 +12,7 @@ import time
 import typing
 
 import livy.cli.config
+import livy.utils
 
 _is_initialized = False
 _console_formatter = None
@@ -123,10 +124,11 @@ def init(args: argparse.Namespace = None):
     # console handler
     stream = sys.stderr
 
-    console_handler, msg_console_handler_create = _get_console_handler(
-        stream=stream,
-        with_progressbar=getattr(args, "with_progressbar", False),
-    )
+    if getattr(args, "with_progressbar", True):
+        console_handler = livy.utils.EnhancedConsoleHandler(stream)
+    else:
+        console_handler = logging.StreamHandler(stream)
+
     console_handler.setLevel(logging.INFO - 10 * getattr(args, "verbose", 0))
     root_logger.addHandler(console_handler)
 
@@ -155,12 +157,6 @@ def init(args: argparse.Namespace = None):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
-    # buffered message: progress bar handler creation
-    if msg_console_handler_create:
-        logger.warning(
-            "%s. Progressbar feature is disabled.", msg_console_handler_create
-        )
-
     # set highlight / lowlight loggers
     for name in getattr(args, "highlight_logger", []):
         register_highlight_logger(name)
@@ -168,152 +164,6 @@ def init(args: argparse.Namespace = None):
         register_ignore_logger(name)
 
     _is_initialized = True
-
-
-def _get_console_handler(
-    stream: typing.TextIO, with_progressbar: bool
-) -> typing.Tuple[logging.StreamHandler, str]:
-    """Return fancy console handler if it is wanted and is avaliable."""
-    if not with_progressbar:
-        return logging.StreamHandler(stream), None
-    if not stream.isatty():
-        return logging.StreamHandler(stream), "Output stream is not attached to TTY"
-    if not importlib.util.find_spec("tqdm"):
-        return logging.StreamHandler(stream), "Dependency `tqdm` not found"
-    return _StreamHandlerWithProgressbar(stream), None
-
-
-class _StreamHandlerWithProgressbar(logging.StreamHandler):
-    _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
-    _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
-    _PATTERN_FINISH_TASK = re.compile(
-        r"Finished task [\d.]+ in stage ([\d.]+) \(.+?\) in \d+ ms on \S+ "
-        r"\(executor \d+\) \((\d+)\/(\d+)\)"
-    )
-
-    _tqdm_create = None
-    _tqdm_suppress = None
-
-    def __init__(self, stream: typing.TextIO) -> None:
-        super().__init__(stream)
-        import tqdm
-
-        self._current_progressbar: tqdm.tqdm = None
-        self._latest_taskset: decimal.Decimal = decimal.Decimal(-1)
-
-        # tqdm is only avaliable in this scope
-        self._tqdm_create = tqdm.tqdm
-        self._tqdm_suppress = tqdm.tqdm.external_write_mode
-
-        # background worker and queue for write log by batch
-        self._log_queue = queue.Queue()
-
-        thread = threading.Thread(target=self._trigger_flush, args=())
-        thread.daemon = True
-        thread.start()
-
-    def _trigger_flush(self):
-        while True:
-            if self._log_queue.qsize() > 0:
-                self.flush()
-            time.sleep(0.07)
-
-    def handle(self, record: logging.LogRecord) -> None:
-        """Override `handle` for reteriving the log before it is filtered."""
-        # capture logs from YarnScheduler / TaskSetManager for updating progressbar
-        if record.name == "YarnScheduler":
-            msg = record.getMessage()
-            m = self._PATTERN_ADD_TASKSET.match(msg)
-            if m:
-                self._set_progressbar(
-                    task_set=m.group(1),
-                    progress=0,
-                    total=int(m.group(2)),
-                )
-            else:
-                m = self._PATTERN_REMOVE_TASKSET.match(msg)
-                if m:
-                    self._close_progressbar(m.group(1))
-
-        elif record.name == "TaskSetManager":
-            m = self._PATTERN_FINISH_TASK.match(record.getMessage())
-            if m:
-                self._set_progressbar(
-                    task_set=m.group(1),
-                    progress=int(m.group(2)),
-                    total=int(m.group(3)),
-                )
-
-        # filter should be proceed in logging.Handler
-        if not self.filter(record):
-            return
-
-        # enqueue
-        #
-        # Normally, `handle()` might emits log here. But as it use tqdm, which
-        # changes the cursor position.
-        # Suppressing the progress bar every time it emits log might make the
-        # progress bar flashing on too many logs proceed in short time.
-        # As the alternative, it proceed the logs by batch (in flush) and use a
-        # background thread to trigger flushing.
-        self._log_queue.put(record)
-
-    def _set_progressbar(self, task_set: str, progress: int, total: int) -> None:
-        task_set = decimal.Decimal(task_set)
-
-        # no update by status of older task set
-        if task_set < self._latest_taskset:
-            return
-
-        # update progress
-        elif self._current_progressbar and task_set == self._latest_taskset:
-            update = progress - self._current_progressbar.n
-            if update > 0:
-                self._current_progressbar.update(update)
-            return
-
-        # overwrite progressbar for new task set
-        elif task_set > self._latest_taskset:
-            self._close_progressbar(self._latest_taskset)
-            self._latest_taskset = task_set
-
-        # create new progress bar
-        self._current_progressbar = self._tqdm_create(
-            desc=f"Stage {task_set}",
-            total=total,
-            leave=True,
-        )
-
-        self._current_progressbar.update(progress)
-
-    def _close_progressbar(self, task_set: str) -> bool:
-        if not self._current_progressbar:
-            return False
-
-        task_set = decimal.Decimal(task_set)
-        if task_set != self._latest_taskset:
-            return False
-
-        self._current_progressbar.close()
-        self._current_progressbar = None
-        return True
-
-    def flush(self) -> None:
-        # get logs
-        logs: typing.List[logging.LogRecord] = []
-        while True:
-            try:
-                logs.append(self._log_queue.get_nowait())
-            except queue.Empty:
-                break
-
-        if not logs:
-            return
-
-        # emit logs
-        with self.lock, self._tqdm_suppress():
-            for record in logs:
-                self.emit(record)
 
 
 def _get_general_formatter():
