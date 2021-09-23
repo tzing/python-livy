@@ -20,6 +20,7 @@ __all__ = ["LivyClient"]
 
 if sys.version_info < (3, 8):  # pragma: no cover
     Batch = typing.TypeVar("Batch", bound=dict)
+    State = typing.TypeVar("State", bound=str)
 else:  # pragma: no cover
 
     class Batch(typing.TypedDict):
@@ -29,6 +30,14 @@ else:  # pragma: no cover
         log: List[str]
         state: str
 
+    State = typing.Literal[
+        "starting",
+        "running",
+        "dead",
+        "killed",
+        "success",
+    ]
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +45,7 @@ logger = logging.getLogger(__name__)
 class LivyClient:
     """Client that wraps requests to Livy server
 
-    This implementation follows livy API v0.7.0 spec.
+    This implementation follows `Livy API v0.7.0 spec <https://livy.incubator.apache.org/docs/latest/rest-api.html>`_.
     """
 
     def __init__(
@@ -67,7 +76,7 @@ class LivyClient:
         This package is designed to use lesser third-party libraries, thus it
         does not use high-level interface to handling the requests. And it
         results with limitations that we could not use such rich features as
-        `requests`.
+        `requests <https://docs.python-requests.org/en/latest/>`_.
         """
         # URL
         if not isinstance(url, str):
@@ -193,12 +202,13 @@ class LivyClient:
         return response_data
 
     def check(self, capture: bool = True) -> bool:
-        """Check if server is live.
+        """Check if server is up.
 
         Parameters
         ----------
             capture : bool
-                Capture exceptions or not.
+                Capture the exception and returns boolean. Set to ``False`` for
+                raise :py:exc:`livy.exception.RequestError` on error.
         """
         try:
             self._request("HEAD", "/batches")
@@ -228,7 +238,7 @@ class LivyClient:
         name: Optional[str] = None,
         conf: Optional[Dict[str, str]] = None,
     ) -> Batch:
-        """Request to create a batch (task)
+        """Request to create a batch.
 
         Parameters
         ----------
@@ -351,7 +361,7 @@ class LivyClient:
         self._request("DELETE", f"/batches/{batch_id}")
 
     def get_batch_information(self, batch_id: int) -> Batch:
-        """Get summary information for specific batch
+        """Get summary information to specific batch.
 
         Parameters
         ----------
@@ -374,8 +384,8 @@ class LivyClient:
             raise _TypeError("batch_id", int, batch_id)
         return self._request("GET", f"/batches/{batch_id}")
 
-    def get_batch_state(self, batch_id: int) -> str:
-        """Get state of the batch
+    def get_batch_state(self, batch_id: int) -> State:
+        """Get state of the batch.
 
         Parameters
         ----------
@@ -384,8 +394,9 @@ class LivyClient:
 
         Return
         ------
-            state : str
-                Current state
+        state : str
+            Current state; Literally ``starting``, ``running``, ``dead``,
+            ``killed``, or ``success``.
 
         Raises
         ------
@@ -396,10 +407,16 @@ class LivyClient:
 
         Note
         ----
-        The listed states is mixed with session state and statement state.
-        It do not provide complete batch state list in official document and I
-        found both state from session list and statement list could be observed
-        in batch task.
+        There is no complete batch state list in
+        `official document <https://livy.incubator.apache.org/docs/latest/rest-api.html>`_.
+
+        The given state list is based on my observation in real practice
+        (perhaps we could check it's source code as confirmation?).
+        Since both state from session list and statement list could be observed,
+        the complete possible list could be: ``not_started``, ``starting``,
+        ``available``, ``idle``, ``waiting``, ``busy``, ``running``,
+        ``shutting_down``, ``error``, ``dead``, ``killed``, ``success``,
+        ``cancelling`` and ``cancelled``.
         """
         if not isinstance(batch_id, int):
             raise _TypeError("batch_id", int, batch_id)
@@ -431,7 +448,7 @@ class LivyClient:
     def get_batch_log(
         self, batch_id: int, from_: Optional[int] = None, size: Optional[int] = None
     ):
-        """Get logs from the batch
+        """Get logs from the batch.
 
         Parameters
         ----------
