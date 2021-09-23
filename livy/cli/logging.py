@@ -1,21 +1,13 @@
 import argparse
-import decimal
-import importlib.util
 import logging
 import os
-import queue
-import re
 import sys
 import tempfile
-import threading
-import time
-import typing
 
 import livy.cli.config
+import livy.utils
 
 _is_initialized = False
-_console_formatter = None
-_log_filter = None
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
@@ -109,11 +101,12 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 def init(args: argparse.Namespace = None):
     """Initialize loggers"""
-    global _is_initialized, _console_formatter, _log_filter
+    global _is_initialized
     if _is_initialized:
         return
 
     args = args or argparse.Namespace()
+    cfg = livy.cli.config.load()
 
     # root logger
     root_logger = logging.getLogger()
@@ -123,18 +116,25 @@ def init(args: argparse.Namespace = None):
     # console handler
     stream = sys.stderr
 
-    console_handler, msg_console_handler_create = _get_console_handler(
-        stream=stream,
-        with_progressbar=getattr(args, "with_progressbar", False),
-    )
+    if getattr(args, "with_progressbar", True):
+        console_handler = livy.utils.EnhancedConsoleHandler(stream)
+    else:
+        console_handler = logging.StreamHandler(stream)
+
     console_handler.setLevel(logging.INFO - 10 * getattr(args, "verbose", 0))
     root_logger.addHandler(console_handler)
 
-    _console_formatter = _get_console_formatter(stream)
-    console_handler.setFormatter(_console_formatter)
+    console_handler.setFormatter(
+        livy.utils.ColoredFormatter(
+            fmt=cfg.logs.format,
+            datefmt=cfg.logs.date_format,
+            highlight_loggers=getattr(args, "highlight_logger", []),
+        )
+    )
 
-    _log_filter = _LogFilter()
-    console_handler.addFilter(_log_filter)
+    console_handler.addFilter(
+        livy.utils.IngoreLogFilter(getattr(args, "hide_logger", []))
+    )
 
     # file handler
     args.log_file = getattr(args, "log_file", False)
@@ -155,165 +155,7 @@ def init(args: argparse.Namespace = None):
     if args.log_file:
         logger.info("Log file is created at %s", args.log_file)
 
-    # buffered message: progress bar handler creation
-    if msg_console_handler_create:
-        logger.warning(
-            "%s. Progressbar feature is disabled.", msg_console_handler_create
-        )
-
-    # set highlight / lowlight loggers
-    for name in getattr(args, "highlight_logger", []):
-        register_highlight_logger(name)
-    for name in getattr(args, "hide_logger", []):
-        register_ignore_logger(name)
-
     _is_initialized = True
-
-
-def _get_console_handler(
-    stream: typing.TextIO, with_progressbar: bool
-) -> typing.Tuple[logging.StreamHandler, str]:
-    """Return fancy console handler if it is wanted and is avaliable."""
-    if not with_progressbar:
-        return logging.StreamHandler(stream), None
-    if not stream.isatty():
-        return logging.StreamHandler(stream), "Output stream is not attached to TTY"
-    if not importlib.util.find_spec("tqdm"):
-        return logging.StreamHandler(stream), "Dependency `tqdm` not found"
-    return _StreamHandlerWithProgressbar(stream), None
-
-
-class _StreamHandlerWithProgressbar(logging.StreamHandler):
-    _PATTERN_ADD_TASKSET = re.compile(r"Adding task set ([\d.]+) with (\d+) tasks")
-    _PATTERN_REMOVE_TASKSET = re.compile(r"Removed TaskSet ([\d.]+),")
-    _PATTERN_FINISH_TASK = re.compile(
-        r"Finished task [\d.]+ in stage ([\d.]+) \(.+?\) in \d+ ms on \S+ "
-        r"\(executor \d+\) \((\d+)\/(\d+)\)"
-    )
-
-    _tqdm_create = None
-    _tqdm_suppress = None
-
-    def __init__(self, stream: typing.TextIO) -> None:
-        super().__init__(stream)
-        import tqdm
-
-        self._current_progressbar: tqdm.tqdm = None
-        self._latest_taskset: decimal.Decimal = decimal.Decimal(-1)
-
-        # tqdm is only avaliable in this scope
-        self._tqdm_create = tqdm.tqdm
-        self._tqdm_suppress = tqdm.tqdm.external_write_mode
-
-        # background worker and queue for write log by batch
-        self._log_queue = queue.Queue()
-
-        thread = threading.Thread(target=self._trigger_flush, args=())
-        thread.daemon = True
-        thread.start()
-
-    def _trigger_flush(self):
-        while True:
-            if self._log_queue.qsize() > 0:
-                self.flush()
-            time.sleep(0.07)
-
-    def handle(self, record: logging.LogRecord) -> None:
-        """Override `handle` for reteriving the log before it is filtered."""
-        # capture logs from YarnScheduler / TaskSetManager for updating progressbar
-        if record.name == "YarnScheduler":
-            msg = record.getMessage()
-            m = self._PATTERN_ADD_TASKSET.match(msg)
-            if m:
-                self._set_progressbar(
-                    task_set=m.group(1),
-                    progress=0,
-                    total=int(m.group(2)),
-                )
-            else:
-                m = self._PATTERN_REMOVE_TASKSET.match(msg)
-                if m:
-                    self._close_progressbar(m.group(1))
-
-        elif record.name == "TaskSetManager":
-            m = self._PATTERN_FINISH_TASK.match(record.getMessage())
-            if m:
-                self._set_progressbar(
-                    task_set=m.group(1),
-                    progress=int(m.group(2)),
-                    total=int(m.group(3)),
-                )
-
-        # filter should be proceed in logging.Handler
-        if not self.filter(record):
-            return
-
-        # enqueue
-        #
-        # Normally, `handle()` might emits log here. But as it use tqdm, which
-        # changes the cursor position.
-        # Suppressing the progress bar every time it emits log might make the
-        # progress bar flashing on too many logs proceed in short time.
-        # As the alternative, it proceed the logs by batch (in flush) and use a
-        # background thread to trigger flushing.
-        self._log_queue.put(record)
-
-    def _set_progressbar(self, task_set: str, progress: int, total: int) -> None:
-        task_set = decimal.Decimal(task_set)
-
-        # no update by status of older task set
-        if task_set < self._latest_taskset:
-            return
-
-        # update progress
-        elif self._current_progressbar and task_set == self._latest_taskset:
-            update = progress - self._current_progressbar.n
-            if update > 0:
-                self._current_progressbar.update(update)
-            return
-
-        # overwrite progressbar for new task set
-        elif task_set > self._latest_taskset:
-            self._close_progressbar(self._latest_taskset)
-            self._latest_taskset = task_set
-
-        # create new progress bar
-        self._current_progressbar = self._tqdm_create(
-            desc=f"Stage {task_set}",
-            total=total,
-            leave=True,
-        )
-
-        self._current_progressbar.update(progress)
-
-    def _close_progressbar(self, task_set: str) -> bool:
-        if not self._current_progressbar:
-            return False
-
-        task_set = decimal.Decimal(task_set)
-        if task_set != self._latest_taskset:
-            return False
-
-        self._current_progressbar.close()
-        self._current_progressbar = None
-        return True
-
-    def flush(self) -> None:
-        # get logs
-        logs: typing.List[logging.LogRecord] = []
-        while True:
-            try:
-                logs.append(self._log_queue.get_nowait())
-            except queue.Empty:
-                break
-
-        if not logs:
-            return
-
-        # emit logs
-        with self.lock, self._tqdm_suppress():
-            for record in logs:
-                self.emit(record)
 
 
 def _get_general_formatter():
@@ -321,155 +163,6 @@ def _get_general_formatter():
     cfg = livy.cli.config.load()
     fmt = cfg.logs.format.replace("%(levelcolor)s", "").replace("%(reset)s", "")
     return logging.Formatter(fmt=fmt, datefmt=cfg.logs.date_format)
-
-
-def _get_console_formatter(stream: typing.TextIO):
-    """Return colored formatter if avaliable."""
-    if not stream.isatty() or not importlib.util.find_spec("colorama"):
-        return _get_general_formatter()
-
-    cfg = livy.cli.config.load()
-    return _ColoredFormatter(fmt=cfg.logs.format, datefmt=cfg.logs.date_format)
-
-
-def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) -> bool:
-    """Return True if the record is from any of wanted logger."""
-    # match by full name
-    if record.name in logger_names:
-        return True
-
-    # early escape if it could not be a sub logger
-    if not record.name or "." not in record.name:
-        return False
-
-    # match by logger hierarchy
-    for name in logger_names:
-        if record.name.startswith(name + "."):
-            return True
-
-    return False
-
-
-class _ColoredFormatter(logging.Formatter):
-    """A formatter that could add ANSI colors to logs, should use with console
-    stream. Inspired by borntyping/python-colorlog, and add feature that
-    supports different color scheme via logger name."""
-
-    __slots__ = ("highlight_loggers",)
-
-    class ColoredRecord:
-        def __init__(
-            self, record: logging.LogRecord, escapes: typing.Dict[str, str]
-        ) -> None:
-            self.__dict__.update(record.__dict__)
-            self.__dict__.update(escapes)
-
-    _COLOR_RESET: str = ""
-    _COLOR_DEFAULT: typing.Dict[str, str] = {}
-    _COLOR_HIGHLIGHT: typing.Dict[str, str] = {}
-
-    def __init__(self, fmt: str, datefmt: str) -> None:
-        """Create ColorFormatter instance"""
-        super().__init__(fmt=fmt, datefmt=datefmt)
-        import colorama
-
-        colorama.init()
-
-        self._COLOR_RESET = colorama.Style.RESET_ALL
-        self._COLOR_DEFAULT = {
-            "DEBUG": colorama.Fore.WHITE,
-            "INFO": colorama.Fore.GREEN,
-            "WARNING": colorama.Fore.YELLOW,
-            "ERROR": colorama.Fore.RED,
-            "CRITICAL": colorama.Fore.LIGHTRED_EX,
-        }
-        self._COLOR_HIGHLIGHT = {
-            "DEBUG": colorama.Back.WHITE + colorama.Fore.WHITE,
-            "INFO": colorama.Back.GREEN + colorama.Fore.WHITE,
-            "WARNING": colorama.Back.YELLOW + colorama.Fore.WHITE,
-            "ERROR": colorama.Back.RED + colorama.Fore.WHITE,
-            "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
-        }
-
-        self.highlight_loggers = set()
-
-    def formatMessage(self, record: logging.LogRecord) -> str:
-        colors = self.get_color_map(record)
-        wrapper = self.ColoredRecord(record, colors)
-        message = super().formatMessage(wrapper)
-        if not message.endswith(self._COLOR_RESET):
-            message += self._COLOR_RESET
-        return message
-
-    def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
-        colors = {
-            "reset": self._COLOR_RESET,
-        }
-
-        if _is_wanted_logger(record, self.highlight_loggers):
-            colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
-                record.levelname, self._COLOR_RESET
-            )
-        else:
-            colors["levelcolor"] = self._COLOR_DEFAULT.get(
-                record.levelname, self._COLOR_RESET
-            )
-
-        return colors
-
-
-def register_highlight_logger(name: str):
-    """Register logger name to be highlighted on console.
-
-    Parameters
-    ----------
-        name : str
-            Logger name
-    """
-    global _console_formatter
-    assert isinstance(name, str)
-    assert _console_formatter, "Console formatter does not exist"
-
-    if not hasattr(_console_formatter, "highlight_loggers"):
-        get(__name__).warning(
-            "Log highlighting feature is currently not avaliable. "
-            "Do you have python library `colorama` installed?",
-        )
-        return
-
-    _console_formatter.highlight_loggers.add(name)
-
-
-class _LogFilter(object):
-    """Drop logs from the unwanted logger list."""
-
-    __slots__ = ("unwanted_loggers",)
-
-    def __init__(self) -> None:
-        self.unwanted_loggers = set()
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Determine if the specified record is to be logged.
-        Returns True if the record should be logged, or False otherwise.
-        """
-        if _is_wanted_logger(record, self.unwanted_loggers):
-            return False
-        return True
-
-
-def register_ignore_logger(name: str):
-    """Register logger name to be ignored on console.
-
-    Parameters
-    ----------
-        name : str
-            Logger name
-    """
-    global _log_filter
-    assert isinstance(name, str)
-    assert _log_filter, "Log filter does not exists"
-
-    _log_filter.unwanted_loggers.add(name)
 
 
 get = logging.getLogger
