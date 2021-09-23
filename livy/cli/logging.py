@@ -9,7 +9,6 @@ import livy.cli.config
 import livy.utils
 
 _is_initialized = False
-_console_formatter = None
 _log_filter = None
 
 
@@ -104,7 +103,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 def init(args: argparse.Namespace = None):
     """Initialize loggers"""
-    global _is_initialized, _console_formatter, _log_filter
+    global _is_initialized, _log_filter
     if _is_initialized:
         return
 

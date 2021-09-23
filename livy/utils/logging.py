@@ -8,6 +8,8 @@ import threading
 import time
 import typing
 
+__all__ = ["EnhancedConsoleHandler", "ColoredFormatter"]
+
 
 class EnhancedConsoleHandler(logging.StreamHandler):
     """A stream handler that could shows progress bar on task set related logs
@@ -273,6 +275,7 @@ class ColoredFormatter(logging.Formatter):
         self.highlight_loggers = set(highlight_loggers or [])
 
     def formatMessage(self, record: logging.LogRecord) -> str:
+        """Override formatMessage to add color"""
         colors = self.get_color_map(record)
         wrapper = ColoredRecord(record, colors)
         message = super().formatMessage(wrapper)
@@ -281,6 +284,7 @@ class ColoredFormatter(logging.Formatter):
         return message
 
     def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
+        """Get dict with color code to be updated into log record's __dict__."""
         colors = {
             "reset": self._COLOR_RESET,
         }
