@@ -271,7 +271,9 @@ class ColoredFormatterTester(unittest.TestCase):
         self.assertDictEqual(
             self.formatter.get_color_map(record),
             {
-                "levelcolor": colorama.Back.GREEN + colorama.Fore.WHITE,
+                "levelcolor": colorama.Back.GREEN
+                + colorama.Style.BRIGHT
+                + colorama.Fore.WHITE,
                 "reset": colorama.Style.RESET_ALL,
             },
         )

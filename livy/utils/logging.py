@@ -260,12 +260,14 @@ class ColoredFormatter(logging.Formatter):
             "ERROR": colorama.Fore.RED,
             "CRITICAL": colorama.Fore.LIGHTRED_EX,
         }
+
+        highlight_fore = colorama.Style.BRIGHT + colorama.Fore.WHITE
         self._COLOR_HIGHLIGHT = {
-            "DEBUG": colorama.Back.WHITE + colorama.Fore.WHITE,
-            "INFO": colorama.Back.GREEN + colorama.Fore.WHITE,
-            "WARNING": colorama.Back.YELLOW + colorama.Fore.WHITE,
-            "ERROR": colorama.Back.RED + colorama.Fore.WHITE,
-            "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
+            "DEBUG": colorama.Back.WHITE + highlight_fore,
+            "INFO": colorama.Back.GREEN + highlight_fore,
+            "WARNING": colorama.Back.YELLOW + highlight_fore,
+            "ERROR": colorama.Back.RED + highlight_fore,
+            "CRITICAL": colorama.Back.RED + highlight_fore,
         }
 
         self.highlight_loggers = set(highlight_loggers or [])
