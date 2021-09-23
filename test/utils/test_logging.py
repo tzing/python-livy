@@ -9,6 +9,8 @@ import unittest.mock
 import livy.utils.logging as module
 
 
+# optional package are not installed in `test-core`
+no_colorama = importlib.util.find_spec("colorama") is None
 no_tqdm = importlib.util.find_spec("tqdm") is None
 
 
@@ -176,3 +178,96 @@ class EnhancedConsoleHandlerTester(unittest.TestCase):
         self.handler.close()
         self.handler.handle(self.record("Test", "Test log"))
         self.handler.flush()
+
+
+@unittest.skipIf(no_colorama, "colorama is not installed")
+class ColoredFormatterTester(unittest.TestCase):
+    def setUp(self) -> None:
+        # dot not include time, local machine is not in utc timezone
+        self.formatter = module.ColoredFormatter(
+            "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
+            "%Y-%m-%d",
+        )
+
+    def test_formatMessage(self):
+        import colorama
+
+        self.formatter.get_color_map = unittest.mock.Mock(
+            return_value={
+                "levelcolor": colorama.Fore.RED,
+                "reset": colorama.Style.RESET_ALL,
+            }
+        )
+
+        self.assertEqual(
+            self.formatter.format(
+                logging.makeLogRecord(
+                    {
+                        "name": "Test",
+                        "levelno": logging.INFO,
+                        "levelname": "INFO",
+                        "msg": "Test log message",
+                        "created": 1631440284,
+                    }
+                )
+            ),
+            f"{colorama.Fore.RED}"
+            "2021-09-12 Test:"
+            f"{colorama.Style.RESET_ALL}"
+            " Test log message"
+            f"{colorama.Style.RESET_ALL}",
+        )
+
+    @unittest.mock.patch("livy.utils.logging.is_from_wanted_logger")
+    def test_get_color_map(self, ifwl):
+        import colorama
+
+        record = unittest.mock.Mock(spec=logging.LogRecord)
+        record.levelname = "INFO"
+
+        # highlight
+        ifwl.return_value = True
+        self.assertDictEqual(
+            self.formatter.get_color_map(record),
+            {
+                "levelcolor": colorama.Back.GREEN + colorama.Fore.WHITE,
+                "reset": colorama.Style.RESET_ALL,
+            },
+        )
+
+        # normal
+        ifwl.return_value = False
+        self.assertDictEqual(
+            self.formatter.get_color_map(record),
+            {
+                "levelcolor": colorama.Fore.GREEN,
+                "reset": colorama.Style.RESET_ALL,
+            },
+        )
+
+
+class HelperTester(unittest.TestCase):
+    def test_is_from_wanted_logger(self):
+        record = unittest.mock.Mock(spec=logging.LogRecord)
+        wantted_names = {"Foo.Bar", "Baz"}
+
+        record.name = "Foo.Bar"
+        self.assertTrue(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Foo.Bar.Baz"
+        self.assertTrue(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Baz"
+        self.assertTrue(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Baz.Foo"
+        self.assertTrue(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Foo"
+        self.assertFalse(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Foo.BarBaz"
+        self.assertFalse(module.is_from_wanted_logger(wantted_names, record))
+
+        record.name = "Qax"
+        self.assertFalse(module.is_from_wanted_logger(wantted_names, record))

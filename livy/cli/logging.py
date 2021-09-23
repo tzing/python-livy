@@ -1,14 +1,9 @@
 import argparse
-import decimal
 import importlib.util
 import logging
 import os
-import queue
-import re
 import sys
 import tempfile
-import threading
-import time
 import typing
 
 import livy.cli.config
@@ -198,96 +193,6 @@ def _is_wanted_logger(record: logging.LogRecord, logger_names: typing.Set[str]) 
             return True
 
     return False
-
-
-class _ColoredFormatter(logging.Formatter):
-    """A formatter that could add ANSI colors to logs, should use with console
-    stream. Inspired by borntyping/python-colorlog, and add feature that
-    supports different color scheme via logger name."""
-
-    __slots__ = ("highlight_loggers",)
-
-    class ColoredRecord:
-        def __init__(
-            self, record: logging.LogRecord, escapes: typing.Dict[str, str]
-        ) -> None:
-            self.__dict__.update(record.__dict__)
-            self.__dict__.update(escapes)
-
-    _COLOR_RESET: str = ""
-    _COLOR_DEFAULT: typing.Dict[str, str] = {}
-    _COLOR_HIGHLIGHT: typing.Dict[str, str] = {}
-
-    def __init__(self, fmt: str, datefmt: str) -> None:
-        """Create ColorFormatter instance"""
-        super().__init__(fmt=fmt, datefmt=datefmt)
-        import colorama
-
-        colorama.init()
-
-        self._COLOR_RESET = colorama.Style.RESET_ALL
-        self._COLOR_DEFAULT = {
-            "DEBUG": colorama.Fore.WHITE,
-            "INFO": colorama.Fore.GREEN,
-            "WARNING": colorama.Fore.YELLOW,
-            "ERROR": colorama.Fore.RED,
-            "CRITICAL": colorama.Fore.LIGHTRED_EX,
-        }
-        self._COLOR_HIGHLIGHT = {
-            "DEBUG": colorama.Back.WHITE + colorama.Fore.WHITE,
-            "INFO": colorama.Back.GREEN + colorama.Fore.WHITE,
-            "WARNING": colorama.Back.YELLOW + colorama.Fore.WHITE,
-            "ERROR": colorama.Back.RED + colorama.Fore.WHITE,
-            "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
-        }
-
-        self.highlight_loggers = set()
-
-    def formatMessage(self, record: logging.LogRecord) -> str:
-        colors = self.get_color_map(record)
-        wrapper = self.ColoredRecord(record, colors)
-        message = super().formatMessage(wrapper)
-        if not message.endswith(self._COLOR_RESET):
-            message += self._COLOR_RESET
-        return message
-
-    def get_color_map(self, record: logging.LogRecord) -> typing.Dict[str, str]:
-        colors = {
-            "reset": self._COLOR_RESET,
-        }
-
-        if _is_wanted_logger(record, self.highlight_loggers):
-            colors["levelcolor"] = self._COLOR_HIGHLIGHT.get(
-                record.levelname, self._COLOR_RESET
-            )
-        else:
-            colors["levelcolor"] = self._COLOR_DEFAULT.get(
-                record.levelname, self._COLOR_RESET
-            )
-
-        return colors
-
-
-def register_highlight_logger(name: str):
-    """Register logger name to be highlighted on console.
-
-    Parameters
-    ----------
-        name : str
-            Logger name
-    """
-    global _console_formatter
-    assert isinstance(name, str)
-    assert _console_formatter, "Console formatter does not exist"
-
-    if not hasattr(_console_formatter, "highlight_loggers"):
-        get(__name__).warning(
-            "Log highlighting feature is currently not avaliable. "
-            "Do you have python library `colorama` installed?",
-        )
-        return
-
-    _console_formatter.highlight_loggers.add(name)
 
 
 class _LogFilter(object):

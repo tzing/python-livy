@@ -1,10 +1,8 @@
 import argparse
-import decimal
 import importlib.util
 import logging
 import os
 import tempfile
-import time
 import unittest
 import unittest.mock
 
@@ -45,96 +43,6 @@ class TestArgumentParse(unittest.TestCase):
             unittest.mock.patch("os.getcwd", return_value=os.path.dirname(fp.name)):
             module.init(args)
         # fmt: on
-
-
-class TestFormatter(unittest.TestCase):
-    def setUp(self) -> None:
-        self.stream = unittest.mock.MagicMock()
-        self.stream.isatty.return_value = True
-
-        self.record = logging.makeLogRecord(
-            {
-                "name": "Test.Bar",
-                "levelno": logging.INFO,
-                "levelname": "INFO",
-                "msg": "Test log message",
-                "created": 1631440284,
-            }
-        )
-
-    @unittest.skipIf(no_colorama, "colorama is not installed")
-    def test_get_console_formatter(self):
-        assert isinstance(module._get_console_formatter(self.stream), logging.Formatter)
-
-    def test_get_console_formatter_fallback(self):
-        self.stream.isatty.return_value = False
-        assert isinstance(module._get_console_formatter(self.stream), logging.Formatter)
-
-    @unittest.skipIf(no_colorama, "colorama is not installed")
-    @unittest.mock.patch("livy.cli.logging._is_wanted_logger")
-    def test_ColoredFormatter(self, is_wanted_logger):
-        import colorama
-
-        # dot not include time, local machine is not in utc timezone
-        formatter = module._ColoredFormatter(
-            "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
-            "%Y-%m-%d",
-        )
-
-        # highlight
-        is_wanted_logger.return_value = True
-        self.assertEqual(
-            formatter.format(self.record),
-            f"{colorama.Back.GREEN}{colorama.Fore.WHITE}"
-            "2021-09-12 Test.Bar:"
-            f"{colorama.Style.RESET_ALL}"
-            " Test log message"
-            f"{colorama.Style.RESET_ALL}",
-        )
-
-        # normal
-        is_wanted_logger.return_value = False
-        self.assertEqual(
-            formatter.format(self.record),
-            f"{colorama.Fore.GREEN}"
-            "2021-09-12 Test.Bar:"
-            f"{colorama.Style.RESET_ALL}"
-            " Test log message"
-            f"{colorama.Style.RESET_ALL}",
-        )
-
-    def test_is_wanted_logger(self):
-        wantted_names = {"Foo.Bar", "Baz"}
-
-        self.record.name = "Foo.Bar"
-        assert module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Foo.Bar.Baz"
-        assert module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Baz"
-        assert module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Baz.Foo"
-        assert module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Foo"
-        assert not module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Foo.BarBaz"
-        assert not module._is_wanted_logger(self.record, wantted_names)
-
-        self.record.name = "Qax"
-        assert not module._is_wanted_logger(self.record, wantted_names)
-
-    @unittest.mock.patch("livy.cli.logging._console_formatter")
-    def test_register_highlight_logger(self, fmt):
-        # fail
-        module.register_highlight_logger("foo")
-
-        # success
-        fmt.highlight_loggers = set()
-        module.register_highlight_logger("foo")
 
 
 class TestFilter(unittest.TestCase):
