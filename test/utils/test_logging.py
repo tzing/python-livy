@@ -183,6 +183,7 @@ class EnhancedConsoleHandlerTester(unittest.TestCase):
 class ColoredFormatterSwitchTester(unittest.TestCase):
     """For testing ColoredFormatter's __new__"""
 
+    @unittest.skipIf(no_colorama, "colorama is not installed")
     @unittest.mock.patch("sys.stdout")
     def test_avaliable(self, _):
         formatter = module.ColoredFormatter(
