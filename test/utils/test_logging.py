@@ -180,9 +180,50 @@ class EnhancedConsoleHandlerTester(unittest.TestCase):
         self.handler.flush()
 
 
+class ColoredFormatterSwitchTester(unittest.TestCase):
+    """For testing ColoredFormatter's __new__"""
+
+    @unittest.mock.patch("sys.stdout")
+    def test_avaliable(self, _):
+        formatter = module.ColoredFormatter(
+            "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
+            "%Y-%m-%d",
+        )
+        self.assertIsInstance(formatter, module.ColoredFormatter)
+
+    @unittest.mock.patch("sys.stdout")
+    def test_not_avaliable(self, stdout):
+        stdout.isatty.return_value = False
+
+        # create instance
+        formatter = module.ColoredFormatter(
+            "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",
+            "%Y-%m-%d",
+        )
+        self.assertIsInstance(formatter, logging.Formatter)
+        self.assertNotIsInstance(formatter, module.ColoredFormatter)
+
+        # ensure color is removed
+        self.assertEqual(
+            formatter.format(
+                logging.makeLogRecord(
+                    {
+                        "name": "Test",
+                        "levelno": logging.INFO,
+                        "levelname": "INFO",
+                        "msg": "Test log message",
+                        "created": 1631440284,
+                    }
+                )
+            ),
+            "2021-09-12 Test: Test log message",
+        )
+
+
 @unittest.skipIf(no_colorama, "colorama is not installed")
 class ColoredFormatterTester(unittest.TestCase):
-    def setUp(self) -> None:
+    @unittest.mock.patch("sys.stdout")
+    def setUp(self, _) -> None:
         # dot not include time, local machine is not in utc timezone
         self.formatter = module.ColoredFormatter(
             "%(levelcolor)s%(asctime)s %(name)s:%(reset)s %(message)s",

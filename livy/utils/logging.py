@@ -3,6 +3,7 @@ import importlib
 import logging
 import queue
 import re
+import sys
 import threading
 import time
 import typing
@@ -223,8 +224,29 @@ class ColoredFormatter(logging.Formatter):
 
     __slots__ = ("highlight_loggers",)
 
-    def __init__(self, fmt: str, datefmt: str) -> None:
-        """Create ColorFormatter instance"""
+    def __new__(
+        cls, fmt: str, datefmt: str, highlight_loggers: typing.Iterable[str] = None
+    ) -> logging.StreamHandler:
+        """Automatically fallback to normal formatter if requirement not satisfied."""
+        if not sys.stdout.isatty() or not importlib.util.find_spec("colorama"):
+            fmt = re.sub(r"%\(levelcolor(:.+)?\)s", "", fmt)
+            fmt = re.sub(r"%\(reset(:.+)?\)s", "", fmt)
+            return logging.Formatter(fmt=fmt, datefmt=datefmt)
+        return super().__new__(cls)
+
+    def __init__(
+        self, fmt: str, datefmt: str, highlight_loggers: typing.Iterable[str] = None
+    ) -> None:
+        """
+        Parameters
+        ----------
+            fmt : str
+                Format for log message
+            datefmt : str
+                Format for datetime
+            highlight_loggers : List[str]
+                List of logger name to be highlighted
+        """
         super().__init__(fmt=fmt, datefmt=datefmt)
         import colorama
 
@@ -246,7 +268,7 @@ class ColoredFormatter(logging.Formatter):
             "CRITICAL": colorama.Back.RED + colorama.Fore.WHITE,
         }
 
-        self.highlight_loggers = set()
+        self.highlight_loggers = set(highlight_loggers or [])
 
     def formatMessage(self, record: logging.LogRecord) -> str:
         colors = self.get_color_map(record)
