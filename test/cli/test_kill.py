@@ -24,7 +24,7 @@ class TestMain(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_success(self):
-        self.client.is_batch_finished.side_effect = [False, True]
+        self.client.is_batch_ended.side_effect = [False, True]
         self.assertEqual(0, module.main(["1234"]))
 
     def test_get_batch_information_errors(self):
@@ -53,10 +53,10 @@ class TestMain(unittest.TestCase):
         self.assertEqual(1, module.main(["1234"]))
 
     def test_monitor_error(self):
-        self.client.is_batch_finished.side_effect = livy.RequestError(0, "test")
+        self.client.is_batch_ended.side_effect = livy.RequestError(0, "test")
         self.assertEqual(1, module.main(["1234"]))
 
-        self.client.is_batch_finished.side_effect = KeyboardInterrupt()
+        self.client.is_batch_ended.side_effect = KeyboardInterrupt()
         self.assertEqual(1, module.main(["1234"]))
 
 
