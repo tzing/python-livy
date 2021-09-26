@@ -1,101 +1,27 @@
 """Configuration management for python-livy CLI tool."""
-import abc
 import argparse
 import enum
 import json
 import logging
-import pathlib
 import typing
 
-
-USER_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
-CONFIG_LOAD_ORDER = [
-    pathlib.Path(__file__).resolve().parent.parent / "default-configure.json",
-    USER_CONFIG_PATH,
-]
+import livy.utils
+import livy.utils.configbase
 
 
 logger = logging.getLogger(__name__)
 
 
-class ConfigSectionBase(abc.ABC):
-    """Base class for configures, inspired by python3.7 dataclass."""
-
-    __missing = object()
-
-    def __init__(self, **kwargs) -> None:
-        cls = type(self)
-        for name, dtype in cls.__annotations__.items():
-            # get value, or create one
-            value = kwargs.get(name, self.__missing)
-            if value is not self.__missing:
-                # use user specific value
-                ...
-            elif isinstance(dtype, type) and issubclass(dtype, ConfigSectionBase):
-                # auto initalized subsection class
-                value = dtype()
-            else:
-                # get default value from class
-                value = cls.__dict__.get(name, self.__missing)
-
-            # set value if exists
-            if value is self.__missing:
-                continue
-            self.__dict__[name] = value
-
-    def __repr__(self) -> str:
-        cls_name = type(self).__name__
-        attr_values = []
-        for k, v in self.__dict__.items():
-            attr_values.append(f"{k}={v}")
-        return f"{cls_name}({', '.join( attr_values)})"
-
-    def merge(self, other: "ConfigSectionBase"):
-        assert isinstance(other, type(self))
-        for k in self.__dict__:
-            v = other.__dict__.get(k, self.__missing)
-            if v is self.__missing:
-                continue
-            self.__dict__[k] = v
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "ConfigSectionBase":
-        ins = cls()
-        for name, dtype in cls.__annotations__.items():
-            value = d.get(name, cls.__missing)
-            if value is cls.__missing:
-                continue
-            if isinstance(dtype, type) and issubclass(dtype, ConfigSectionBase):
-                if isinstance(value, dict):
-                    value = dtype.from_dict(value)
-                else:
-                    logger.warning(
-                        "Config parsing error. Expect dict for %s, got %s.",
-                        name,
-                        type(value).__name__,
-                    )
-                    continue
-            # TODO validate
-            ins.__dict__[name] = value
-        return ins
-
-    def to_dict(self):
-        return {
-            k: (v if not isinstance(v, ConfigSectionBase) else v.to_dict())
-            for k, v in self.__dict__.items()
-        }
-
-
-class Configuration(ConfigSectionBase):
+class Configuration(livy.utils.ConfigBase):
     """Collection to all configurations"""
 
-    class RootSection(ConfigSectionBase):
+    class RootSection(livy.utils.ConfigBase):
         """Basic settings that might be applied to all actions"""
 
         api_url: str = None
         """Base-URL for Livy API server"""
 
-    class LocalLoggingSection(ConfigSectionBase):
+    class LocalLoggingSection(livy.utils.ConfigBase):
         """Logging behavior on local"""
 
         class LogLevel(enum.IntEnum):
@@ -121,13 +47,13 @@ class Configuration(ConfigSectionBase):
         with_progressbar: bool = True
         """Convert TaskSetManager's logs into progress bar"""
 
-    class ReadLogSection(ConfigSectionBase):
+    class ReadLogSection(livy.utils.ConfigBase):
         """For read-log tool"""
 
         keep_watch: bool = True
         """Keep watching for batch activity until it is finished."""
 
-    class SubmitSection(ConfigSectionBase):
+    class SubmitSection(livy.utils.ConfigBase):
         """For task submission tool"""
 
         pre_submit: typing.List[str] = []
@@ -170,20 +96,12 @@ def load() -> Configuration:
     if _configuration:
         return _configuration
 
-    _configuration = Configuration()
-
     # read configs
-    for path in CONFIG_LOAD_ORDER:
-        # read file
-        try:
-            with open(path, "rb") as fp:
-                data = json.load(fp)
-        except (FileNotFoundError, json.JSONDecodeError):
-            continue
+    sections = {}
+    for name, class_ in Configuration.__annotations__.items():
+        sections[name] = class_.load(name)
 
-        # apply default values
-        v = Configuration.from_dict(data)
-        _configuration.merge(v)
+    _configuration = Configuration(**sections)
 
     return _configuration
 
@@ -193,7 +111,8 @@ def main(argv=None):
     # parse args
     parser = argparse.ArgumentParser(
         prog="livy config",
-        description=f"{__doc__} All configured would be saved and loaded from {USER_CONFIG_PATH}.",
+        description="%s All configured would be saved and loaded from %s"
+        % (__doc__, livy.utils.configbase.USER_CONFIG_PATH),
     )
     action = parser.add_subparsers(title="action", dest="action")
 
@@ -265,9 +184,6 @@ def cli_set_configure(name: str, raw_input: str):
 
     is_changed = value_new != value_orig
 
-    # set value
-    setattr(cfg_group, key, value_new)
-
     # show value
     print(f"{section}.{key} = {value_new}", end=" ")
     print("(updated)" if is_changed else "(not changed)")
@@ -278,17 +194,17 @@ def cli_set_configure(name: str, raw_input: str):
     # write config file, read current file and override by current settings to
     # preserved extra fields used by config
     try:
-        with open(USER_CONFIG_PATH, "r") as fp:
+        with open(livy.utils.configbase.USER_CONFIG_PATH, "r") as fp:
             config: dict = json.load(fp)
     except (FileNotFoundError, json.JSONDecodeError):
         config = {}
 
-    # override with new settings
-    config.update(cfg_root.to_dict())
+    # override with new settings; only add the changed value to the config file
+    config.setdefault(section, {})[key] = value_new
 
     # save file
     try:
-        with open(USER_CONFIG_PATH, "w") as fp:
+        with open(livy.utils.configbase.USER_CONFIG_PATH, "w") as fp:
             json.dump(config, fp, indent=2)
     except:
         logger.exception("Failed to write configure file")

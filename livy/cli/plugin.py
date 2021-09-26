@@ -9,13 +9,14 @@ except logging which is already configured before the hook, and return back the
 namespace back to pass to next plugins or used in the main function.
 """
 import datetime
-import json
 import logging
 import os
 import pathlib
 import re
 import typing
 import uuid
+
+import livy.utils
 
 if typing.TYPE_CHECKING:
     import argparse
@@ -24,23 +25,10 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def read_plugin_config(name: str) -> dict:
-    """Serialize configs from the user config file"""
-    import livy.cli.config
-
-    # load file
-    try:
-        with open(livy.cli.config.USER_CONFIG_PATH) as fp:
-            all_config = json.load(fp)
-    except (FileNotFoundError, json.JSONDecodeError):
-        logger.exception("Failed to read user config.")
-        return
-
-    cfg = all_config.get(f"plugin:{name}")
-    if not cfg:
-        logger.error("Configuration for plugin `%s` not exists", name)
-
-    return cfg
+class _ConfigUploadS3(livy.utils.ConfigBase):
+    bucket: str
+    folder_format: str
+    expire_days: int
 
 
 def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
@@ -59,7 +47,7 @@ def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
     Example config:
     ```json
     {
-        "plugin:upload_s3": {
+        "pre-submit:upload_s3": {
             "bucket": "example-bucket",
             "folder_format": "ManualSubmitTask-{time:%Y%m%d}-{uuid}",
             "expire_days": 3
@@ -71,39 +59,41 @@ def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
         raise ValueError("this plugin is for pre-submit hook only")
 
     # get configs
-    meta = read_plugin_config("upload_s3")
-    assert isinstance(meta, dict), "Config not found"
-    logger.debug("Get config: %s", json.dumps(meta))
-
-    bucket = meta["bucket"]
-    folder = meta["folder_format"]
-    expire_days = meta.get("expire_days")
-    assert isinstance(bucket, str)
-    assert isinstance(folder, str)
+    meta = _ConfigUploadS3.load("pre-submit:upload_s3")
+    assert isinstance(
+        meta.bucket, str
+    ), "Missing required key `bucket` in upload-s3 plugin config"
+    assert isinstance(
+        meta.folder_format, str
+    ), "Missing required key `folder_format` in upload-s3 plugin config"
 
     # shared parameters
     basic_param = {
-        "Bucket": bucket,
+        "Bucket": meta.bucket,
     }
 
-    if expire_days is None:
+    if meta.expire_days is None:
         ...  # do nothing
-    elif isinstance(expire_days, int) and expire_days > 0:
-        expire_date = datetime.datetime.utcnow() + datetime.timedelta(days=expire_days)
+    elif isinstance(meta.expire_days, int) and meta.expire_days > 0:
+        expire_date = datetime.datetime.utcnow() + datetime.timedelta(
+            days=meta.expire_days
+        )
         basic_param["Expires"] = expire_date
     else:
-        logger.warning("`expire_days` must be a positive integer. got %s", expire_days)
+        logger.warning(
+            "`expire_days` must be a positive integer. got %s", meta.expire_days
+        )
         logger.warning("Continuing the process without setting expire date.")
 
     # prefix
     script_name, _ = os.path.splitext(os.path.basename(args.script))
-    folder = folder.strip("/").format(
+    folder = meta.folder_format.strip("/").format(
         time=datetime.datetime.now(),
         uuid=uuid.uuid4(),
         script_name=script_name,
     )
 
-    logger.debug("Uploading files to s3://%s/%s", bucket, folder)
+    logger.debug("Uploading files to s3://%s/%s", meta.bucket, folder)
 
     # upload to s3
     import boto3
@@ -118,13 +108,13 @@ def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
         # build key
         filename = pathlib.Path(filepath).resolve()
         key = os.path.join(folder, prefix, os.path.basename(filepath))
-        logger.debug("Upload %s -> s3://%s/%s", filename, bucket, key)
+        logger.debug("Upload %s -> s3://%s/%s", filename, meta.bucket, key)
 
         # upload
         with open(filepath, "rb") as fp:
             client.put_object(Key=key, Body=fp, **basic_param)
 
-        return f"s3://{bucket}/{key}"
+        return f"s3://{meta.bucket}/{key}"
 
     args.script = _upload("", args.script)
 
