@@ -25,39 +25,39 @@ class TestMain(unittest.TestCase):
 
     def test_success(self):
         self.client.is_batch_ended.side_effect = [False, True]
-        self.assertEqual(0, module.main(["1234"]))
+        self.assertEqual(0, module.main(["--api-url", "http://example.com", "1234"]))
 
     def test_get_batch_information_errors(self):
         self.client.get_batch_information.side_effect = livy.RequestError(0, "test")
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
         self.client.get_batch_information.side_effect = KeyboardInterrupt()
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
     def test_task_finished(self):
         self.client.get_batch_information.return_value = {
             "id": 1234,
             "state": "failed",
         }
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
     def test_user_cancal(self):
         self.check_user_confirm.return_value = False
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
     def test_delete_batch_error(self):
         self.client.delete_batch.side_effect = livy.RequestError(0, "test")
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
         self.client.delete_batch.side_effect = KeyboardInterrupt()
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
     def test_monitor_error(self):
         self.client.is_batch_ended.side_effect = livy.RequestError(0, "test")
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
         self.client.is_batch_ended.side_effect = KeyboardInterrupt()
-        self.assertEqual(1, module.main(["1234"]))
+        self.assertEqual(1, module.main(["--api-url", "http://example.com", "1234"]))
 
 
 class TestCheckUserConfirm(unittest.TestCase):
