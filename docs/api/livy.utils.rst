@@ -5,6 +5,13 @@ Utility
 
 Most of the classes in this module need extra dependency to work. If you call them in a non-compatible environment, it would automatically fallback to some builtin python function with the similar features.
 
+livy.utils.ConfigBase
+---------------------
+
+.. automodule:: livy.utils.config
+
+.. autoclass:: livy.utils.config.ConfigBase
+   :members:
 
 livy.utils.EnhancedConsoleHandler
 ---------------------------------

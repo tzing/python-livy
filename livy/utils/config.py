@@ -92,3 +92,41 @@ class ConfigBase(abc.ABC):
             if value is self.__missing:
                 continue
             self.__dict__[field] = value
+
+    @classmethod
+    def load(cls: typing.Type[_T], section: str) -> _T:
+        """Create a config instance and load settings from files. It reads the
+        config from :py:const:`CONFIG_LOAD_ORDER`.
+
+        Parameters
+        ----------
+        section : str
+            Key name for reading config
+
+        Return
+        ------
+        config : ConfigBase
+            Config instance with data loaded from the file.
+        """
+        assert isinstance(section, str)
+
+        inst: ConfigBase = cls()
+        for filename in CONFIG_LOAD_ORDER:
+            # read file
+            try:
+                with open(filename, "rb") as fp:
+                    data = json.load(fp)
+            except FileNotFoundError:
+                continue
+            except json.JSONDecodeError as e:
+                logging.getLogger(__name__).warning(
+                    "Decode error in config file %s: %s", filename, e
+                )
+                continue
+
+            # merge config
+            # ignore when section not exists
+            if section in data:
+                inst.mergedict(data[section])
+
+        return inst
