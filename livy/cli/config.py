@@ -184,9 +184,6 @@ def cli_set_configure(name: str, raw_input: str):
 
     is_changed = value_new != value_orig
 
-    # set value
-    setattr(cfg_group, key, value_new)
-
     # show value
     print(f"{section}.{key} = {value_new}", end=" ")
     print("(updated)" if is_changed else "(not changed)")
@@ -197,17 +194,17 @@ def cli_set_configure(name: str, raw_input: str):
     # write config file, read current file and override by current settings to
     # preserved extra fields used by config
     try:
-        with open(USER_CONFIG_PATH, "r") as fp:
+        with open(livy.utils.configbase.USER_CONFIG_PATH, "r") as fp:
             config: dict = json.load(fp)
     except (FileNotFoundError, json.JSONDecodeError):
         config = {}
 
-    # override with new settings
-    config.update(cfg_root.to_dict())
+    # override with new settings; only add the changed value to the config file
+    config.setdefault(section, {})[key] = value_new
 
     # save file
     try:
-        with open(USER_CONFIG_PATH, "w") as fp:
+        with open(livy.utils.configbase.USER_CONFIG_PATH, "w") as fp:
             json.dump(config, fp, indent=2)
     except:
         logger.exception("Failed to write configure file")

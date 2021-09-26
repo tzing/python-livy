@@ -35,15 +35,22 @@ class TestMain(unittest.TestCase):
         _, path = tempfile.mkstemp()
         self.addCleanup(lambda: os.remove(path))
 
-        # success
         with unittest.mock.patch(
-            "livy.cli.config.USER_CONFIG_PATH", path
+            "livy.utils.configbase.USER_CONFIG_PATH", path
         ), unittest.mock.patch(
             "livy.cli.config.convert_user_input", return_value="foo"
         ):
             self.assertEqual(0, module.cli_set_configure("root.api_url", "test"))
 
-            # for early escape
+    def test_cli_set_configure_not_changed(self):
+        cfg = module.Configuration()
+        cfg.root.api_url = "test"
+
+        with unittest.mock.patch(
+            "livy.cli.config.load", return_value=cfg
+        ), unittest.mock.patch(
+            "livy.cli.config.convert_user_input", return_value="test"
+        ):
             self.assertEqual(0, module.cli_set_configure("root.api_url", "test"))
 
     def test_cli_set_configure_error(self):
