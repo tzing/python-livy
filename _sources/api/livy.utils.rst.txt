@@ -8,9 +8,9 @@ Most of the classes in this module need extra dependency to work. If you call th
 livy.utils.ConfigBase
 ---------------------
 
-.. automodule:: livy.utils.config
+.. automodule:: livy.utils.configbase
 
-.. autoclass:: livy.utils.config.ConfigBase
+.. autoclass:: livy.utils.configbase.ConfigBase
    :members:
 
 livy.utils.EnhancedConsoleHandler
