@@ -99,15 +99,15 @@ This tool is shipped with plugin ``upload_s3``. It could automatically upload th
 
    Currently it does not have plugin for native HDFS / GCP / Azure. Please file an issue or PR if you need it.
 
-This plugin need extra configure but not supporting set via command line. Please use the editor to open ``~/.config/python-livy.json`` and add ``plugin:upload_s3`` section:
+This plugin need extra configure but not supporting set via command line. Please use the editor to open ``~/.config/python-livy.json`` and add ``pre-submit:upload_s3`` section:
 
 .. code-block:: json
 
    {
      "root": {
-       // existing configs, please do not change
+       "...": "existing configs, please do not change"
      },
-     "plugin:upload_s3": {
+     "pre-submit:upload_s3": {
        "bucket": "example-bucket",
        "folder_format": "{time:%Y%m%d%H%M%S}-{name}-{uuid}",
        "expire_days": 3
@@ -122,8 +122,13 @@ After the configure, we could simply use the command line tool to submit the tas
 
    livy submit main.py
 
-Log reader would be auto started after submission.
+Log reader would be started after submission.
 
+.. note::
+
+   ``upload_s3`` plugin uses `boto3 <https://pypi.org/project/boto3/>`_ to upload the files, you should run this tool with ``s3:PutObject``. Or an error would raised.
+
+.. TODO CLI doc
 
 As library
 ----------
@@ -159,3 +164,49 @@ Note plugin system would not be triggered in core library. For action like *subm
    >>> reader.read_until_finish()  # read logs and broadcast to log handlers
 
 for API document, see :ref:`core-lib`.
+
+
+Advanced usage
+~~~~~~~~~~~~~~
+
+Set default configs and repack
+------------------------------
+
+In some case, we want to install this tool into multiple environments with setting configurations every time. We could re-packing this tool with default configurations for myself.
+
+First, clone the repo:
+
+.. code-block:: bash
+
+   git clone git@github.com:tzing/python-livy.git
+   cd python-livy
+
+Create ``default-configuration.json`` under ``livy/``, this is a hardcoded filename would be read by this tool but not exists in this origin repo.
+
+Save everything we want in this file, could be:
+
+.. code-block:: json
+
+   {
+     "root": {
+       "api_url": "http://example.com:8998/"
+     },
+     "submit": {
+       "pre_submit": [
+         "livy.cli.plugin:upload_s3"
+       ]
+     }
+     "pre-submit:upload_s3": {
+       "bucket": "example-bucket",
+       "folder_format": "{time:%Y%m%d%H%M%S}-{name}-{uuid}",
+       "expire_days": 3
+     }
+   }
+
+And build this tool for distributing:
+
+.. code-block:: bash
+
+   poetry build
+
+Then find the wheel or tar file in ``dist/``.
