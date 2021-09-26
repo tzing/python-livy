@@ -87,31 +87,3 @@ And add following section to `~/.config/python-livy.json`:
 ```
 
 Please kindly replace the `bucket` to some bucket that is readable to EMR, and configure the `folder_format` with proper string in your environment. The `time` and `uuid` part in `folder_format` would be replaced in runtime.
-
-### Use as library
-
-```python
->>> import livy
->>> client = livy.LivyClient("http://ip-10-12-34-56.us-west-2.compute.internal:8998/")
->>> client.create_batch("s3://example-bucket/test_script/main.py")
-{
-  "id": 55,
-  "name": None,
-  "owner": None,
-  "proxyUser": None,
-  "state": "starting",
-  "appId": None,
-  "appInfo": {
-    "driverLogUrl": None,
-    "sparkUiUrl": None
-  },
-  "log": [
-    "stdout: ",
-    "\nstderr: ",
-    "\nYARN Diagnostics: "
-  ]
-}
-
->>> reader = livy.LivyBatchLogReader(client, 55)
->>> reader.read_until_finish()  # read logs and broadcast to log handlers
-```
