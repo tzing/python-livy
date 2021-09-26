@@ -1,0 +1,408 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Usage &#8212; python-livy  documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet" />
+  <link href="_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/index.html" />
+    <link rel="prev" title="Welcome to python-livy’s documentation!" href="index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="index.html">
+<p class="title">python-livy</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 current active nav-item">
+ <a class="current reference internal nav-link" href="#">
+  Usage
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="api/index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/tzing/python-livy" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#requirement">
+   Requirement
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#install">
+   Install
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#use-pip">
+     Use pip
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#from-source">
+     From source
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#quick-start">
+   Quick start
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#command-line-tool">
+     Command line tool
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#as-library">
+     As library
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#advanced-usage">
+   Advanced usage
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#set-default-configs-and-repack">
+     Set default configs and repack
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="requirement">
+<h2>Requirement<a class="headerlink" href="#requirement" title="Permalink to this headline">¶</a></h2>
+<p><em>python-livy</em> requires Python 3.6+.</p>
+<p>It does not require third party library for core features, but could be more handful to use with some optional dependencies. See <a class="reference internal" href="#install"><span class="std std-ref">Install</span></a>.</p>
+</div>
+<div class="section" id="install">
+<span id="id1"></span><h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
+<p>This package is only hosted on Github.</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span></code> does have feature to support downloading packages from git server, so it not exists a strong reason for me to submit this to PyPI.</p>
+<div class="section" id="use-pip">
+<h3>Use pip<a class="headerlink" href="#use-pip" title="Permalink to this headline">¶</a></h3>
+<p>Full installation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy[pretty,aws]&#39;</span>
+</pre></div>
+</div>
+<p>Two <a class="reference external" href="https://setuptools.pypa.io/en/latest/userguide/dependency_management.html#optional-dependencies">“extras”</a> is included, they are for:</p>
+<dl class="simple">
+<dt>pretty</dt><dd><p>Enhance the command line output with color and progress bar.</p>
+</dd>
+<dt>aws</dt><dd><p>Install <code class="docutils literal notranslate"><span class="pre">boto3</span></code> for using plugin <code class="docutils literal notranslate"><span class="pre">upload_s3</span></code>.</p>
+</dd>
+</dl>
+<p>If you do not need these features, you could use basic installation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="from-source">
+<h3>From source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h3>
+<p>Please noted the dependencies in this project is managed by <a class="reference external" href="https://python-poetry.org/docs/">poetry</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:tzing/python-livy.git
+<span class="nb">cd</span> python-livy
+poetry install
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="command-line-tool">
+<h3>Command line tool<a class="headerlink" href="#command-line-tool" title="Permalink to this headline">¶</a></h3>
+<p>First, set the livy server URL in local config file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>livy config <span class="nb">set</span> root.api_url http://ip-10-12-34-56.us-west-2.compute.internal:8998/
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The given URL should not contain extra path (do not include <code class="docutils literal notranslate"><span class="pre">/ui/batch</span></code>).</p>
+</div>
+<p>All configurations would be saved in <code class="docutils literal notranslate"><span class="pre">~/.config/python-livy.json</span></code>. Settings could be specificied via argument in each command, but we probably do not want to pass these values every time.</p>
+<p>Then we could use it to read logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>livy read-log <span class="m">1234</span>
+</pre></div>
+</div>
+<p>For <code class="docutils literal notranslate"><span class="pre">read-log</span></code> command, it would keep watching the logs until the batch finished by default. Still, we could turn of this behavior by argument or configuration.</p>
+<p>Also, we could <code class="docutils literal notranslate"><span class="pre">submit</span></code> a new task:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>livy submit s3://example-bucket/test_script/main.py
+</pre></div>
+</div>
+<p>Well, it’s bit troublesome to upload the script by our self, so we could utilize the plugin system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>livy config <span class="nb">set</span> submit.pre_submit livy.cli.plugin:upload_s3
+</pre></div>
+</div>
+<p>This tool is shipped with plugin <code class="docutils literal notranslate"><span class="pre">upload_s3</span></code>. It could automatically upload the local scirpt to <a class="reference external" href="https://aws.amazon.com/s3/">AWS S3</a>. This could be helpful if you are using <a class="reference external" href="https://aws.amazon.com/emr/">EMR</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently it does not have plugin for native HDFS / GCP / Azure. Please file an issue or PR if you need it.</p>
+</div>
+<p>This plugin need extra configure but not supporting set via command line. Please use the editor to open <code class="docutils literal notranslate"><span class="pre">~/.config/python-livy.json</span></code> and add <code class="docutils literal notranslate"><span class="pre">pre-submit:upload_s3</span></code> section:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;root&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;...&quot;</span><span class="p">:</span> <span class="s2">&quot;existing configs, please do not change&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;pre-submit:upload_s3&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;bucket&quot;</span><span class="p">:</span> <span class="s2">&quot;example-bucket&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{name}-{uuid}&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;expire_days&quot;</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>There are three keys: <code class="docutils literal notranslate"><span class="pre">bucket</span></code> for S3 bucket name, <code class="docutils literal notranslate"><span class="pre">folder_format</span></code> as the prefix to store the scirpt(s), and <code class="docutils literal notranslate"><span class="pre">expire_days</span></code> to <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html">set lifetime</a> to the objects.</p>
+<p>After the configure, we could simply use the command line tool to submit the task:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>livy submit main.py
+</pre></div>
+</div>
+<p>Log reader would be started after submission.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">upload_s3</span></code> plugin uses <a class="reference external" href="https://pypi.org/project/boto3/">boto3</a> to upload the files, you should run this tool with <code class="docutils literal notranslate"><span class="pre">s3:PutObject</span></code>. Or an error would raised.</p>
+</div>
+</div>
+<div class="section" id="as-library">
+<h3>As library<a class="headerlink" href="#as-library" title="Permalink to this headline">¶</a></h3>
+<p>We could utilize the core components in another scripts. They do not use any extra dependency and could be retrieved by importting <code class="docutils literal notranslate"><span class="pre">livy</span></code> package.</p>
+<p>Note plugin system would not be triggered in core library. For action like <em>submit</em>, script(s) should be already stored in somewhere readable by the server.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">livy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">livy</span><span class="o">.</span><span class="n">LivyClient</span><span class="p">(</span><span class="s2">&quot;http://ip-10-12-34-56.us-west-2.compute.internal:8998/&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="s2">&quot;s3://example-bucket/test_script/main.py&quot;</span><span class="p">)</span>
+<span class="go">{</span>
+<span class="go">    &quot;id&quot;: 55,</span>
+<span class="go">    &quot;name&quot;: None,</span>
+<span class="go">    &quot;owner&quot;: None,</span>
+<span class="go">    &quot;proxyUser&quot;: None,</span>
+<span class="go">    &quot;state&quot;: &quot;starting&quot;,</span>
+<span class="go">    &quot;appId&quot;: None,</span>
+<span class="go">    &quot;appInfo&quot;: {</span>
+<span class="go">        &quot;driverLogUrl&quot;: None,</span>
+<span class="go">        &quot;sparkUiUrl&quot;: None</span>
+<span class="go">    },</span>
+<span class="go">    &quot;log&quot;: [</span>
+<span class="go">        &quot;stdout: &quot;,</span>
+<span class="go">        &quot;\nstderr: &quot;,</span>
+<span class="go">        &quot;\nYARN Diagnostics: &quot;</span>
+<span class="go">    ]</span>
+<span class="go">}</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span> <span class="o">=</span> <span class="n">livy</span><span class="o">.</span><span class="n">LivyBatchLogReader</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="mi">55</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span><span class="o">.</span><span class="n">read_until_finish</span><span class="p">()</span>  <span class="c1"># read logs and broadcast to log handlers</span>
+</pre></div>
+</div>
+<p>for API document, see <a class="reference internal" href="api/livy.html#core-lib"><span class="std std-ref">Core library</span></a>.</p>
+</div>
+</div>
+<div class="section" id="advanced-usage">
+<h2>Advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="set-default-configs-and-repack">
+<h3>Set default configs and repack<a class="headerlink" href="#set-default-configs-and-repack" title="Permalink to this headline">¶</a></h3>
+<p>In some case, we want to install this tool into multiple environments with setting configurations every time. We could re-packing this tool with default configurations for myself.</p>
+<p>First, clone the repo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:tzing/python-livy.git
+<span class="nb">cd</span> python-livy
+</pre></div>
+</div>
+<p>Create <code class="docutils literal notranslate"><span class="pre">default-configuration.json</span></code> under <code class="docutils literal notranslate"><span class="pre">livy/</span></code>, this is a hardcoded filename would be read by this tool but not exists in this origin repo.</p>
+<p>Save everything we want in this file, could be:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;root&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;api_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://example.com:8998/&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;submit&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;pre_submit&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&quot;livy.cli.plugin:upload_s3&quot;</span>
+    <span class="p">]</span>
+  <span class="p">}</span>
+  <span class="nt">&quot;pre-submit:upload_s3&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;bucket&quot;</span><span class="p">:</span> <span class="s2">&quot;example-bucket&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{name}-{uuid}&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;expire_days&quot;</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>And build this tool for distributing:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry build
+</pre></div>
+</div>
+<p>Then find the wheel or tar file in <code class="docutils literal notranslate"><span class="pre">dist/</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">Welcome to python-livy’s documentation!</a>
+    <a class='right-next' id="next-link" href="api/index.html" title="next page">API Reference</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, tzing.<br/>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br/>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

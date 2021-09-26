@@ -1,3 +1,5 @@
+.. _core-lib:
+
 Core library
 ============
 
