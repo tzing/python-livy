@@ -4,9 +4,9 @@ store/read them into an unified file. By default, it reads settings from
 code if the key not exists.
 
 If you are going to repack this tool to suit your environment, it is suggested
-to add extra file to :py:const:`CONFIG_LOAD_ORDER` and put your settings inside.
-It could be easier to maintain the configuration rather than change every thing
-in the code.
+to put values in ``default-configuration.json`` in the root directory of this
+repo. It could be easier to maintain the configuration rather than change every
+thing in the code.
 """
 import abc
 import json
@@ -19,6 +19,7 @@ __all__ = ["ConfigBase"]
 
 USER_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
 CONFIG_LOAD_ORDER = [
+    pathlib.Path(__file__).resolve().parent.parent / "default-configuration.json",
     USER_CONFIG_PATH,
 ]
 
