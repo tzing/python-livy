@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import unittest.mock
 
-import livy.utils.config as module
+import livy.utils.configbase as module
 
 
 class ConfigBaseTester(unittest.TestCase):
@@ -53,7 +53,7 @@ class ConfigBaseTester(unittest.TestCase):
         self.addCleanup(lambda: os.remove(file_error))
 
         patcher = unittest.mock.patch(
-            "livy.utils.config.CONFIG_LOAD_ORDER",
+            "livy.utils.configbase.CONFIG_LOAD_ORDER",
             [file_ok1, file_ok2, file_error, "/file-not-exist"],
         )
         patcher.start()
