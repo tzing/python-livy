@@ -57,12 +57,12 @@ class LivyClient:
         """
         Parameters
         ----------
-            url : str
-                URL to the livy server
-            verify : Union[bool, ssl.SSLContext]
-                Verifies SSL certificates or not; or use customized SSL context
-            timeout : float
-                Timeout seconds for the connection.
+        url : str
+            URL to the livy server
+        verify : Union[bool, ssl.SSLContext]
+            Verifies SSL certificates or not; or use customized SSL context
+        timeout : float
+            Timeout seconds for the connection.
 
         Raises
         ------
@@ -119,17 +119,17 @@ class LivyClient:
 
         Parameters
         ----------
-            method : str
-                HTTP request method
-            path : str
-                Resource path
-            data : dict
-                Data to be sent to server. Would be JSON stringify and encoded.
+        method : str
+            HTTP request method
+        path : str
+            Resource path
+        data : dict
+            Data to be sent to server. Would be JSON stringify and encoded.
 
         Return
         ------
-            data : dict
-                Decoded response data
+        data : dict
+            Decoded response data
 
         Raises
         ------
@@ -189,6 +189,10 @@ class LivyClient:
             response_bytes = buf.read()
 
         if response.status < 200 or response.status >= 400:
+            if response_bytes:
+                logger.error(
+                    "Server response: %s", response_bytes.decode("utf8", "replace")
+                )
             raise RequestError(response.status, response.reason)
 
         if not response_bytes:
@@ -206,9 +210,9 @@ class LivyClient:
 
         Parameters
         ----------
-            capture : bool
-                Capture the exception and returns boolean. Set to ``False`` for
-                raise :py:exc:`livy.exception.RequestError` on error.
+        capture : bool
+            Capture the exception and returns boolean. Set to ``False`` for
+            raise :py:exc:`livy.exception.RequestError` on error.
         """
         try:
             self._request("HEAD", "/batches")
@@ -242,43 +246,43 @@ class LivyClient:
 
         Parameters
         ----------
-            file : str
-                File containing the application to execute
-            proxy_user : str
-                User to impersonate when running the job
-            class_name : str
-                Application Java/Spark main class
-            args : List[str]
-                Command line arguments for the application
-            jars : List[str]
-                Java dependencies to be used in this batch
-            py_files : List[str]
-                Python dependencies to be used in this batch
-            files : List[str]
-                files to be used in this batch
-            driver_memory : str
-                Amount of memory to use for the driver process
-            driver_cores : int
-                Number of cores to use for the driver process
-            executor_memory : str
-                Amount of memory to use per executor process
-            executor_cores : int
-                Number of cores to use for each executor
-            num_executors : int
-                Number of executors to launch for this batch
-            archives : List[str]
-                Archives to be used in this batch
-            queue : str
-                The name of the YARN queue to which submitted
-            name : str
-                The session name to execute this batch
-            conf : Dict[str, str]
-                Spark configuration properties
+        file : str
+            File containing the application to execute
+        proxy_user : str
+            User to impersonate when running the job
+        class_name : str
+            Application Java/Spark main class
+        args : List[str]
+            Command line arguments for the application
+        jars : List[str]
+            Java dependencies to be used in this batch
+        py_files : List[str]
+            Python dependencies to be used in this batch
+        files : List[str]
+            files to be used in this batch
+        driver_memory : str
+            Amount of memory to use for the driver process
+        driver_cores : int
+            Number of cores to use for the driver process
+        executor_memory : str
+            Amount of memory to use per executor process
+        executor_cores : int
+            Number of cores to use for each executor
+        num_executors : int
+            Number of executors to launch for this batch
+        archives : List[str]
+            Archives to be used in this batch
+        queue : str
+            The name of the YARN queue to which submitted
+        name : str
+            The session name to execute this batch
+        conf : Dict[str, str]
+            Spark configuration properties
 
         Return
         ------
-            batch : dict
-                Created batch object from livy server
+        batch : dict
+            Created batch object from livy server
 
         Raises
         ------
@@ -346,8 +350,8 @@ class LivyClient:
 
         Parameters
         ----------
-            batch_id : int
-                Batch ID
+        batch_id : int
+            Batch ID
 
         Raises
         ------
@@ -365,13 +369,13 @@ class LivyClient:
 
         Parameters
         ----------
-            batch_id : int
-                Batch ID
+        batch_id : int
+            Batch ID
 
         Return
         ------
-            batch : dict
-                Batch information form livy server
+        batch : dict
+            Batch information form livy server
 
         Raises
         ------
@@ -389,8 +393,8 @@ class LivyClient:
 
         Parameters
         ----------
-            batch_id : int
-                Batch ID
+        batch_id : int
+            Batch ID
 
         Return
         ------
@@ -428,13 +432,13 @@ class LivyClient:
 
         Parameters
         ----------
-            batch_id : int
-                Batch ID
+        batch_id : int
+            Batch ID
 
         Return
         ------
-            finished : bool
-                Task is over
+        finished : bool
+            Task is over
 
         Raises
         ------
@@ -452,12 +456,12 @@ class LivyClient:
 
         Parameters
         ----------
-            batch_id : int
-                Batch ID
-            from_ : int
-                Offset
-            size : int
-                Max line numbers to return
+        batch_id : int
+            Batch ID
+        from_ : int
+            Offset
+        size : int
+            Max line numbers to return
 
         Return
         ------

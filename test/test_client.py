@@ -212,7 +212,7 @@ class LivyClientRequestTester(unittest.TestCase):
         self.assertIn("bar", resp)
 
     def test_http_status_wanted(self):
-        self.getresponse.return_value = self.mock_response(500)
+        self.getresponse.return_value = self.mock_response(500, b"test")
 
         with self.assertRaises(exception.RequestError):
             self.client._request("GET", "/test")
