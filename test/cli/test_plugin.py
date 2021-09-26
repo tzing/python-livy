@@ -1,8 +1,5 @@
 import argparse
 import importlib
-import json
-import os
-import tempfile
 import unittest
 import unittest.mock
 
@@ -10,37 +7,6 @@ import livy.cli.plugin as module
 
 
 no_boto3 = importlib.util.find_spec("boto3") is None
-
-
-class TestHelper(unittest.TestCase):
-    def setUp(self) -> None:
-        _, path = tempfile.mkstemp()
-        self.config_path = path
-
-        patcher = unittest.mock.patch("livy.cli.config.USER_CONFIG_PATH", path)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def tearDown(self) -> None:
-        os.remove(self.config_path)
-
-    def test_read_plugin_config_success(self):
-        with open(self.config_path, "w") as fp:
-            json.dump({"plugin:foo": {"foo": "bar"}}, fp)
-        self.assertDictEqual(module.read_plugin_config("foo"), {"foo": "bar"})
-
-    def test_read_plugin_config_file_not_exists(self):
-        self.assertIsNone(module.read_plugin_config("foo"))
-
-    def test_read_plugin_config_json_error(self):
-        with open(self.config_path, "w") as fp:
-            fp.write("{")
-        self.assertIsNone(module.read_plugin_config("foo"))
-
-    def test_read_plugin_config_section_not_exists(self):
-        with open(self.config_path, "w") as fp:
-            json.dump({"plugin:foo": {"foo": "bar"}}, fp)
-        self.assertIsNone(module.read_plugin_config("foobar2"))
 
 
 @unittest.skipIf(no_boto3, "boto3 is not installed")
@@ -54,8 +20,10 @@ class TestUploadS3(unittest.TestCase):
 
         # config
         patcher = unittest.mock.patch(
-            "livy.cli.plugin.read_plugin_config",
-            return_value={"bucket": "example-bucket", "folder_format": "/{uuid}/"},
+            "livy.cli.plugin._ConfigUploadS3.load",
+            return_value=module._ConfigUploadS3(
+                bucket="example-bucket", folder_format="/{uuid}/"
+            ),
         )
         self.read_config = patcher.start()
         self.addCleanup(patcher.stop)
@@ -97,11 +65,9 @@ class TestUploadS3(unittest.TestCase):
         )
 
     def test_success_with_expire(self):
-        self.read_config.return_value = {
-            "bucket": "example-bucket",
-            "folder_format": "{uuid}",
-            "expire_days": 5,
-        }
+        self.read_config.return_value = module._ConfigUploadS3(
+            bucket="example-bucket", folder_format="/{uuid}/", expire_days=5
+        )
 
         module.upload_s3("PRE-SUBMIT", self.args)
 
@@ -110,10 +76,8 @@ class TestUploadS3(unittest.TestCase):
             module.upload_s3("NOT-THIS-HOOK", self.args)
 
     def test_expire_error(self):
-        self.read_config.return_value = {
-            "bucket": "example-bucket",
-            "folder_format": "{uuid}",
-            "expire_days": -1,
-        }
+        self.read_config.return_value = module._ConfigUploadS3(
+            bucket="example-bucket", folder_format="/{uuid}/", expire_days=-1
+        )
 
         module.upload_s3("PRE-SUBMIT", self.args)
