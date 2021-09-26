@@ -30,18 +30,12 @@ class ConfigBaseTester(unittest.TestCase):
         t = Foo()
         assert repr(t) == "Foo(bar=123, qaz=hello)"
 
-    def test_merge(self):
-        # data
+    def test_mergedict(self):
         class Foo(module.ConfigBase):
             baz: int
             qax: int
 
         a = Foo(baz=1, qax=2)
-        b = Foo(qax=3)
-
-        # run
-        a.merge(b)
-
-        # check
+        a.mergedict({"qax": 3, "not-related": 5})
         assert a.baz == 1
         assert a.qax == 3

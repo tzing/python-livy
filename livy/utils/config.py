@@ -1,4 +1,29 @@
+"""Config utility provides an interface to get typed config values and could
+store/read them into an unified file. By default, it reads settings from
+``~/.config/python-livy.json``. Then fallback to default value hardcoded in the
+code if the key not exists.
+
+If you are going to repack this tool to suit your environment, it is suggested
+to add extra file to :py:const:`CONFIG_LOAD_ORDER` and put your settings inside.
+It could be easier to maintain the configuration rather than change every thing
+in the code.
+"""
 import abc
+import json
+import logging
+import pathlib
+import typing
+
+
+__all__ = ["ConfigBase"]
+
+USER_CONFIG_PATH = pathlib.Path.home() / ".config" / "python-livy.json"
+CONFIG_LOAD_ORDER = [
+    USER_CONFIG_PATH,
+]
+
+
+_T = typing.TypeVar("_T")
 
 
 class ConfigBase(abc.ABC):
@@ -53,17 +78,17 @@ class ConfigBase(abc.ABC):
             field_values.append(f"{k}={v}")
         return f"{class_name}({', '.join( field_values)})"
 
-    def merge(self, other: "ConfigBase") -> None:
-        """Merge configs. Overwrite all the value in this instance from another
-        instance once the value is not ``None``.
+    def mergedict(self, data: dict) -> None:
+        """Merge configs. Overwrite all the value in this instance from a dict.
 
-        Parameter
-        ---------
-        other : ConfigBase
-            Another instance to provide values.
+        Parameters
+        ----------
+        data : dict
+            A dict to provide values.
         """
+        assert isinstance(data, dict)
         for field in self.__annotations__:
-            value = getattr(other, field, self.__missing)
-            if value is self.__missing or value is None:
+            value = data.get(field, self.__missing)
+            if value is self.__missing:
                 continue
             self.__dict__[field] = value
