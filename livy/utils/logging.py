@@ -1,5 +1,5 @@
 import decimal
-import importlib
+import importlib.util
 import logging
 import queue
 import re
