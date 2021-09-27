@@ -109,7 +109,7 @@ This plugin need extra configure but not supporting set via command line. Please
      },
      "pre-submit:upload_s3": {
        "bucket": "example-bucket",
-       "folder_format": "{time:%Y%m%d%H%M%S}-{name}-{uuid}",
+       "folder_format": "{time:%Y%m%d%H%M%S}-{script_name}-{uuid}",
        "expire_days": 3
      }
    }
@@ -195,11 +195,10 @@ Save everything we want in this file, could be:
        "pre_submit": [
          "livy.cli.plugin:upload_s3"
        ]
-     }
+     },
      "pre-submit:upload_s3": {
        "bucket": "example-bucket",
-       "folder_format": "{time:%Y%m%d%H%M%S}-{name}-{uuid}",
-       "expire_days": 3
+       "folder_format": "{time:%Y%m%d%H%M%S}-{script_name}-{uuid}"
      }
    }
 
