@@ -1,4 +1,4 @@
-name: Build document
+name: Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - trunk
 
 jobs:
-  sphinx:
+  build-doc:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,14 +17,20 @@ jobs:
         with:
           python-version: 3.9
 
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-python-3.9-poetry-${{ hashFiles('poetry.lock') }}
+
       - name: Install dependencies
         run: |
           python -m pip install poetry
-          poetry install --no-root --extras pretty --extras aws
+          poetry install --no-root
 
       - name: Build doc
-        run: |
-          poetry run sphinx-build -b html docs build
+        run: poetry run sphinx-build -b html docs build
 
       - name: Deploy to Github pages
         uses: peaceiris/actions-gh-pages@v3
