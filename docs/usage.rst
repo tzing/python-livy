@@ -17,14 +17,14 @@ This package is only hosted on Github.
 
 ``pip`` does have feature to support downloading packages from git server, so it not exists a strong reason for me to submit this to PyPI.
 
-Use pip
--------
+pip from VCS
+------------
 
 Full installation:
 
 .. code-block:: bash
 
-   pip install 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty,aws]'
+   pip install -U 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty,aws]'
 
 
 Two `"extras" <https://setuptools.pypa.io/en/latest/userguide/dependency_management.html#optional-dependencies>`_ is included, they are for:
@@ -40,13 +40,19 @@ If you do not need these features, you could use basic installation:
 
 .. code-block:: bash
 
-   pip install 'git+https://github.com/tzing/python-livy.git#egg=livy'
+   pip install -U 'git+https://github.com/tzing/python-livy.git#egg=livy'
+
+
+From wheel package
+------------------
+
+If there's some reason that you could not directly install from VCS. You could try to get the `wheel <https://www.python.org/dev/peps/pep-0427/>`_ package from `release <https://github.com/tzing/python-livy/releases/latest>`_ page.
 
 
 From source
 -----------
 
-Please noted the dependencies in this project is managed by `poetry <https://python-poetry.org/docs/>`_.
+The dependencies in this project is managed by `poetry <https://python-poetry.org/docs/>`_. Please refer to official document to get poetry first:
 
 .. code-block:: bash
 

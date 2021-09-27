@@ -36,8 +36,10 @@ features:
 Install via `pip`:
 
 ```bash
-pip install 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty]'
+pip install -U 'git+https://github.com/tzing/python-livy.git#egg=livy[pretty]'
 ```
+
+Or get the wheel from [release](https://github.com/tzing/python-livy/releases/latest).
 
 
 ## Docs
