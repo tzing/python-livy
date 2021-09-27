@@ -281,7 +281,7 @@ poetry install
   <span class="p">},</span>
   <span class="nt">&quot;pre-submit:upload_s3&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;bucket&quot;</span><span class="p">:</span> <span class="s2">&quot;example-bucket&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{name}-{uuid}&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{script_name}-{uuid}&quot;</span><span class="p">,</span>
     <span class="nt">&quot;expire_days&quot;</span><span class="p">:</span> <span class="mi">3</span>
   <span class="p">}</span>
 <span class="p">}</span>
@@ -350,11 +350,10 @@ poetry install
     <span class="nt">&quot;pre_submit&quot;</span><span class="p">:</span> <span class="p">[</span>
       <span class="s2">&quot;livy.cli.plugin:upload_s3&quot;</span>
     <span class="p">]</span>
-  <span class="p">}</span>
+  <span class="p">},</span>
   <span class="nt">&quot;pre-submit:upload_s3&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;bucket&quot;</span><span class="p">:</span> <span class="s2">&quot;example-bucket&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{name}-{uuid}&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;expire_days&quot;</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="nt">&quot;folder_format&quot;</span><span class="p">:</span> <span class="s2">&quot;{time:%Y%m%d%H%M%S}-{script_name}-{uuid}&quot;</span>
   <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
