@@ -143,8 +143,13 @@
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#use-pip">
-     Use pip
+    <a class="reference internal nav-link" href="#pip-from-vcs">
+     pip from VCS
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#from-wheel-package">
+     From wheel package
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
@@ -215,10 +220,10 @@
 <span id="id1"></span><h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
 <p>This package is only hosted on Github.</p>
 <p><code class="docutils literal notranslate"><span class="pre">pip</span></code> does have feature to support downloading packages from git server, so it not exists a strong reason for me to submit this to PyPI.</p>
-<div class="section" id="use-pip">
-<h3>Use pip<a class="headerlink" href="#use-pip" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="pip-from-vcs">
+<h3>pip from VCS<a class="headerlink" href="#pip-from-vcs" title="Permalink to this headline">¶</a></h3>
 <p>Full installation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy[pretty,aws]&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy[pretty,aws]&#39;</span>
 </pre></div>
 </div>
 <p>Two <a class="reference external" href="https://setuptools.pypa.io/en/latest/userguide/dependency_management.html#optional-dependencies">“extras”</a> is included, they are for:</p>
@@ -229,13 +234,17 @@
 </dd>
 </dl>
 <p>If you do not need these features, you could use basic installation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U <span class="s1">&#39;git+https://github.com/tzing/python-livy.git#egg=livy&#39;</span>
 </pre></div>
 </div>
 </div>
+<div class="section" id="from-wheel-package">
+<h3>From wheel package<a class="headerlink" href="#from-wheel-package" title="Permalink to this headline">¶</a></h3>
+<p>If there’s some reason that you could not directly install from VCS. You could try to get the <a class="reference external" href="https://www.python.org/dev/peps/pep-0427/">wheel</a> package from <a class="reference external" href="https://github.com/tzing/python-livy/releases/latest">release</a> page.</p>
+</div>
 <div class="section" id="from-source">
 <h3>From source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h3>
-<p>Please noted the dependencies in this project is managed by <a class="reference external" href="https://python-poetry.org/docs/">poetry</a>.</p>
+<p>The dependencies in this project is managed by <a class="reference external" href="https://python-poetry.org/docs/">poetry</a>. Please refer to official document to get poetry first:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:tzing/python-livy.git
 <span class="nb">cd</span> python-livy
 poetry install
