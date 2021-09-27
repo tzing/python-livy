@@ -7,37 +7,37 @@ on:
   pull_request: {}
 
 jobs:
-  build-doc:
-    runs-on: ubuntu-latest
+  # build-doc:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-python-3.9-poetry-${{ hashFiles('poetry.lock') }}
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cache/pip
+  #           ~/.cache/pypoetry/virtualenvs
+  #         key: ${{ runner.os }}-python-3.9-poetry-${{ hashFiles('poetry.lock') }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install poetry
-          poetry install --no-root
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install poetry
+  #         poetry install --no-root
 
-      - name: Build doc
-        run: poetry run sphinx-build -b html docs build
+  #     - name: Build doc
+  #       run: poetry run sphinx-build -b html docs build
 
-      - name: Deploy to Github pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+  #     - name: Deploy to Github pages
+  #       uses: peaceiris/actions-gh-pages@v3
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         publish_dir: ./build
 
   release-package:
     runs-on: ubuntu-latest
@@ -60,8 +60,9 @@ jobs:
       - name: Get poetry
         run: python -m pip install poetry
 
-      - name: Set tag
-        run: git tag $(poetry version -s)
+      - name: Set version
+        id: versioning
+        run: echo "::set-output name=version::$(poetry version -s)"
 
       - name: Build package
         run: poetry build
@@ -69,6 +70,6 @@ jobs:
       - name: Create Github release
         uses: softprops/action-gh-release@v1
         with:
-          name:
-          tag_name:
+          name: ${{ steps.versioning.outputs.version }}
+          tag_name: ${{ steps.versioning.outputs.version }}
           files: dist/livy-*.whl
