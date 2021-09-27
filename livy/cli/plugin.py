@@ -49,7 +49,7 @@ def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
     {
         "pre-submit:upload_s3": {
             "bucket": "example-bucket",
-            "folder_format": "ManualSubmitTask-{time:%Y%m%d}-{uuid}",
+            "folder_format": "livy-{time:%Y%m%d}-{script_name}-{uuid}",
             "expire_days": 3
         }
     }
