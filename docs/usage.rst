@@ -1,5 +1,5 @@
-Usage
-=====
+Get started
+===========
 
 Requirement
 ~~~~~~~~~~~
@@ -61,8 +61,8 @@ The dependencies in this project is managed by `poetry <https://python-poetry.or
    poetry install
 
 
-Quick start
-~~~~~~~~~~~
+Usage
+~~~~~
 
 Command line tool
 -----------------
