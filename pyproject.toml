@@ -30,6 +30,7 @@ pytest-cov = "^2.12.1"
 boto3-stubs = {version = "^1.18.44", extras = ["s3"]}
 Sphinx = "^4.2.0"
 pydata-sphinx-theme = "^0.6.3"
+sphinxcontrib-programoutput = "^0.17"
 
 [tool.poetry.extras]
 pretty = ["colorama", "tqdm"]
