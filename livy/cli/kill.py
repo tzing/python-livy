@@ -95,21 +95,31 @@ def main(argv=None):
     console.info("Monitor task status")
 
     while True:
+        # query status
+        err = None
         try:
             is_finished = client.is_batch_ended(args.batch_id)
-        except livy.RequestError as e:
-            console.error(
-                "Failed to get batch status. HTTP code=%d, Reason=%s", e.code, e.reason
-            )
-            return 1
         except KeyboardInterrupt:
             console.warning("Keyboard interrupt")
             return 1
+        except livy.RequestError as e:
+            err = e
+            is_finished = False
 
-        if is_finished:
+        # determin state
+        if is_finished or (err and err.code == 404):
             console.info("Task terminated")
             break
 
+        if err:
+            console.error(
+                "Failed to get batch status. HTTP code=%d, Reason=%s",
+                err.code,
+                err.reason,
+            )
+            return 1
+
+        # wait until next query
         console.info("Task is still running")
         time.sleep(2.0)
 
