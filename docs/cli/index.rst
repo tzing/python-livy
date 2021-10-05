@@ -5,3 +5,4 @@ Command line tool
    :maxdepth: 1
 
    read-log
+   config

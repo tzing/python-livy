@@ -12,73 +12,87 @@ import livy.utils.configbase
 logger = logging.getLogger(__name__)
 
 
+class RootSection(livy.utils.ConfigBase):
+    """Prefix ``root``. Basic settings that might be applied to all actions."""
+
+    api_url: str = None
+    """Base-URL for Livy API server."""
+
+
+class LocalLoggingSection(livy.utils.ConfigBase):
+    """Prefix ``logs``. Logging behavior on local."""
+
+    class LogLevel(enum.IntEnum):
+        DEBUG = logging.DEBUG
+        INFO = logging.INFO
+        WARNING = logging.WARNING
+        ERROR = logging.ERROR
+
+    format: str = (
+        "%(levelcolor)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
+    )
+    """Log message format. ``%(levelcolor)s`` and ``%(reset)s`` are two special
+    keys only take effect on console output in this tool. They are and used to
+    colorize the output. For all the other avaliable keys, see
+    `log attributes <https://docs.python.org/3/library/logging.html#logrecord-attributes>`_."""
+
+    date_format: str = "%Y-%m-%d %H:%M:%S %z"
+    """Date format in log message. It uses
+    `strftime <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes>`_
+    format."""
+
+    output_file: bool = False
+    """Output logs into file by default. A log file with random name would be
+    created on the working directory when it set to ``True``."""
+
+    logfile_level: LogLevel = logging.DEBUG
+    """Default log level on output to log file."""
+
+    with_progressbar: bool = True
+    """Convert Spark TaskSetManager's logs (*Finished task X in stage Y on example.com (1/10)*) into progress bar."""
+
+
+class ReadLogSection(livy.utils.ConfigBase):
+    """Prefix ``read-log``. For :ref:`cli-read-log` tool."""
+
+    keep_watch: bool = True
+    """Keep watching for batch activity until it is finished."""
+
+
+class SubmitSection(livy.utils.ConfigBase):
+    """Prefix ``submit``. For :ref:`cli-submit` tool"""
+
+    pre_submit: typing.List[str] = []
+    """Enabled Pre-submit plugin list."""
+
+    driver_memory: str = None
+    """Amount of memory to use for the driver process. Need to specific unit,
+    e.g. ``12gb`` or ``34mb``."""
+
+    driver_cores: int = None
+    """Number of cores to use for the driver process."""
+
+    executor_memory: str = None
+    """Amount of memory to use per executor process. Need to specific unit,
+    e.g. ``12gb`` or ``34mb``."""
+
+    executor_cores: int = None
+    """Number of cores to use for each executor."""
+
+    num_executors: int = None
+    """Number of executors to launch for this batch."""
+
+    spark_conf: typing.List[typing.Tuple[str, str]] = []
+    """Key value pairs to override spark configuration properties."""
+
+    watch_log: bool = True
+    """Watching for logs after the task is submitted. This option shares the
+    same behavior to :py:attr:`~ReadLogSection.keep_watch`, only different is the
+    scope it take effects."""
+
+
 class Configuration(livy.utils.ConfigBase):
     """Collection to all configurations"""
-
-    class RootSection(livy.utils.ConfigBase):
-        """Basic settings that might be applied to all actions"""
-
-        api_url: str = None
-        """Base-URL for Livy API server"""
-
-    class LocalLoggingSection(livy.utils.ConfigBase):
-        """Logging behavior on local"""
-
-        class LogLevel(enum.IntEnum):
-            DEBUG = logging.DEBUG
-            INFO = logging.INFO
-            WARNING = logging.WARNING
-            ERROR = logging.ERROR
-
-        format: str = (
-            "%(levelcolor)s%(asctime)s [%(levelname)s] %(name)s:%(reset)s %(message)s"
-        )
-        """Log message format."""
-
-        date_format: str = "%Y-%m-%d %H:%M:%S %z"
-        """Date format in log message"""
-
-        output_file: bool = False
-        """Output logs into file by default"""
-
-        logfile_level: LogLevel = logging.DEBUG
-        """Default log level on output to log file"""
-
-        with_progressbar: bool = True
-        """Convert TaskSetManager's logs into progress bar"""
-
-    class ReadLogSection(livy.utils.ConfigBase):
-        """For read-log tool"""
-
-        keep_watch: bool = True
-        """Keep watching for batch activity until it is finished."""
-
-    class SubmitSection(livy.utils.ConfigBase):
-        """For task submission tool"""
-
-        pre_submit: typing.List[str] = []
-        """Pre-submit processor list"""
-
-        driver_memory: str = None
-        """Amount of memory to use for the driver process."""
-
-        driver_cores: int = None
-        """Number of cores to use for the driver process"""
-
-        executor_memory: str = None
-        """Amount of memory to use per executor process"""
-
-        executor_cores: int = None
-        """Number of cores to use for each executor"""
-
-        num_executors: int = None
-        """Number of executors to launch for this batch"""
-
-        spark_conf: typing.List[typing.Tuple[str, str]] = []
-        """Spark configuration properties"""
-
-        watch_log: bool = True
-        """Watching for logs after the task is submitted"""
 
     root: RootSection
     logs: LocalLoggingSection

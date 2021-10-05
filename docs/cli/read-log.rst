@@ -1,3 +1,5 @@
+.. _cli-read-log:
+
 Read log
 ========
 
@@ -13,7 +15,7 @@ Usage
 Configurations
 --------------
 
-Following configs could be set via *livy config* command:
+Following configs could be set via :ref:`cli-config` command:
 
 root.api_url
    URL to Livy server
