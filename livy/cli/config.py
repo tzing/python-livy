@@ -60,7 +60,7 @@ class ReadLogSection(livy.utils.ConfigBase):
 
 
 class SubmitSection(livy.utils.ConfigBase):
-    """Prefix ``submit``. For :ref:`cli-submit` tool"""
+    """Prefix ``submit``. For :ref:`cli-submit` tool."""
 
     pre_submit: typing.List[str] = []
     """Enabled Pre-submit plugin list."""
