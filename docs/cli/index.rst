@@ -8,3 +8,4 @@ Command line tool
    read-log
    kill
    config
+   plugin

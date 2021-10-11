@@ -14,6 +14,31 @@ import livy.cli.logging
 logger = logging.getLogger(__name__)
 
 
+class PreSubmitArguments(argparse.Namespace):
+    """Typed :py:class:`~argparse.Namespace` for arguments before task submission."""
+
+    # submit
+    script: str
+    args: typing.List[str]
+    class_name: str
+    jars: typing.List[str]
+    py_files: typing.List[str]
+    files: typing.List[str]
+    archives: typing.List[str]
+    queue_name: str
+    session_name: str
+    api_url: str
+    driver_memory: str
+    driver_cores: int
+    executor_memory: str
+    executor_cores: int
+    num_executors: int
+    spark_conf: typing.List[typing.Tuple[str, str]]
+
+    # log
+    watch_log: bool
+
+
 def main(argv=None):
     """CLI entrypoint"""
     # parse argument
@@ -151,7 +176,7 @@ def main(argv=None):
 
     livy.cli.logging.setup_argparse(parser)
 
-    args = parser.parse_args(argv)
+    args: PreSubmitArguments = parser.parse_args(argv)
 
     # setup logger
     livy.cli.logging.init(args)
