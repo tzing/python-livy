@@ -201,9 +201,53 @@
 <p><code class="docutils literal notranslate"><span class="pre">read-log</span></code> is a tool for reading/monitoring logs of specific batch. By default, it would keep tracking for logs until the batch is finished.</p>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/read-log.rst</span>, line 12)</p>
-<p>Command ['livy', 'read-log', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: livy read-log [-h] --api-url API_URL [--keep-watch | --no-keep-watch]
+                     [-v | -q] [--highlight-logger NAME [NAME ...]]
+                     [--hide-logger NAME [NAME ...]] [--pb | --no-pb]
+                     [--log-file [XXXX.log] | --no-log-file]
+                     [--log-file-level {DEBUG,INFO,WARNING,ERROR}]
+                     N
+
+Read livy batch execution log from server
+
+positional arguments:
+  N                     Livy batch ID for fetching logs
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+livy server configuration:
+  --api-url API_URL     Base-URL for Livy API server
+
+actions:
+  --keep-watch          Keep watching this batch until it is finished
+  --no-keep-watch       Only read log once
+
+console:
+  -v, --verbose         Enable debug log.
+  -q, --silent          Silent mode. Only show warning and error log.
+  --highlight-logger NAME [NAME ...]
+                        Highlight logs from the given loggers. This option
+                        only takes effect when `colorama` is installed.
+  --hide-logger NAME [NAME ...]
+                        Do not show logs from the given loggers.
+  --pb, --with-progressbar
+                        Convert TaskSetManager&#39;s `Finished task XX in stage Y`
+                        logs into progress bar. This option only takes effect
+                        when `tqdm` is installed.
+  --no-pb, --without-progressbar
+                        Not to convert TaskSetManager&#39;s logs into progress
+                        bar.
+
+file logging:
+  --log-file [XXXX.log]
+                        Output logs into log file. A temporary file would be
+                        created if path is not specificied.
+  --no-log-file         Do not output logs into log file.
+  --log-file-level {DEBUG,INFO,WARNING,ERROR}
+                        Set minimal log level to be written to file. Default:
+                        DEBUG.
+</pre></div>
 </div>
 </div>
 <div class="section" id="configurations">

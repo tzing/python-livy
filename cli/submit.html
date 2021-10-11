@@ -202,9 +202,90 @@
 <p>In original use case, I’m designing and utilizing this tool for sending local on to the server as a test. The local files are of course not accessible to the livy server. Therefore it comes with <a class="reference internal" href="plugin.html#plugin"><span class="std std-ref">Plugin system</span></a> system for automatically upload the file to somewhere avaliable to the server.</p>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/submit.rst</span>, line 14)</p>
-<p>Command ['livy', 'submit', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: livy submit [-h] [--class-name COM.EXAMPLE.FOO]
+                   [--jars FOO.JAR [FOO.JAR ...]]
+                   [--py-files FOO.ZIP [FOO.ZIP ...]]
+                   [--files FOO.TXT [FOO.TXT ...]]
+                   [--archives FOO.TAR [FOO.TAR ...]] [--queue-name DEFAULT]
+                   [--session-name HELLO] [--pre-submit PLUG [PLUG ...]]
+                   --api-url API_URL [--driver-memory 10G] [--driver-cores N]
+                   [--executor-memory 10G] [--executor-cores N]
+                   [--num-executors N]
+                   [--spark-conf CONF_NAME=VALUE [CONF_NAME=VALUE ...]]
+                   [--watch-log | --no-watch-log] [-v | -q]
+                   [--highlight-logger NAME [NAME ...]]
+                   [--hide-logger NAME [NAME ...]] [--pb | --no-pb]
+                   [--log-file [XXXX.log] | --no-log-file]
+                   [--log-file-level {DEBUG,INFO,WARNING,ERROR}]
+                   script [args ...]
+
+Submit a batch task to livy server.
+
+positional arguments:
+  script                Path to the script that contains the application to be
+                        executed
+  args                  Arguments for the task script
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --class-name COM.EXAMPLE.FOO
+                        Application Java/Spark main class (for Java/Scala
+                        task)
+  --jars FOO.JAR [FOO.JAR ...]
+                        Java dependencies to be used in this batch
+  --py-files FOO.ZIP [FOO.ZIP ...]
+                        Python dependencies to be used in this batch
+  --files FOO.TXT [FOO.TXT ...]
+                        Files to be used in this batch
+  --archives FOO.TAR [FOO.TAR ...]
+                        Archives to be used in this batch
+  --queue-name DEFAULT  The name of the YARN queue to which submitted
+  --session-name HELLO  The session name to execute this batch
+
+pre-submit actions:
+  --pre-submit PLUG [PLUG ...]
+                        Run specific plugin before submit
+
+livy server configuration:
+  --api-url API_URL     Base-URL for Livy API server
+  --driver-memory 10G   Amount of memory to use for the driver process.
+  --driver-cores N      Number of cores to use for the driver process.
+  --executor-memory 10G
+                        Amount of memory to use for the executor process.
+  --executor-cores N    Number of cores to use for each executor.
+  --num-executors N     Number of executors to launch for this batch.
+  --spark-conf CONF_NAME=VALUE [CONF_NAME=VALUE ...]
+                        Spark configuration properties.
+
+post-submit actions:
+  --watch-log           Watching for logs until it is finished
+  --no-watch-log        Not to watch for logs. Only submit the task and quit.
+
+console:
+  -v, --verbose         Enable debug log.
+  -q, --silent          Silent mode. Only show warning and error log.
+  --highlight-logger NAME [NAME ...]
+                        Highlight logs from the given loggers. This option
+                        only takes effect when `colorama` is installed.
+  --hide-logger NAME [NAME ...]
+                        Do not show logs from the given loggers.
+  --pb, --with-progressbar
+                        Convert TaskSetManager&#39;s `Finished task XX in stage Y`
+                        logs into progress bar. This option only takes effect
+                        when `tqdm` is installed.
+  --no-pb, --without-progressbar
+                        Not to convert TaskSetManager&#39;s logs into progress
+                        bar.
+
+file logging:
+  --log-file [XXXX.log]
+                        Output logs into log file. A temporary file would be
+                        created if path is not specificied.
+  --no-log-file         Do not output logs into log file.
+  --log-file-level {DEBUG,INFO,WARNING,ERROR}
+                        Set minimal log level to be written to file. Default:
+                        DEBUG.
+</pre></div>
 </div>
 </div>
 <div class="section" id="configurations">

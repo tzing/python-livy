@@ -220,24 +220,40 @@
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="list-all-configurable-keys">
 <h3>List all configurable keys<a class="headerlink" href="#list-all-configurable-keys" title="Permalink to this headline">¶</a></h3>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 14)</p>
-<p>Command ['livy', 'config', 'list', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: livy config list [-h] [section]
+
+positional arguments:
+  section     Only show specific section
+
+optional arguments:
+  -h, --help  show this help message and exit
+</pre></div>
 </div>
 <p>It provides a command to view the list, but is without description. For the details, see below.</p>
 </div>
 <div class="section" id="get-value">
 <h3>Get value<a class="headerlink" href="#get-value" title="Permalink to this headline">¶</a></h3>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 21)</p>
-<p>Command ['livy', 'config', 'get', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: livy config get [-h] name
+
+positional arguments:
+  name        Config name to be retrieved.
+
+optional arguments:
+  -h, --help  show this help message and exit
+</pre></div>
 </div>
 </div>
 <div class="section" id="set-value">
 <h3>Set value<a class="headerlink" href="#set-value" title="Permalink to this headline">¶</a></h3>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 26)</p>
-<p>Command ['livy', 'config', 'set', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: livy config set [-h] name value
+
+positional arguments:
+  name        Name of config to be updated.
+  value       Value to be set.
+
+optional arguments:
+  -h, --help  show this help message and exit
+</pre></div>
 </div>
 <p>Not all of used values could be set via this command. For example, values used <a class="reference internal" href="plugin.html#plugin"><span class="std std-ref">Plugin system</span></a> should be inputted manually.</p>
 </div>
