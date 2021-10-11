@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Reference &#8212; python-livy  documentation</title>
+    <title>Read log &#8212; python-livy  documentation</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet" />
   <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -33,8 +33,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Core library" href="livy.html" />
-    <link rel="prev" title="Plugin system" href="../cli/plugin.html" />
+    <link rel="next" title="Kill" href="kill.html" />
+    <link rel="prev" title="Submit" href="submit.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -72,14 +72,14 @@
  </a>
 </li>
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../cli/index.html">
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="index.html">
   Command line tool
  </a>
 </li>
 
-<li class="toctree-l1 current active nav-item">
- <a class="current reference internal nav-link" href="#">
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api/index.html">
   API Reference
  </a>
 </li>
@@ -119,15 +119,30 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
-    <ul class="nav bd-sidenav">
+    <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="livy.html">
-   Core library
+  <a class="reference internal" href="submit.html">
+   Submit
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Read log
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="livy.utils.html">
-   Utility
+  <a class="reference internal" href="kill.html">
+   Kill
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="config.html">
+   Configure
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="plugin.html">
+   Plugin system
   </a>
  </li>
 </ul>
@@ -144,9 +159,24 @@
               
               <div class="toc-item">
                 
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
 
 <nav id="bd-toc-nav">
-    
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#usage">
+   Usage
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#configurations">
+   Configurations
+  </a>
+ </li>
+</ul>
+
 </nav>
               </div>
               
@@ -166,24 +196,25 @@
               
               <div>
                 
-  <div class="section" id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="livy.html">Core library</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="livy.html#livy-livyclient">livy.LivyClient</a></li>
-<li class="toctree-l2"><a class="reference internal" href="livy.html#livy-livybatchlogreader">livy.LivyBatchLogReader</a></li>
-<li class="toctree-l2"><a class="reference internal" href="livy.html#module-livy.exception">Exceptions</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="livy.utils.html">Utility</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="livy.utils.html#module-livy.utils.configbase">livy.utils.ConfigBase</a></li>
-<li class="toctree-l2"><a class="reference internal" href="livy.utils.html#livy-utils-enhancedconsolehandler">livy.utils.EnhancedConsoleHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="livy.utils.html#livy-utils-coloredformatter">livy.utils.ColoredFormatter</a></li>
-<li class="toctree-l2"><a class="reference internal" href="livy.utils.html#livy-utils-ingorelogfilter">livy.utils.IngoreLogFilter</a></li>
-</ul>
-</li>
-</ul>
+  <div class="section" id="read-log">
+<span id="cli-read-log"></span><h1>Read log<a class="headerlink" href="#read-log" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">read-log</span></code> is a tool for reading/monitoring logs of specific batch. By default, it would keep tracking for logs until the batch is finished.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/read-log.rst</span>, line 12)</p>
+<p>Command ['livy', 'read-log', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+</div>
+</div>
+<div class="section" id="configurations">
+<h2>Configurations<a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h2>
+<p>Following configs could be set via <a class="reference internal" href="config.html#cli-config"><span class="std std-ref">Configure</span></a> command:</p>
+<dl class="simple">
+<dt>root.api_url</dt><dd><p>URL to Livy server</p>
+</dd>
+<dt>read_log.keep_watch</dt><dd><p>To keep watching or not by default. Could be override by <code class="docutils literal notranslate"><span class="pre">--keep-watch</span></code> and <code class="docutils literal notranslate"><span class="pre">--no-keep-watch</span></code> argument.</p>
+</dd>
+</dl>
 </div>
 </div>
 
@@ -193,8 +224,8 @@
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="../cli/plugin.html" title="previous page">Plugin system</a>
-    <a class='right-next' id="next-link" href="livy.html" title="next page">Core library</a>
+    <a class='left-prev' id="prev-link" href="submit.html" title="previous page">Submit</a>
+    <a class='right-next' id="next-link" href="kill.html" title="next page">Kill</a>
 
               </div>
               

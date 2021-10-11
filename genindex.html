@@ -66,7 +66,13 @@
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
  <a class="reference internal nav-link" href="usage.html">
-  Usage
+  Get started
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="cli/index.html">
+  Command line tool
  </a>
 </li>
 
@@ -145,13 +151,17 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="_">_</h2>
@@ -194,6 +204,10 @@
       <li><a href="api/livy.html#livy.logreader.LivyBatchLogReader.add_parsers">add_parsers() (livy.logreader.LivyBatchLogReader method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.RootSection.api_url">api_url (livy.cli.config.RootSection attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
@@ -219,7 +233,15 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection.date_format">date_format (livy.cli.config.LocalLoggingSection attribute)</a>
+</li>
       <li><a href="api/livy.html#livy.client.LivyClient.delete_batch">delete_batch() (livy.client.LivyClient method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.driver_cores">driver_cores (livy.cli.config.SubmitSection attribute)</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.driver_memory">driver_memory (livy.cli.config.SubmitSection attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -229,9 +251,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.utils.html#livy.utils.logging.EnhancedConsoleHandler">EnhancedConsoleHandler (class in livy.utils.logging)</a>
 </li>
+      <li><a href="api/livy.html#livy.exception.Error">Error</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/livy.html#livy.exception.Error">Error</a>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.executor_cores">executor_cores (livy.cli.config.SubmitSection attribute)</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.executor_memory">executor_memory (livy.cli.config.SubmitSection attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -241,9 +267,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.utils.html#livy.utils.logging.IngoreLogFilter.filter">filter() (livy.utils.logging.IngoreLogFilter method)</a>
 </li>
+      <li><a href="api/livy.utils.html#livy.utils.logging.EnhancedConsoleHandler.flush">flush() (livy.utils.logging.EnhancedConsoleHandler method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/livy.utils.html#livy.utils.logging.EnhancedConsoleHandler.flush">flush() (livy.utils.logging.EnhancedConsoleHandler method)</a>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection.format">format (livy.cli.config.LocalLoggingSection attribute)</a>
 </li>
       <li><a href="api/livy.utils.html#livy.utils.logging.ColoredFormatter.formatMessage">formatMessage() (livy.utils.logging.ColoredFormatter method)</a>
 </li>
@@ -286,6 +314,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.ReadLogSection.keep_watch">keep_watch (livy.cli.config.ReadLogSection attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -314,6 +350,10 @@
       <li><a href="api/livy.html#livy.logreader.LivyLogParseResult">LivyLogParseResult (class in livy.logreader)</a>
 </li>
       <li><a href="api/livy.utils.html#livy.utils.configbase.ConfigBase.load">load() (livy.utils.configbase.ConfigBase class method)</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection">LocalLoggingSection (class in livy.cli.config)</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection.logfile_level">logfile_level (livy.cli.config.LocalLoggingSection attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -345,12 +385,32 @@
       <li><a href="api/livy.html#livy.logreader.LivyLogParseResult.name">name (livy.logreader.LivyLogParseResult attribute)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.num_executors">num_executors (livy.cli.config.SubmitSection attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.html#livy.exception.OperationError">OperationError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection.output_file">output_file (livy.cli.config.LocalLoggingSection attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.pre_submit">pre_submit (livy.cli.config.SubmitSection attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/plugin.html#livy.cli.submit.PreSubmitArguments">PreSubmitArguments (class in livy.cli.submit)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -360,11 +420,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.html#livy.logreader.LivyBatchLogReader.read">read() (livy.logreader.LivyBatchLogReader method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.html#livy.logreader.LivyBatchLogReader.read_until_finish">read_until_finish() (livy.logreader.LivyBatchLogReader method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.ReadLogSection">ReadLogSection (class in livy.cli.config)</a>
+</li>
       <li><a href="api/livy.html#livy.exception.RequestError">RequestError</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.RootSection">RootSection (class in livy.cli.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -372,7 +436,13 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.spark_conf">spark_conf (livy.cli.config.SubmitSection attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.html#livy.logreader.LivyBatchLogReader.stop_read">stop_read() (livy.logreader.LivyBatchLogReader method)</a>
+</li>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection">SubmitSection (class in livy.cli.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -381,6 +451,26 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/livy.html#livy.exception.TypeError">TypeError</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/plugin.html#livy.cli.plugin.upload_s3">upload_s3() (in module livy.cli.plugin)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.SubmitSection.watch_log">watch_log (livy.cli.config.SubmitSection attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli/config.html#livy.cli.config.LocalLoggingSection.with_progressbar">with_progressbar (livy.cli.config.LocalLoggingSection attribute)</a>
 </li>
   </ul></td>
 </tr></table>

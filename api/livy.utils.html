@@ -67,7 +67,13 @@
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
  <a class="reference internal nav-link" href="../usage.html">
-  Usage
+  Get started
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../cli/index.html">
+  Command line tool
  </a>
 </li>
 
@@ -189,7 +195,7 @@
 <p><code class="docutils literal notranslate"><span class="pre">livy.utils</span></code> is a collection of helper classes to make the CLI tool more friendly, this module is not included in <code class="docutils literal notranslate"><span class="pre">livy</span></code> import by default.</p>
 <p>Most of the classes in this module need extra dependency to work. If you call them in a non-compatible environment, it would automatically fallback to some builtin python function with the similar features.</p>
 <div class="section" id="module-livy.utils.configbase">
-<span id="livy-utils-configbase"></span><h2>livy.utils.ConfigBase<a class="headerlink" href="#module-livy.utils.configbase" title="Permalink to this headline">¶</a></h2>
+<span id="livy-utils-configbase"></span><span id="config-base"></span><h2>livy.utils.ConfigBase<a class="headerlink" href="#module-livy.utils.configbase" title="Permalink to this headline">¶</a></h2>
 <p>Config utility provides an interface to get typed config values and could
 store/read them into an unified file. By default, it reads settings from
 <code class="docutils literal notranslate"><span class="pre">~/.config/python-livy.json</span></code>. Then fallback to default value hardcoded in the
@@ -204,7 +210,7 @@ thing in the code.</p>
 <dd><p>Base class for setting configurations. Inspired by
 <a class="reference external" href="https://pydantic-docs.helpmanual.io/">pydantic</a>.
 Thought this, please just treat this class as a simplified version of
-<a class="reference external" href="https://docs.python.org/3/library/dataclasses.html#module-dataclasses" title="(in Python v3.9)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>.</p>
+<a class="reference external" href="https://docs.python.org/3/library/dataclasses.html#module-dataclasses" title="(in Python v3.10)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>.</p>
 <p>This class does lake of validation, it is created to perform dictionary
 updating liked config merge and json transform.</p>
 <p>To use this base, inherit this class and use
@@ -221,7 +227,7 @@ annotations if not specific, or set to <code class="docutils literal notranslate
 set.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -233,7 +239,7 @@ set.</p>
 config from <code class="xref py py-const docutils literal notranslate"><span class="pre">CONFIG_LOAD_ORDER</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>section</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Key name for reading config</p>
+<dd class="field-odd"><p><strong>section</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Key name for reading config</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>config</strong> – Config instance with data loaded from the file.</p>
@@ -250,10 +256,10 @@ config from <code class="xref py py-const docutils literal notranslate"><span cl
 <dd><p>Merge configs. Overwrite all the value in this instance from a dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – A dict to provide values.</p>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – A dict to provide values.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -282,10 +288,10 @@ issue.</p>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#livy.utils.logging.EnhancedConsoleHandler.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>stream</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TextIO" title="(in Python v3.9)"><em>typing.TextIO</em></a>) – Output stream. Might be stdout or stderr.</p>
+<dd class="field-odd"><p><strong>stream</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TextIO" title="(in Python v3.10)"><em>typing.TextIO</em></a>) – Output stream. Might be stdout or stderr.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -299,7 +305,7 @@ issue.</p>
 <dd class="field-odd"><p><strong>stream</strong> (<em>TextIO</em>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.9)">logging.StreamHandler</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.10)">logging.StreamHandler</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -316,7 +322,7 @@ issue.</p>
 <dd><p>Flush all logs to console</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -324,14 +330,14 @@ issue.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="livy.utils.logging.EnhancedConsoleHandler.handle">
 <span class="sig-name descname"><span class="pre">handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#livy.utils.logging.EnhancedConsoleHandler.handle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override <a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">logging.StreamHandler</span></code></a> for reteriving the log
+<dd><p>Override <a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">logging.StreamHandler</span></code></a> for reteriving the log
 before it is filtered.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.9)"><em>logging.LogRecord</em></a>) – </p>
+<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.10)"><em>logging.LogRecord</em></a>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -353,13 +359,13 @@ feature that supports different color scheme via logger name.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Format for log message</p></li>
-<li><p><strong>datefmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Format for datetime</p></li>
-<li><p><strong>highlight_loggers</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>]</em>) – List of logger name to be highlighted</p></li>
+<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Format for log message</p></li>
+<li><p><strong>datefmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Format for datetime</p></li>
+<li><p><strong>highlight_loggers</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – List of logger name to be highlighted</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -371,13 +377,13 @@ feature that supports different color scheme via logger name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – </p></li>
-<li><p><strong>datefmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – </p></li>
-<li><p><strong>highlight_loggers</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – </p></li>
+<li><p><strong>datefmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – </p></li>
+<li><p><strong>highlight_loggers</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.9)">logging.StreamHandler</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.StreamHandler" title="(in Python v3.10)">logging.StreamHandler</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -388,10 +394,10 @@ feature that supports different color scheme via logger name.</p>
 <dd><p>Override formatMessage to add color</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.9)"><em>logging.LogRecord</em></a>) – </p>
+<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.10)"><em>logging.LogRecord</em></a>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -402,10 +408,10 @@ feature that supports different color scheme via logger name.</p>
 <dd><p>Get dict with color code to be updated into log record’s <code class="docutils literal notranslate"><span class="pre">__dict__</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.9)"><em>logging.LogRecord</em></a>) – </p>
+<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.10)"><em>logging.LogRecord</em></a>) – </p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Dict[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a>]</p>
+<dd class="field-even"><p>Dict[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -424,10 +430,10 @@ feature that supports different color scheme via logger name.</p>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unwanted_loggers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#livy.utils.logging.IngoreLogFilter.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>unwanted_loggers</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>]</em>) – List of logger name to be ignored</p>
+<dd class="field-odd"><p><strong>unwanted_loggers</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – List of logger name to be ignored</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)">None</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,13 +444,13 @@ feature that supports different color scheme via logger name.</p>
 <dd><p>Determine if the specified record is to be logged.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.9)"><em>logging.LogRecord</em></a>) – Log record</p>
+<dd class="field-odd"><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.LogRecord" title="(in Python v3.10)"><em>logging.LogRecord</em></a>) – Log record</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>ok</strong> – Returns <code class="docutils literal notranslate"><span class="pre">True</span></code> if the record should be logged, or <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
 </dd>
 </dl>
 </dd></dl>

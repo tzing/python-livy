@@ -1,0 +1,413 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configure &#8212; python-livy  documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet" />
+  <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plugin system" href="plugin.html" />
+    <link rel="prev" title="Kill" href="kill.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../index.html">
+<p class="title">python-livy</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../usage.html">
+  Get started
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="index.html">
+  Command line tool
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api/index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/tzing/python-livy" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="submit.html">
+   Submit
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="read-log.html">
+   Read log
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="kill.html">
+   Kill
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Configure
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="plugin.html">
+   Plugin system
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#usage">
+   Usage
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#list-all-configurable-keys">
+     List all configurable keys
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#get-value">
+     Get value
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#set-value">
+     Set value
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#all-configurable-keys">
+   All configurable keys
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="configure">
+<span id="cli-config"></span><h1>Configure<a class="headerlink" href="#configure" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">config</span></code> is a command to get or set the configuration. This command is underlying on <a class="reference internal" href="../api/livy.utils.html#config-base"><span class="std std-ref">livy.utils.ConfigBase</span></a>, it saves the values on local directory and let the corresponding command filled with the pre-configured settings.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="list-all-configurable-keys">
+<h3>List all configurable keys<a class="headerlink" href="#list-all-configurable-keys" title="Permalink to this headline">¶</a></h3>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 14)</p>
+<p>Command ['livy', 'config', 'list', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+</div>
+<p>It provides a command to view the list, but is without description. For the details, see below.</p>
+</div>
+<div class="section" id="get-value">
+<h3>Get value<a class="headerlink" href="#get-value" title="Permalink to this headline">¶</a></h3>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 21)</p>
+<p>Command ['livy', 'config', 'get', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+</div>
+</div>
+<div class="section" id="set-value">
+<h3>Set value<a class="headerlink" href="#set-value" title="Permalink to this headline">¶</a></h3>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/runner/work/python-livy/python-livy/docs/cli/config.rst</span>, line 26)</p>
+<p>Command ['livy', 'config', 'set', '-h'] failed: [Errno 2] No such file or directory: 'livy'</p>
+</div>
+<p>Not all of used values could be set via this command. For example, values used <a class="reference internal" href="plugin.html#plugin"><span class="std std-ref">Plugin system</span></a> should be inputted manually.</p>
+</div>
+</div>
+<div class="section" id="all-configurable-keys">
+<h2>All configurable keys<a class="headerlink" href="#all-configurable-keys" title="Permalink to this headline">¶</a></h2>
+<p>A valid config name for the CLI tool should be in <code class="docutils literal notranslate"><span class="pre">prefix.name</span></code> format, the <em>prefix</em> would be placed in class description and <em>name</em> is the attribute name in each of config class. For example, <code class="docutils literal notranslate"><span class="pre">root.api_url</span></code> would be a valid key for CLI tool.</p>
+<p>The value shows after the attribute is default value when it is not override by user. Some of them could be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="livy.cli.config.RootSection">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">livy.cli.config.</span></span><span class="sig-name descname"><span class="pre">RootSection</span></span><a class="headerlink" href="#livy.cli.config.RootSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix <code class="docutils literal notranslate"><span class="pre">root</span></code>. Basic settings that might be applied to all actions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.RootSection.api_url">
+<span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.RootSection.api_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base-URL for Livy API server.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">livy.cli.config.</span></span><span class="sig-name descname"><span class="pre">LocalLoggingSection</span></span><a class="headerlink" href="#livy.cli.config.LocalLoggingSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix <code class="docutils literal notranslate"><span class="pre">logs</span></code>. Logging behavior on local.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.format">
+<span class="sig-name descname"><span class="pre">format</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">'%(levelcolor)s%(asctime)s</span> <span class="pre">[%(levelname)s]</span> <span class="pre">%(name)s:%(reset)s</span> <span class="pre">%(message)s'</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log message format. <code class="docutils literal notranslate"><span class="pre">%(levelcolor)s</span></code> and <code class="docutils literal notranslate"><span class="pre">%(reset)s</span></code> are two special
+keys only take effect on console output in this tool. They are and used to
+colorize the output. For all the other avaliable keys, see
+<a class="reference external" href="https://docs.python.org/3/library/logging.html#logrecord-attributes">log attributes</a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.date_format">
+<span class="sig-name descname"><span class="pre">date_format</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">'%Y-%m-%d</span> <span class="pre">%H:%M:%S</span> <span class="pre">%z'</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.date_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Date format in log message. It uses
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes">strftime</a>
+format.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.output_file">
+<span class="sig-name descname"><span class="pre">output_file</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.output_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output logs into file by default. A log file with random name would be
+created on the working directory when it set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.logfile_level">
+<span class="sig-name descname"><span class="pre">logfile_level</span></span><em class="property"><span class="pre">:</span> <span class="pre">livy.cli.config.LocalLoggingSection.LogLevel</span></em><em class="property"> <span class="pre">=</span> <span class="pre">10</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.logfile_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default log level on output to log file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.with_progressbar">
+<span class="sig-name descname"><span class="pre">with_progressbar</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.with_progressbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert Spark TaskSetManager’s logs (<em>Finished task X in stage Y on example.com (1/10)</em>) into progress bar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="livy.cli.config.ReadLogSection">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">livy.cli.config.</span></span><span class="sig-name descname"><span class="pre">ReadLogSection</span></span><a class="headerlink" href="#livy.cli.config.ReadLogSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix <code class="docutils literal notranslate"><span class="pre">read-log</span></code>. For <a class="reference internal" href="read-log.html#cli-read-log"><span class="std std-ref">Read log</span></a> tool.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.ReadLogSection.keep_watch">
+<span class="sig-name descname"><span class="pre">keep_watch</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#livy.cli.config.ReadLogSection.keep_watch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keep watching for batch activity until it is finished.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">livy.cli.config.</span></span><span class="sig-name descname"><span class="pre">SubmitSection</span></span><a class="headerlink" href="#livy.cli.config.SubmitSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix <code class="docutils literal notranslate"><span class="pre">submit</span></code>. For <a class="reference internal" href="submit.html#cli-submit"><span class="std std-ref">Submit</span></a> tool.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.pre_submit">
+<span class="sig-name descname"><span class="pre">pre_submit</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.pre_submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enabled Pre-submit plugin list.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.driver_memory">
+<span class="sig-name descname"><span class="pre">driver_memory</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.driver_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amount of memory to use for the driver process. Need to specific unit,
+e.g. <code class="docutils literal notranslate"><span class="pre">12gb</span></code> or <code class="docutils literal notranslate"><span class="pre">34mb</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.driver_cores">
+<span class="sig-name descname"><span class="pre">driver_cores</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.driver_cores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of cores to use for the driver process.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.executor_memory">
+<span class="sig-name descname"><span class="pre">executor_memory</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.executor_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amount of memory to use per executor process. Need to specific unit,
+e.g. <code class="docutils literal notranslate"><span class="pre">12gb</span></code> or <code class="docutils literal notranslate"><span class="pre">34mb</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.executor_cores">
+<span class="sig-name descname"><span class="pre">executor_cores</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.executor_cores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of cores to use for each executor.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.num_executors">
+<span class="sig-name descname"><span class="pre">num_executors</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.num_executors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of executors to launch for this batch.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.spark_conf">
+<span class="sig-name descname"><span class="pre">spark_conf</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.spark_conf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Key value pairs to override spark configuration properties.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.SubmitSection.watch_log">
+<span class="sig-name descname"><span class="pre">watch_log</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#livy.cli.config.SubmitSection.watch_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Watching for logs after the task is submitted. This option shares the
+same behavior to <a class="reference internal" href="#livy.cli.config.ReadLogSection.keep_watch" title="livy.cli.config.ReadLogSection.keep_watch"><code class="xref py py-attr docutils literal notranslate"><span class="pre">keep_watch</span></code></a>, only different is the
+scope it take effects.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+    <a class='left-prev' id="prev-link" href="kill.html" title="previous page">Kill</a>
+    <a class='right-next' id="next-link" href="plugin.html" title="next page">Plugin system</a>
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, tzing.<br/>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br/>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
