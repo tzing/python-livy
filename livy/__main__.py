@@ -2,6 +2,7 @@ import argparse
 import sys
 import time
 
+import livy
 import livy.cli.config
 import livy.cli.read_log
 import livy.cli.submit
@@ -23,6 +24,13 @@ def main():
     subparsers.add_parser("read-log", help=livy.cli.read_log.__doc__)
     subparsers.add_parser("kill", help=livy.cli.kill.__doc__)
     subparsers.add_parser("config", help=livy.cli.config.__doc__)
+
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"livy {livy.__version__}",
+    )
 
     args, remain = parser.parse_known_args(sys.argv[1:2])
     remain += sys.argv[2:]
