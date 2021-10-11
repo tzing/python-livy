@@ -15,6 +15,7 @@ Table of content
    :maxdepth: 2
 
    usage
+   cli/index
    api/index
 
 

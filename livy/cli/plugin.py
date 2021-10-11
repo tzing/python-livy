@@ -19,7 +19,7 @@ import uuid
 import livy.utils
 
 if typing.TYPE_CHECKING:
-    import argparse
+    import livy.cli.submit
 
 
 logger = logging.getLogger(__name__)
@@ -31,29 +31,34 @@ class _ConfigUploadS3(livy.utils.ConfigBase):
     expire_days: int
 
 
-def upload_s3(source: str, args: "argparse.Namespace") -> "argparse.Namespace":
-    """Pre-submit action to upload local file to AWS S3, so hadoop could read
-    the files. It could be useful if you are using this tool with EMR.
+def upload_s3(
+    source: str, args: "livy.cli.submit.PreSubmitArguments"
+) -> "livy.cli.submit.PreSubmitArguments":
+    """Pre-submit action to upload local file to `AWS S3 <https://aws.amazon.com/s3/>`_,
+    for Hadoop to read the files. It could be useful if you are using this tool with
+    `EMR <https://aws.amazon.com/emr/>`_.
 
-    This plugin REQUIRES configurations section `plugin:upload_s3` set in user
+    This plugin **requires** configurations section ``plugin:upload_s3`` set in user
     config file. Following key are read:
-    - `bucket`: Required key. S3 bucket name
-    - `folder_format`: Required key. S3 prefix name format to store the files; it would be
-                       expanded inside the plugin with variables `time` (current
-                       time), `uuid` (random genersted uuid) or `script_name`
-                       (base name part of main application script).
-    - `expire_days`: Optional key. Would set object expire date if given.
 
-    Example config:
-    ```json
-    {
-        "pre-submit:upload_s3": {
-            "bucket": "example-bucket",
-            "folder_format": "livy-{time:%Y%m%d}-{script_name}-{uuid}",
-            "expire_days": 3
-        }
-    }
-    ```
+    * ``bucket``: Required key. S3 bucket name
+    * ``folder_format``: Required key. S3 prefix name format to store the files;
+      it would be expanded inside the plugin with variables ``time`` (currenttime),
+      ``uuid`` (random genersted uuid) or ``script_name`` (base name part of main
+      application script).
+    * ``expire_days``: Optional key. Would set object expire date if given.
+
+    Example configs:
+
+    .. code-block:: json
+
+       {
+           "pre-submit:upload_s3": {
+               "bucket": "example-bucket",
+               "folder_format": "livy-{time:%Y%m%d}-{script_name}-{uuid}",
+               "expire_days": 3
+           }
+       }
     """
     if source != "PRE-SUBMIT":
         raise ValueError("this plugin is for pre-submit hook only")
