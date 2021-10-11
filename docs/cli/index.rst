@@ -6,4 +6,5 @@ Command line tool
 
    submit
    read-log
+   kill
    config
