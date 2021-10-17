@@ -46,8 +46,10 @@ The value shows after the attribute is default value when it is not override by 
    .. autoattribute:: livy.cli.config::LocalLoggingSection.format
    .. autoattribute:: livy.cli.config::LocalLoggingSection.date_format
    .. autoattribute:: livy.cli.config::LocalLoggingSection.output_file
-   .. autoattribute:: livy.cli.config::LocalLoggingSection.logfile_level
    .. autoattribute:: livy.cli.config::LocalLoggingSection.with_progressbar
+   .. autoattribute:: livy.cli.config::LocalLoggingSection.highlight_loggers
+   .. autoattribute:: livy.cli.config::LocalLoggingSection.hide_loggers
+   .. autoattribute:: livy.cli.config::LocalLoggingSection.logfile_level
 
 .. autoclass:: livy.cli.config::ReadLogSection
    :exclude-members: __init__, __new__

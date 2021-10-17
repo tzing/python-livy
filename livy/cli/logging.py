@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import tempfile
+import typing
 
 import livy.cli.config
 import livy.utils
@@ -42,7 +43,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         "--highlight-logger",
         metavar="NAME",
         nargs="+",
-        default=[],
+        default=cfg.logs.highlight_loggers,
         help="Highlight logs from the given loggers. "
         "This option only takes effect when `colorama` is installed.",
     )
@@ -50,7 +51,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         "--hide-logger",
         metavar="NAME",
         nargs="+",
-        default=[],
+        default=cfg.logs.hide_loggers,
         help="Do not show logs from the given loggers.",
     )
 
@@ -99,7 +100,16 @@ def setup_argparse(parser: argparse.ArgumentParser):
     )
 
 
-def init(args: argparse.Namespace = None):
+class LoggingArguments(argparse.Namespace):
+    verbose: int
+    highlight_logger: typing.List[str]
+    hide_logger: typing.List[str]
+    with_progressbar: bool
+    log_file: typing.Union[bool, str]
+    log_file_level: int
+
+
+def init(args: LoggingArguments = None):
     """Initialize loggers"""
     global _is_initialized
     if _is_initialized:
@@ -121,7 +131,8 @@ def init(args: argparse.Namespace = None):
     else:
         console_handler = logging.StreamHandler(stream)
 
-    console_handler.setLevel(logging.INFO - 10 * getattr(args, "verbose", 0))
+    console_log_level = logging.INFO - 10 * getattr(args, "verbose", 0)
+    console_handler.setLevel(console_log_level)
     root_logger.addHandler(console_handler)
 
     console_handler.setFormatter(
@@ -147,6 +158,7 @@ def init(args: argparse.Namespace = None):
 
         file_handler = logging.FileHandler(args.log_file)
         file_handler.setFormatter(_get_general_formatter())
+        file_handler.setLevel(getattr(args, "log_file_level", console_log_level))
         root_logger.addHandler(file_handler)
 
     # send init log

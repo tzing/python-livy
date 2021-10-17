@@ -41,15 +41,25 @@ class LocalLoggingSection(livy.utils.ConfigBase):
     `strftime <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes>`_
     format."""
 
+    with_progressbar: bool = True
+    """Convert Spark TaskSetManager's logs (*Finished task X in stage Y on
+    example.com (1/10)*) into progress bar. This feature requires
+    `tqdm <https://tqdm.github.io/>`_."""
+
+    highlight_loggers: typing.List[str] = []
+    """Highlight logs from these loggers. This option only take effects when
+    `colorama <https://pypi.org/project/colorama/>`_ is installed."""
+
+    hide_loggers: typing.List[str] = []
+    """Hide logs from these loggers. This option does not affect progress bar
+    displaying."""
+
     output_file: bool = False
     """Output logs into file by default. A log file with random name would be
     created on the working directory when it set to ``True``."""
 
     logfile_level: LogLevel = logging.DEBUG
     """Default log level on output to log file."""
-
-    with_progressbar: bool = True
-    """Convert Spark TaskSetManager's logs (*Finished task X in stage Y on example.com (1/10)*) into progress bar."""
 
 
 class ReadLogSection(livy.utils.ConfigBase):
