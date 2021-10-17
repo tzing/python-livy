@@ -43,7 +43,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         "--highlight-logger",
         metavar="NAME",
         nargs="+",
-        default=[],
+        default=cfg.logs.highlight_loggers,
         help="Highlight logs from the given loggers. "
         "This option only takes effect when `colorama` is installed.",
     )
@@ -51,7 +51,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         "--hide-logger",
         metavar="NAME",
         nargs="+",
-        default=[],
+        default=cfg.logs.hide_loggers,
         help="Do not show logs from the given loggers.",
     )
 

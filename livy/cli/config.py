@@ -42,7 +42,17 @@ class LocalLoggingSection(livy.utils.ConfigBase):
     format."""
 
     with_progressbar: bool = True
-    """Convert Spark TaskSetManager's logs (*Finished task X in stage Y on example.com (1/10)*) into progress bar."""
+    """Convert Spark TaskSetManager's logs (*Finished task X in stage Y on
+    example.com (1/10)*) into progress bar. This feature requires
+    `tqdm <https://tqdm.github.io/>`_."""
+
+    highlight_loggers: typing.List[str] = []
+    """Highlight logs from these loggers. This option only take effects when
+    `colorama <https://pypi.org/project/colorama/>`_ is installed."""
+
+    hide_loggers: typing.List[str] = []
+    """Hide logs from these loggers. This option does not affect progress bar
+    displaying."""
 
     output_file: bool = False
     """Output logs into file by default. A log file with random name would be
