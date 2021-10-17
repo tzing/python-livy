@@ -6,3 +6,4 @@ API Reference
 
    livy
    livy.utils
+   livy.cli.plugin

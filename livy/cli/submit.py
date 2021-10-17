@@ -39,6 +39,12 @@ class PreSubmitArguments(argparse.Namespace):
     watch_log: bool
 
 
+class TaskEndedArguments(PreSubmitArguments):
+    """Typed :py:class:`~argparse.Namespace` for arguments when task is ended.
+    It contains all attributes from :py:class:`~livy.cli.submit.PreSubmitArguments`.
+    """
+
+
 def main(argv=None):
     """CLI entrypoint"""
     # parse argument
