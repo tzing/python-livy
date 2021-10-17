@@ -100,11 +100,11 @@ def main(argv=None):
 
     group = parser.add_argument_group("pre-submit actions")
     group.add_argument(
-        "--pre-submit",
+        "--on-pre-submit",
         metavar="PLUG",
         nargs="+",
         default=cfg.submit.pre_submit,
-        help="Run specific plugin before submit",
+        help="Run plugin(s) before submit",
     )
 
     group = parser.add_argument_group("livy server configuration")
@@ -174,6 +174,29 @@ def main(argv=None):
         help="Not to watch for logs. Only submit the task and quit.",
     )
 
+    group = parser.add_argument_group("after-task-finish actions")
+    group.add_argument(
+        "--on-task-success",
+        metavar="PLUG",
+        nargs="+",
+        default=cfg.submit.task_success,
+        help="Run plugin(s) on task is finished and success",
+    )
+    group.add_argument(
+        "--on-task-failed",
+        metavar="PLUG",
+        nargs="+",
+        default=cfg.submit.task_fail,
+        help="Run plugin(s) on task is ended and failed",
+    )
+    group.add_argument(
+        "--on-task-ended",
+        metavar="PLUG",
+        nargs="+",
+        default=cfg.submit.task_fail,
+        help="Run plugin(s) on task is ended and ended and regardless to its state",
+    )
+
     livy.cli.logging.setup_argparse(parser)
 
     args: PreSubmitArguments = parser.parse_args(argv)
@@ -184,7 +207,7 @@ def main(argv=None):
     console.info("Submission task started")
 
     # run pre-submit actions
-    for action in args.pre_submit:
+    for action in args.on_pre_submit:
         console.info("Run pre-submit action %s", action)
 
         func = get_function(action)
