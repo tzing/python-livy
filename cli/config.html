@@ -303,15 +303,31 @@ created on the working directory when it set to <code class="docutils literal no
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.logfile_level">
-<span class="sig-name descname"><span class="pre">logfile_level</span></span><em class="property"><span class="pre">:</span> <span class="pre">livy.cli.config.LocalLoggingSection.LogLevel</span></em><em class="property"> <span class="pre">=</span> <span class="pre">10</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.logfile_level" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default log level on output to log file.</p>
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.with_progressbar">
+<span class="sig-name descname"><span class="pre">with_progressbar</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.with_progressbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert Spark TaskSetManager’s logs (<em>Finished task X in stage Y on
+example.com (1/10)</em>) into progress bar. This feature requires
+<a class="reference external" href="https://tqdm.github.io/">tqdm</a>.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.with_progressbar">
-<span class="sig-name descname"><span class="pre">with_progressbar</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.with_progressbar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert Spark TaskSetManager’s logs (<em>Finished task X in stage Y on example.com (1/10)</em>) into progress bar.</p>
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.highlight_loggers">
+<span class="sig-name descname"><span class="pre">highlight_loggers</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.highlight_loggers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Highlight logs from these loggers. This option only take effects when
+<a class="reference external" href="https://pypi.org/project/colorama/">colorama</a> is installed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.hide_loggers">
+<span class="sig-name descname"><span class="pre">hide_loggers</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.hide_loggers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hide logs from these loggers. This option does not affect progress bar
+displaying.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="livy.cli.config.LocalLoggingSection.logfile_level">
+<span class="sig-name descname"><span class="pre">logfile_level</span></span><em class="property"><span class="pre">:</span> <span class="pre">livy.cli.config.LocalLoggingSection.LogLevel</span></em><em class="property"> <span class="pre">=</span> <span class="pre">10</span></em><a class="headerlink" href="#livy.cli.config.LocalLoggingSection.logfile_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default log level on output to log file.</p>
 </dd></dl>
 
 </dd></dl>
