@@ -237,27 +237,7 @@ def main(argv=None):
     console.info("Submission task started")
 
     # run pre-submit actions
-    for action in args.on_pre_submit:
-        console.info("Run pre-submit action %s", action)
-
-        func = get_function(action)
-        if not func:
-            console.warning("Failed to get action function instance. Stop process.")
-            return 1
-
-        try:
-            args = func("PRE-SUBMIT", args)
-        except:
-            console.exception("Error occurs during pre-submit action. Stop process.")
-            return 1
-
-        if not isinstance(args, argparse.Namespace):
-            console.error(
-                "Return value should be a namespace object. Got %s", type(args).__name__
-            )
-            return 1
-
-    args: TaskEndedArguments
+    args: TaskEndedArguments = run_hook(console, "PRE-SUBMIT", args, args.on_pre_submit)
 
     # check server state
     client = livy.LivyClient(url=args.api_url)
@@ -366,6 +346,10 @@ def main(argv=None):
         human_readable_timeperiod(elapsed_time),
     )
 
+    # run task-end actions
+    if args.state == "success":
+        args = run_hook(console, "TASK-SUCCESS", args, args.on_task_success)
+
     return exit_code
 
 
@@ -382,6 +366,40 @@ def argkvpair(val):
     """Splitting key value pair"""
     k, v = val.split("=", 1)
     return k, v
+
+
+def run_hook(
+    logger: logging.Logger,
+    identifier: str,
+    args: argparse.Namespace,
+    actions: typing.List[str],
+) -> argparse.Namespace:
+    """Run hook actions"""
+    for action_name in actions:
+        logger.info("Run %s action %s", identifier.lower(), action_name)
+
+        func = get_function(action_name)
+        if not func:
+            logger.warning("Failed to get action function instance. Stop process.")
+            exit(1)
+
+        try:
+            args = func(identifier, args)
+        except:
+            logger.exception(
+                "Error occurs during %s action. Stop process.", identifier.lower()
+            )
+            exit(1)
+
+        if not isinstance(args, argparse.Namespace):
+            logger.error(
+                "Expect namespace object from %s's return value. Got %s",
+                action_name,
+                type(args).__name__,
+            )
+            exit(1)
+
+    return args
 
 
 def get_function(name: str) -> typing.Callable:
