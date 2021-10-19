@@ -28,5 +28,7 @@ Typed namespace
 .. autoclass:: livy.cli.submit::TaskEndedArguments
    :exclude-members: __init__, __new__
 
+   .. autoattribute:: livy.cli.submit::TaskEndedArguments.batch_id
+   .. autoattribute:: livy.cli.submit::TaskEndedArguments.state
    .. autoattribute:: livy.cli.submit::TaskEndedArguments.time_task_submit
    .. autoattribute:: livy.cli.submit::TaskEndedArguments.time_task_ended
