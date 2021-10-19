@@ -67,3 +67,6 @@ The value shows after the attribute is default value when it is not override by 
    .. autoattribute:: livy.cli.config::SubmitSection.num_executors
    .. autoattribute:: livy.cli.config::SubmitSection.spark_conf
    .. autoattribute:: livy.cli.config::SubmitSection.watch_log
+   .. autoattribute:: livy.cli.config::SubmitSection.task_success
+   .. autoattribute:: livy.cli.config::SubmitSection.task_fail
+   .. autoattribute:: livy.cli.config::SubmitSection.task_ended

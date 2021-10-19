@@ -3,7 +3,7 @@
 Plugin system
 =============
 
-Some of the operation might not be common sense to other user, so these actions are moved to plugins and trigger via the hook. Currently only ``pre-submit`` hook is implemented.
+Some of the operation might not be common sense to other user, so these actions are moved to plugins and trigger via the hook.
 
 
 How to use it
@@ -28,34 +28,34 @@ A plugin function must in following signature:
    def action(source: str, args: argparse.Namespace) -> argparse.Namespace:
        ...
 
-It takes following arguments:
+It takes arguments ``source`` and ``args``, and returns :py:class:`~argparse.Namespace` object back to parent function.
 
-* ``source`` the hook name, for preventing user trigger this function in wrong hook. It is hardcoded string and always in uppercase, see table below:
+Input argument ``source`` the hook name, for preventing user trigger this function in wrong hook. It is hardcoded string and always in uppercase, see table below for details. Argument ``args`` an :py:class:`~argparse.Namespace` object, the plugin function could do what they want and modify its value.
 
-  +----------------+-------------------+
-  | name           | ``source`` string |
-  +================+===================+
-  | pre-submit     | ``PRE-SUBMIT``    |
-  +----------------+-------------------+
+Expected input value and typed namespace instances are:
 
-* ``args`` the argument object, this function could do what they want and modify its value.
+.. table::
+   :widths: 30 20 50
 
-And returns :py:class:`~argparse.Namespace` object back to parent function.
-
-For developing, we could utilizing :ref:`plugin-typed-namespace` for type hinting.
+   +----------------+-------------------+-------------------------------------------------+
+   | name           | ``source`` string | Typed namespace reference                       |
+   +================+===================+=================================================+
+   | pre-submit     | ``PRE-SUBMIT``    | :py:class:`~livy.cli.submit.PreSubmitArguments` |
+   +----------------+-------------------+-------------------------------------------------+
+   | task-success   | ``TASK-SUCCESS``  | :py:class:`~livy.cli.submit.PreSubmitArguments` |
+   +----------------+-------------------+-------------------------------------------------+
+   | task-failed    | ``TASK-FAILED``   | :py:class:`~livy.cli.submit.PreSubmitArguments` |
+   +----------------+-------------------+-------------------------------------------------+
+   | task-ended     | ``TASK-ENDED``    | :py:class:`~livy.cli.submit.TaskEndedArguments` |
+   +----------------+-------------------+-------------------------------------------------+
 
 
 Builtin plugin
 --------------
 
 .. currentmodule:: livy.cli.plugin
+
+Upload script to S3
++++++++++++++++++++
+
 .. autofunction:: upload_s3
-
-
-.. _plugin-typed-namespace:
-
-Typed namespace
----------------
-
-.. autoclass:: livy.cli.submit.PreSubmitArguments
-   :exclude-members: __init__, __new__
