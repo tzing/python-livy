@@ -100,6 +100,15 @@ class SubmitSection(livy.utils.ConfigBase):
     same behavior to :py:attr:`~ReadLogSection.keep_watch`, only different is the
     scope it take effects."""
 
+    task_success: typing.List[str] = []
+    """Plugins to be trigger when task is finished and success."""
+
+    task_fail: typing.List[str] = []
+    """Plugins to be trigger when task is ended and failed."""
+
+    task_ended: typing.List[str] = []
+    """Plugins to be trigger when task is ended, regardless to its state."""
+
 
 class Configuration(livy.utils.ConfigBase):
     """Collection to all configurations"""
