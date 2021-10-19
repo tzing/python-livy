@@ -349,6 +349,10 @@ def main(argv=None):
     # run task-end actions
     if args.state == "success":
         args = run_hook(console, "TASK-SUCCESS", args, args.on_task_success)
+    else:
+        args = run_hook(console, "TASK-FAILED", args, args.on_task_failed)
+
+    args = run_hook(console, "TASK", args, args.on_task_ended)
 
     return exit_code
 

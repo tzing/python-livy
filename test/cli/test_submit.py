@@ -96,7 +96,7 @@ class TestMain(unittest.TestCase):
 
     def test_task_ending_error(self):
         self.client.get_batch_state.return_value = "dead"
-        self.assertEqual(1, module.main(["test.py"]))
+        self.assertEqual(1, module.main(["test.py", "--on-task-failed", "test_hook"]))
 
 
 class TestHelperFunc(unittest.TestCase):
