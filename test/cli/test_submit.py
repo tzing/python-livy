@@ -46,7 +46,7 @@ class TestMain(unittest.TestCase):
             module.main(
                 [
                     "test.py",
-                    "--pre-submit",
+                    "--on-pre-submit",
                     "test_hook",
                     "--no-watch-log",
                 ]
@@ -63,7 +63,7 @@ class TestMain(unittest.TestCase):
             module.main(
                 [
                     "test.py",
-                    "--pre-submit",
+                    "--on-pre-submit",
                     "test_hook",
                 ]
             ),

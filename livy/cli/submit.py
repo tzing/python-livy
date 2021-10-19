@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class PreSubmitArguments(argparse.Namespace):
     """Typed :py:class:`~argparse.Namespace` for arguments before task submission."""
 
-    # submit
+    # task
     script: str
     args: typing.List[str]
     class_name: str
@@ -38,11 +38,27 @@ class PreSubmitArguments(argparse.Namespace):
     # log
     watch_log: bool
 
+    # time
+    time_prog_start: datetime.datetime
+    "Local time this script is called"
+
 
 class TaskEndedArguments(PreSubmitArguments):
     """Typed :py:class:`~argparse.Namespace` for arguments when task is ended.
     It contains all attributes from :py:class:`~livy.cli.submit.PreSubmitArguments`.
     """
+
+    # task
+    batch_id: int
+    "Batch ID response by livy server"
+    state: str
+    "Task ended state"
+
+    # time
+    time_task_submit: datetime.datetime
+    "Local time before task is submitted"
+    time_task_ended: datetime.datetime
+    "Local time that detected task is ended"
 
 
 def main(argv=None):
@@ -207,6 +223,14 @@ def main(argv=None):
 
     args: PreSubmitArguments = parser.parse_args(argv)
 
+    # time stamping
+    tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+
+    def now() -> datetime.datetime:
+        return datetime.datetime.now().astimezone(tzlocal)
+
+    args.time_prog_start = now()
+
     # setup logger
     livy.cli.logging.init(args)
     console = livy.cli.logging.get("livy-read-log.main")
@@ -232,6 +256,8 @@ def main(argv=None):
                 "Return value should be a namespace object. Got %s", type(args).__name__
             )
             return 1
+
+    args: TaskEndedArguments
 
     # check server state
     client = livy.LivyClient(url=args.api_url)
@@ -271,9 +297,8 @@ def main(argv=None):
     )
 
     # timing
-    tzlocal = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-    start_time = datetime.datetime.now().astimezone(tzlocal)
-    console.debug("Batch submission time= %s", start_time)
+    args.time_task_submit = now()
+    console.debug("Batch submission time= %s", args.time_task_submit)
 
     # submit
     try:
@@ -284,19 +309,19 @@ def main(argv=None):
 
     console.info("Server response: %s", json.dumps(submit_resp, indent=2))
 
-    batch_id: int = submit_resp.get("id", None)
-    if not isinstance(batch_id, int) or batch_id < 0:
+    args.batch_id = submit_resp.get("id", None)
+    if not isinstance(args.batch_id, int) or args.batch_id < 0:
         console.error("Failed to get batch id. Something goes wrong.")
         return 1
 
     # watch log
     if not args.watch_log:
-        console.info("Batch %d created.", batch_id)
+        console.info("Batch %d created.", args.batch_id)
         return 0
 
-    console.info("Start reading logs of batch %d", batch_id)
+    console.info("Start reading logs of batch %d", args.batch_id)
 
-    reader = livy.LivyBatchLogReader(client, batch_id)
+    reader = livy.LivyBatchLogReader(client, args.batch_id)
 
     try:
         reader.read_until_finish()
@@ -306,41 +331,42 @@ def main(argv=None):
         )
         return 1
     except KeyboardInterrupt:
+        msg_args = args.batch_id, args.api_url  # just for shorten
         console.warning("Keyboard interrupt. Local livy-submit process terminating.")
         console.warning("Your task might be still running on the server.")
         console.warning("For reading the logs, call:")
-        console.warning("    livy read-log %d --api-url %s", batch_id, args.api_url)
+        console.warning("    livy read-log %d --api-url %s", *msg_args)
         console.warning("For stopping the task, call:")
-        console.warning("    livy kill %d --api-url %s", batch_id, args.api_url)
+        console.warning("    livy kill %d --api-url %s", *msg_args)
         return 1
 
     # timing
-    finish_time = datetime.datetime.now().astimezone(tzlocal)
-    elapsed_time = finish_time - start_time
-    console.debug("Batch finishing time= %s", finish_time)
+    args.time_task_ended = now()
+    console.debug("Batch finishing time= %s", args.time_task_ended)
 
     # get ending state
     try:
-        state = client.get_batch_state(batch_id)
+        args.state = client.get_batch_state(args.batch_id)
     except livy.RequestError:
         console.error("Error during query batch ending state.")
         return 1
 
-    if state == "success":
-        code = 0
-        level = logging.INFO
+    if args.state == "success":
+        exit_code = 0
+        state_level = logging.INFO
     else:
-        code = 1
-        level = logging.WARNING
+        exit_code = 1
+        state_level = logging.WARNING
 
-    console.log(level, "Batch ended with state= %s", state)
+    console.log(state_level, "Batch#%d ended with state= %s", args.batch_id, args.state)
+    elapsed_time = args.time_task_ended - args.time_task_submit
     console.info(
         "Batch execution time: %dsec (%s)",
         elapsed_time.total_seconds(),
         human_readable_timeperiod(elapsed_time),
     )
 
-    return code
+    return exit_code
 
 
 def argmem(s: str):

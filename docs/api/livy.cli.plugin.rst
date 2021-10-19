@@ -4,7 +4,7 @@ Plugins
 Typed namespace
 ---------------
 
-.. autoclass:: livy.scli.submit::PreSubmitArguments
+.. autoclass:: livy.cli.submit::PreSubmitArguments
    :exclude-members: __init__, __new__
 
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.script
@@ -19,11 +19,14 @@ Typed namespace
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.driver_memory
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.driver_cores
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.executor_memory
-   .. autoattribute:: livy.cli.submit::PreSubmitArguments.executor_memory
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.executor_cores
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.num_executors
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.spark_conf
    .. autoattribute:: livy.cli.submit::PreSubmitArguments.watch_log
+   .. autoattribute:: livy.cli.submit::PreSubmitArguments.time_prog_start
 
 .. autoclass:: livy.cli.submit::TaskEndedArguments
    :exclude-members: __init__, __new__
+
+   .. autoattribute:: livy.cli.submit::TaskEndedArguments.time_task_submit
+   .. autoattribute:: livy.cli.submit::TaskEndedArguments.time_task_ended
